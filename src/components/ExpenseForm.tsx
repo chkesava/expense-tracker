@@ -13,13 +13,14 @@ export default function ExpenseForm() {
 
   const submit = async () => {
     if (!user || !amount || !date) return;
-
+    const now = new Date();
     await addDoc(collection(db, "users", user.uid, "expenses"), {
       amount: Number(amount),
       date,
       category,
       note,
       month: date.slice(0, 7),
+      time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       createdAt: serverTimestamp(),
     });
 

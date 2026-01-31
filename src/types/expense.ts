@@ -25,5 +25,6 @@ export interface Expense {
   note: string;
   date: string;
   month: string;
+  time?: string;
   createdAt: unknown;
 }

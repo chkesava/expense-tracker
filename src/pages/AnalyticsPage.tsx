@@ -6,6 +6,8 @@ import CategoryPie from "../components/charts/CategoryPie";
 import MonthlyBar from "../components/charts/MonthlyBar";
 import TrendLine from "../components/charts/TrendLine";
 import MonthSelector from "../components/MonthSelector";
+import DailyTrend from "../components/charts/DailyTrend";
+import { groupByDay } from "../utils/groupByDay";
 
 export default function AnalyticsPage() {
   const expenses = useExpenses();
@@ -60,6 +62,9 @@ export default function AnalyticsPage() {
         {/* Trend for selected month */}
         <div className="card">
           <TrendLine data={groupByMonth(expenses)} />
+        </div>
+        <div className="card">
+          <DailyTrend data={groupByDay(filteredExpenses)} />
         </div>
       </main>
     </>

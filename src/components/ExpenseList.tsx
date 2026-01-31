@@ -12,7 +12,8 @@ export default function ExpenseList({ expenses }: { expenses: Expense[] }) {
           <div className="expense-left">
             <span className="expense-category">{e.category}</span>
             {e.note && <span className="expense-note">{e.note}</span>}
-            <span className="expense-date">{e.date}</span>
+            <span className="expense-date">{e.date}
+{e.time && ` • ${e.time}`}</span>
           </div>
           <div className="expense-amount">₹{e.amount}</div>
         </div>
