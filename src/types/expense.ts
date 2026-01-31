@@ -12,6 +12,7 @@ export const CATEGORIES = [
   "Subscriptions",
   "Insurance",
   "Brother Related",
+  "EMIS",
   "Other",
 ] as const;
 
