@@ -1,18 +1,13 @@
+import { useLocation } from "react-router-dom";
 import ExpenseForm from "../components/ExpenseForm";
 
-export default function AddExpense({ onLogout }: { onLogout: () => void }) {
-  return (
-    <>
-      <header className="app-header">
-        <div className="app-title">Add Expense</div>
-        <button onClick={onLogout} className="logout-btn">
-          Logout
-        </button>
-      </header>
+export default function AddExpense() {
+  const location = useLocation();
+  const editingExpense = (location.state as any) ?? null;
 
-      <main className="app-container">
-        <ExpenseForm />
-      </main>
-    </>
+  return (
+    <main className="app-container">
+      <ExpenseForm editingExpense={editingExpense} />
+    </main>
   );
 }

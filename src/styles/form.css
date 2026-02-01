@@ -273,6 +273,54 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* =========================
+   Collapsible (analytics sections)
+   ========================= */
+.collapsible {
+  margin-bottom: 12px;
+}
+
+.collapsible-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 8px 0;
+  cursor: pointer;
+}
+
+.collapsible-title {
+  font-weight: 600;
+  flex: 1;
+}
+
+.collapsible-right {
+  color: #6b7280;
+  font-size: 13px;
+  margin-right: 8px;
+}
+
+.chevron {
+  width: 12px;
+  height: 12px;
+  border-right: 2px solid #9ca3af;
+  border-bottom: 2px solid #9ca3af;
+  transform: rotate(-45deg);
+  transition: transform 160ms ease;
+}
+
+.chevron.open {
+  transform: rotate(45deg);
+}
+
+.collapsible-content {
+  overflow: hidden;
+  transition: max-height 240ms ease;
+}
+
+
 .scroll-card .expense-row {
   padding: 12px 0;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
@@ -280,4 +328,42 @@ body {
 
 .scroll-card .expense-row:last-child {
   border-bottom: none;
+}
+
+/* =========================
+   Small action buttons (mobile friendly)
+   ========================= */
+.small-btn {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  background: #f3f4f6;
+}
+
+.small-btn:active {
+  transform: scale(0.98);
+}
+
+.muted-btn {
+  background: rgba(0, 0, 0, 0.06);
+  color: #111827;
+}
+
+.danger-btn {
+  background: linear-gradient(180deg, #ef4444, #dc2626);
+  color: white;
+  box-shadow: 0 8px 18px rgba(220, 38, 38, 0.18);
+}
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.36);
+  z-index: 1000;
+  padding: 16px;
 }

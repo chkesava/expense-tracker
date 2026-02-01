@@ -8,6 +8,11 @@ import TrendLine from "../components/charts/TrendLine";
 import MonthSelector from "../components/MonthSelector";
 import DailyTrend from "../components/charts/DailyTrend";
 import { groupByDay } from "../utils/groupByDay";
+import SmartSummary from "../components/analytics/SmartSummary";
+import CategoryBars from "../components/analytics/CategoryBars";
+import MonthlyComparison from "../components/analytics/MonthlyComparison";
+import WeeklySummary from "../components/analytics/WeeklySummary";
+import Collapsible from "../components/common/Collapsible";
 
 export default function AnalyticsPage() {
   const expenses = useExpenses();
@@ -34,13 +39,8 @@ export default function AnalyticsPage() {
     if (!selectedMonth) return [];
     return expenses.filter(e => e.month === selectedMonth);
   }, [expenses, selectedMonth]);
-
   return (
     <>
-      <header className="app-header">
-        <div className="app-title">Analytics</div>
-      </header>
-
       <main className="app-container">
         {/* Month selector */}
         <MonthSelector
@@ -48,24 +48,43 @@ export default function AnalyticsPage() {
           value={selectedMonth}
           onChange={setUserSelectedMonth}
         />
+        {/* Summary (smart summary + monthly comparison) */}
+        <Collapsible title="Summary" defaultOpen>
+          <SmartSummary expenses={filteredExpenses} />
+          <div style={{ height: 10 }} />
+          <MonthlyComparison expenses={expenses} />
+          <div style={{ height: 10 }} />
+          <WeeklySummary expenses={expenses} month={selectedMonth} />
+        </Collapsible>
 
-        {/* Category split */}
-        <div className="card">
-          <CategoryPie data={groupByCategory(filteredExpenses)} />
-        </div>
+        {/* Category section (pie + bars) */}
+        <Collapsible title="Category breakdown" defaultOpen>
+          <div className="card">
+            <CategoryPie data={groupByCategory(filteredExpenses)} />
+          </div>
+          <div style={{ height: 10 }} />
+          <CategoryBars expenses={filteredExpenses} />
+        </Collapsible>
 
-        {/* Monthly spend (overall trend) */}
-        <div className="card">
-          <MonthlyBar data={groupByMonth(expenses)} />
-        </div>
+        {/* Trends */}
+        <Collapsible title="Monthly trends">
+          <div className="card">
+            <MonthlyBar data={groupByMonth(expenses)} />
+          </div>
 
-        {/* Trend for selected month */}
-        <div className="card">
-          <TrendLine data={groupByMonth(expenses)} />
-        </div>
-        <div className="card">
-          <DailyTrend data={groupByDay(filteredExpenses)} />
-        </div>
+          <div style={{ height: 10 }} />
+
+          <div className="card">
+            <TrendLine data={groupByMonth(expenses)} />
+          </div>
+        </Collapsible>
+
+        {/* Daily trend */}
+        <Collapsible title="Daily trend">
+          <div className="card">
+            <DailyTrend data={groupByDay(filteredExpenses)} />
+          </div>
+        </Collapsible>
       </main>
     </>
   );

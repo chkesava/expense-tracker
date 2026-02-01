@@ -4,10 +4,16 @@ import { useAuth } from "./hooks/useAuth";
 import AddExpense from "./pages/AddExpense";
 import ExpenseListPage from "./pages/ExpenseListPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import Dashboard from "./pages/Dashboard";
+import SeedDataPage from "./pages/SeedData";
 import BottomNav from "./components/BottomNav";
+import Header from "./components/Header";
+import SettingsPage from "./pages/Settings";
+import useSettings from "./hooks/useSettings";
 
 export default function App() {
-  const { user, login, logout } = useAuth();
+  const { user, login } = useAuth();
+  const { settings } = useSettings();
 
   // -------- LOGIN SCREEN --------
   if (!user) {
@@ -37,14 +43,22 @@ export default function App() {
   }
 
   // -------- APP ROUTES --------
+
   return (
     <BrowserRouter>
       <div className="app-shell">
+        <Header />
+
         <Routes>
-          <Route path="/" element={<Navigate to="/add" />} />
-          <Route path="/add" element={<AddExpense onLogout={logout} />} />
+          <Route path="/" element={<Navigate to={`/${settings.defaultView}`} replace />} />
+          <Route path="/add" element={<AddExpense />} />
           <Route path="/expenses" element={<ExpenseListPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          {import.meta.env.DEV && (
+            <Route path="/seed" element={<SeedDataPage />} />
+          )}
         </Routes>
 
         <BottomNav />

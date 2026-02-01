@@ -5,10 +5,24 @@ import App from './App.tsx'
 import "./index.css";
 import "./styles/auth.css";
 import "./styles/form.css"; // your existing form css
-
+import { ToastContainer, Slide } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
+    <ToastContainer
+      position="bottom-right"
+      autoClose={3000}
+      hideProgressBar={true}
+      newestOnTop={true}
+      closeOnClick
+      pauseOnHover
+      draggable
+      theme="colored"
+      limit={3}
+      transition={Slide}
+      toastStyle={{ maxWidth: '360px', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.12)', padding: '12px 14px' }}
+    />
   </StrictMode>,
 )
