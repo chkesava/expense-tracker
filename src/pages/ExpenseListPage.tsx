@@ -1,7 +1,6 @@
 import { useExpenses } from "../hooks/useExpenses";
 import { useMemo, useState, useEffect } from "react";
 import MonthSelector from "../components/MonthSelector";
-import ExpenseList from "../components/ExpenseList";
 import { getMonthlySummary } from "../utils/monthSummary";
 import { groupExpensesByDay } from "../utils/dayGrouping";
 
