@@ -281,3 +281,41 @@ body {
 .scroll-card .expense-row:last-child {
   border-bottom: none;
 }
+
+/* =========================
+   Small action buttons (mobile friendly)
+   ========================= */
+.small-btn {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  background: #f3f4f6;
+}
+
+.small-btn:active {
+  transform: scale(0.98);
+}
+
+.muted-btn {
+  background: rgba(0, 0, 0, 0.06);
+  color: #111827;
+}
+
+.danger-btn {
+  background: linear-gradient(180deg, #ef4444, #dc2626);
+  color: white;
+  box-shadow: 0 8px 18px rgba(220, 38, 38, 0.18);
+}
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.36);
+  z-index: 1000;
+  padding: 16px;
+}

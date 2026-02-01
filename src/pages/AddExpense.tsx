@@ -1,6 +1,10 @@
+import { useLocation } from "react-router-dom";
 import ExpenseForm from "../components/ExpenseForm";
 
 export default function AddExpense({ onLogout }: { onLogout: () => void }) {
+  const location = useLocation();
+  const editingExpense = (location.state as any) ?? null;
+
   return (
     <>
       <header className="app-header">
@@ -11,7 +15,7 @@ export default function AddExpense({ onLogout }: { onLogout: () => void }) {
       </header>
 
       <main className="app-container">
-        <ExpenseForm />
+        <ExpenseForm editingExpense={editingExpense} />
       </main>
     </>
   );

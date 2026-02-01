@@ -1,6 +1,11 @@
 import { useExpenses } from "../hooks/useExpenses";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import { deleteDoc, doc } from "firebase/firestore";
+import { db } from "../firebase";
 import MonthSelector from "../components/MonthSelector";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import { getMonthlySummary } from "../utils/monthSummary";
 import { groupExpensesByDay } from "../utils/dayGrouping";
 
@@ -12,15 +17,8 @@ export default function ExpenseListPage() {
     [expenses]
   );
 
-  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
-    return months.length > 0 ? months[0] : "";
-  });
-
-  useEffect(() => {
-    if (months.length > 0 && !selectedMonth) {
-      setSelectedMonth(months[0]);
-    }
-  }, [months]);
+  const [userSelectedMonth, setUserSelectedMonth] = useState<string | null>(null);
+  const selectedMonth = userSelectedMonth ?? months[0] ?? "";
 
   const filteredExpenses = useMemo(
     () => expenses.filter(e => e.month === selectedMonth),
@@ -35,6 +33,22 @@ export default function ExpenseListPage() {
   // group filtered expenses by day for sectioned listing
   const { today, yesterday, earlier } = groupExpensesByDay(filteredExpenses);
 
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+  const doDelete = async (id?: string) => {
+    if (!user || !id) return;
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "expenses", id));
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete expense");
+      setDeleteTarget(null);
+    }
+  };
+
   return (
     <>
       {/* Header */}
@@ -47,7 +61,7 @@ export default function ExpenseListPage() {
         <MonthSelector
           months={months}
           value={selectedMonth}
-          onChange={setSelectedMonth}
+          onChange={setUserSelectedMonth}
         />
 
         {/* Monthly summary */}
@@ -92,7 +106,7 @@ export default function ExpenseListPage() {
                 <>
                   <h4 className="list-section-title">Today</h4>
                   {today.map((e) => (
-                    <div key={e.id} className="expense-row">
+                    <div key={e.id} className="expense-row" onClick={() => navigate("/add", { state: e })}>
                       <div className="expense-left">
                         <span className="expense-category">{e.category}</span>
                         {e.note && <span className="expense-note">{e.note}</span>}
@@ -101,9 +115,25 @@ export default function ExpenseListPage() {
                           {e.time && ` • ${e.time}`}
                         </span>
                       </div>
-                      <div className="expense-amount">₹{e.amount}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <button
+                          className="small-btn muted-btn"
+                          onClick={(ev) => { ev.stopPropagation(); navigate("/add", { state: e }); }}
+                        >
+                          Edit
+                        </button>
+
+                        <div className="expense-amount">₹{e.amount}</div>
+
+                        <button
+                          className="small-btn danger-btn"
+                          onClick={(ev) => { ev.stopPropagation(); setDeleteTarget(e.id ?? null); }}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
-                  ))}
+                  ))} 
                 </>
               )}
 
@@ -111,7 +141,7 @@ export default function ExpenseListPage() {
                 <>
                   <h4 className="list-section-title">Yesterday</h4>
                   {yesterday.map((e) => (
-                    <div key={e.id} className="expense-row">
+                    <div key={e.id} className="expense-row" onClick={() => navigate("/add", { state: e })}>
                       <div className="expense-left">
                         <span className="expense-category">{e.category}</span>
                         {e.note && <span className="expense-note">{e.note}</span>}
@@ -120,9 +150,25 @@ export default function ExpenseListPage() {
                           {e.time && ` • ${e.time}`}
                         </span>
                       </div>
-                      <div className="expense-amount">₹{e.amount}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <button
+                          className="small-btn muted-btn"
+                          onClick={(ev) => { ev.stopPropagation(); navigate("/add", { state: e }); }}
+                        >
+                          Edit
+                        </button>
+
+                        <div className="expense-amount">₹{e.amount}</div>
+
+                        <button
+                          className="small-btn danger-btn"
+                          onClick={(ev) => { ev.stopPropagation(); setDeleteTarget(e.id ?? null); }}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
-                  ))}
+                  ))} 
                 </>
               )}
 
@@ -130,7 +176,7 @@ export default function ExpenseListPage() {
                 <>
                   <h4 className="list-section-title">Earlier</h4>
                   {earlier.map((e) => (
-                    <div key={e.id} className="expense-row">
+                    <div key={e.id} className="expense-row" onClick={() => navigate("/add", { state: e })}>
                       <div className="expense-left">
                         <span className="expense-category">{e.category}</span>
                         {e.note && <span className="expense-note">{e.note}</span>}
@@ -139,7 +185,23 @@ export default function ExpenseListPage() {
                           {e.time && ` • ${e.time}`}
                         </span>
                       </div>
-                      <div className="expense-amount">₹{e.amount}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <button
+                          className="small-btn muted-btn"
+                          onClick={(ev) => { ev.stopPropagation(); navigate("/add", { state: e }); }}
+                        >
+                          Edit
+                        </button>
+
+                        <div className="expense-amount">₹{e.amount}</div>
+
+                        <button
+                          className="small-btn danger-btn"
+                          onClick={(ev) => { ev.stopPropagation(); setDeleteTarget(e.id ?? null); }}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </>
@@ -147,6 +209,16 @@ export default function ExpenseListPage() {
             </>
           )}
         </div>
+
+        <ConfirmDialog
+          open={!!deleteTarget}
+          title="Delete expense"
+          message="Do you want to delete this expense? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={() => doDelete(deleteTarget ?? undefined)}
+        />
       </main>
     </>
   );
