@@ -8,6 +8,7 @@ import TrendLine from "../components/charts/TrendLine";
 import MonthSelector from "../components/MonthSelector";
 import DailyTrend from "../components/charts/DailyTrend";
 import { groupByDay } from "../utils/groupByDay";
+import SmartSummary from "../components/analytics/SmartSummary";
 
 export default function AnalyticsPage() {
   const expenses = useExpenses();
@@ -34,7 +35,6 @@ export default function AnalyticsPage() {
     if (!selectedMonth) return [];
     return expenses.filter(e => e.month === selectedMonth);
   }, [expenses, selectedMonth]);
-
   return (
     <>
       <header className="app-header">
@@ -48,7 +48,8 @@ export default function AnalyticsPage() {
           value={selectedMonth}
           onChange={setUserSelectedMonth}
         />
-
+        {/* Smart summary */}
+        <SmartSummary expenses={filteredExpenses} />
         {/* Category split */}
         <div className="card">
           <CategoryPie data={groupByCategory(filteredExpenses)} />
@@ -59,7 +60,7 @@ export default function AnalyticsPage() {
           <MonthlyBar data={groupByMonth(expenses)} />
         </div>
 
-        {/* Trend for selected month */}
+        {/* Overall monthly trend (line) */}
         <div className="card">
           <TrendLine data={groupByMonth(expenses)} />
         </div>

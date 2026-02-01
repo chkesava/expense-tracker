@@ -1,36 +1,56 @@
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import { useAuth } from "../hooks/useAuth";
 import { CATEGORIES } from "../types/expense";
 import type { Category } from "../types/expense";
 export default function ExpenseForm() {
+  
+
   const { user } = useAuth();
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [category, setCategory] = useState<Category>("Food");
   const [note, setNote] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const submit = async () => {
     if (!user || !amount || !date) return;
-    const now = new Date();
-    await addDoc(collection(db, "users", user.uid, "expenses"), {
-      amount: Number(amount),
-      date,
-      category,
-      note,
-      month: date.slice(0, 7),
-      time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      createdAt: serverTimestamp(),
-    });
+    setIsSubmitting(true);
+    try {
+      localStorage.setItem("lastCategory", category);
+      const now = new Date();
+      await addDoc(collection(db, "users", user.uid, "expenses"), {
+        amount: Number(amount),
+        date,
+        category,
+        note,
+        month: date.slice(0, 7),
+        time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        createdAt: serverTimestamp(),
+      });
 
-    setAmount("");
-    setNote("");
-  };
+      setAmount("");
+      setNote("");
+      // reset date to today to make adding multiple expenses easier
+      setDate(new Date().toISOString().slice(0, 10));
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add expense");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }; 
+  useEffect(() => {
+    const last = localStorage.getItem("lastCategory") as Category | null;
+    if (last) setCategory(last);
+  }, []);
+
+
 
   return (
-    <div className="card">
-      <div className="form-title">Add Expense</div>
+    <form className="card" onSubmit={e => { e.preventDefault(); submit(); }}>
+      <div className="form-title">Add Expense</div> 
 
       <div className="form-group">
         <label className="form-label">Amount</label>
@@ -61,8 +81,10 @@ export default function ExpenseForm() {
           onChange={e => setCategory(e.target.value as Category)}
         >
           {CATEGORIES.map(c => (
-            <option key={c}>{c}</option>
-          ))}
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))} 
         </select>
       </div>
 
@@ -76,9 +98,9 @@ export default function ExpenseForm() {
         />
       </div>
 
-      <button onClick={submit} className="primary-btn">
-        Add Expense
+      <button type="submit" disabled={isSubmitting} className="primary-btn">
+        {isSubmitting ? "Adding..." : "Add Expense"}
       </button>
-    </div>
+    </form>
   );
 }
