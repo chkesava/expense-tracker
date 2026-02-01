@@ -1,4 +1,4 @@
-import { deleteDoc, doc } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, addDoc, collection } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import type { Expense } from "../types/expense";
@@ -6,6 +6,7 @@ import "../styles/form.css";
 import { useAuth } from "../hooks/useAuth";
 import { db } from "../firebase";
 import ConfirmDialog from "./common/ConfirmDialog";
+import { toast } from 'react-toastify';
 
 export default function ExpenseList({ expenses }: { expenses: Expense[] }) {
   const navigate = useNavigate();
@@ -15,11 +16,45 @@ export default function ExpenseList({ expenses }: { expenses: Expense[] }) {
   const doDelete = async (id?: string) => {
     if (!user || !id) return;
     try {
-      await deleteDoc(doc(db, "users", user.uid, "expenses", id));
+      const dRef = doc(db, "users", user.uid, "expenses", id);
+      const snap = await getDoc(dRef);
+      if (!snap.exists()) {
+        setDeleteTarget(null);
+        toast.error("Expense already removed");
+        return;
+      }
+
+      const data = snap.data();
+
+      // delete immediately, offer undo to recreate
+      await deleteDoc(dRef);
       setDeleteTarget(null);
+
+      const toastId = toast(() => (
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div>Expense deleted</div>
+          <button
+            className="small-btn muted-btn"
+            onClick={async () => {
+              try {
+                await addDoc(collection(db, "users", user.uid, "expenses"), data as Record<string, unknown>);
+                toast.dismiss(toastId);
+                toast.success("Expense restored");
+              } catch (err) {
+                console.error(err);
+                toast.error("Failed to restore expense");
+              }
+            }}
+          >
+            Undo
+          </button>
+        </div>
+      ), { autoClose: 5000 });
+
     } catch (err) {
       console.error(err);
-      alert("Failed to delete expense");
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(msg ?? "Failed to delete expense");
       setDeleteTarget(null);
     }
   };

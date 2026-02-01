@@ -5,6 +5,8 @@ import { db } from "../firebase";
 import { useAuth } from "../hooks/useAuth";
 import { CATEGORIES } from "../types/expense";
 import type { Category, Expense } from "../types/expense";
+import { toast } from 'react-toastify';
+import useSettings from "../hooks/useSettings";
 export default function ExpenseForm({
   editingExpense,}:{
   editingExpense?: Expense|null;
@@ -19,6 +21,31 @@ export default function ExpenseForm({
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // online / offline status
+  const [isOnline, setIsOnline] = useState<boolean>(typeof navigator !== "undefined" ? navigator.onLine : true);
+
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
+
+  // short saved confirmation shown after successful save, before navigation
+  const [showSavedConfirmation, setShowSavedConfirmation] = useState(false);
+
+  // current month lock helper (respects user setting)
+  const currentMonth = new Date().toISOString().slice(0, 7);
+
+  const { settings } = useSettings();
+  const isLocked = !!editingExpense && settings.lockPastMonths && editingExpense.month !== currentMonth;
+
 useEffect(() => {
   if (editingExpense) {
     setAmount(editingExpense.amount.toString());
@@ -28,9 +55,10 @@ useEffect(() => {
   } else {
     const last = localStorage.getItem("lastCategory") as Category | null;
     if (last) setCategory(last);
+    else setCategory(settings.defaultCategory as Category);
     setDate(new Date().toISOString().slice(0, 10));
   }
-}, [editingExpense]);
+}, [editingExpense, settings.defaultCategory]);
 
 const submit = async () => {
   if (!user || !amount || !date) return;
@@ -47,6 +75,8 @@ const submit = async () => {
         note,
         month,
       });
+
+      toast.success("Expense updated");
     } else {
       const now = new Date();
       await addDoc(collection(db, "users", user.uid, "expenses"), {
@@ -58,15 +88,24 @@ const submit = async () => {
         time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         createdAt: serverTimestamp(),
       });
+
+      toast.success("Expense added");
     }
+
+    // show a short inline confirmation so the user sees the saved state before we navigate
+    setShowSavedConfirmation(true);
+    await new Promise((res) => setTimeout(res, 700));
 
     // navigate back to list
     navigate("/expenses");
   } catch (err) {
     console.error(err);
-    alert("Failed to save expense");
+    const msg = err instanceof Error ? err.message : String(err);
+    toast.error(msg ?? "Failed to save expense");
   } finally {
     setIsSubmitting(false);
+    // hide confirmation shortly after navigation or if error occurs
+    setTimeout(() => setShowSavedConfirmation(false), 1000);
   }
 };
   return (
@@ -117,9 +156,35 @@ const submit = async () => {
         />
       </div>
 
-      <button type="submit" disabled={isSubmitting} className="primary-btn">
-        {isSubmitting ? (editingExpense ? "Updating..." : "Adding...") : (editingExpense ? "Update Expense" : "Add Expense")}
+      <button
+        type="submit"
+        disabled={(isSubmitting && isOnline) || (!!editingExpense && isLocked)}
+        className="primary-btn"
+      >
+        {isLocked && editingExpense ? "Past month locked" : isSubmitting ? (editingExpense ? "Updating..." : "Adding...") : (editingExpense ? "Update Expense" : "Add Expense")}
       </button>
+
+      {isLocked && editingExpense && (
+        <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
+          This expense is from a past month and cannot be edited.
+        </div>
+      )}
+
+      <p
+        style={{
+          marginTop: 8,
+          fontSize: 12,
+          color: isOnline ? "#16a34a" : "#d97706",
+        }}
+      >
+        {isOnline ? "✓ Synced" : "Saved locally"}
+      </p>
+
+      {showSavedConfirmation && (
+        <div style={{ marginTop: 8, fontSize: 13, fontWeight: 600 }}>
+          Saved {isOnline ? "— ✓ Synced" : "— Saved locally"}
+        </div>
+      )}
     </form>
   );
 }
