@@ -41,50 +41,61 @@ export default function AnalyticsPage() {
   }, [expenses, selectedMonth]);
   return (
     <>
-      <main className="app-container">
+      <main className="app-container page-enter">
         {/* Month selector */}
         <MonthSelector
           months={months}
           value={selectedMonth}
           onChange={setUserSelectedMonth}
         />
+
+        <div style={{ height: 20 }} />
+
         {/* Summary (smart summary + monthly comparison) */}
         <Collapsible title="Summary" defaultOpen>
-          <SmartSummary expenses={filteredExpenses} />
-          <div style={{ height: 10 }} />
-          <MonthlyComparison expenses={expenses} />
-          <div style={{ height: 10 }} />
-          <WeeklySummary expenses={expenses} month={selectedMonth} />
+          <div className="grid gap-6">
+            <SmartSummary expenses={filteredExpenses} />
+            <div style={{ height: 1, background: 'rgba(0,0,0,0.05)' }} />
+            <MonthlyComparison expenses={expenses} />
+            <div style={{ height: 1, background: 'rgba(0,0,0,0.05)' }} />
+            <WeeklySummary expenses={expenses} month={selectedMonth} />
+          </div>
         </Collapsible>
 
         {/* Category section (pie + bars) */}
         <Collapsible title="Category breakdown" defaultOpen>
-          <div className="card">
-            <CategoryPie data={groupByCategory(filteredExpenses)} />
+          <div className="grid gap-8">
+            <div style={{ minHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CategoryPie data={groupByCategory(filteredExpenses)} />
+            </div>
+            <CategoryBars expenses={filteredExpenses} />
           </div>
-          <div style={{ height: 10 }} />
-          <CategoryBars expenses={filteredExpenses} />
         </Collapsible>
 
         {/* Trends */}
         <Collapsible title="Monthly trends">
-          <div className="card">
-            <MonthlyBar data={groupByMonth(expenses)} />
-          </div>
+          <div className="grid gap-8">
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: '#6b7280' }}>Total Spending</div>
+              <MonthlyBar data={groupByMonth(expenses)} />
+            </div>
 
-          <div style={{ height: 10 }} />
+            <div style={{ height: 1, background: 'rgba(0,0,0,0.05)' }} />
 
-          <div className="card">
-            <TrendLine data={groupByMonth(expenses)} />
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: '#6b7280' }}>Trend Line</div>
+              <TrendLine data={groupByMonth(expenses)} />
+            </div>
           </div>
         </Collapsible>
 
         {/* Daily trend */}
         <Collapsible title="Daily trend">
-          <div className="card">
-            <DailyTrend data={groupByDay(filteredExpenses)} />
-          </div>
+          <DailyTrend data={groupByDay(filteredExpenses)} />
         </Collapsible>
+
+        {/* Spacer for bottom nav */}
+        <div style={{ height: 80 }} />
       </main>
     </>
   );

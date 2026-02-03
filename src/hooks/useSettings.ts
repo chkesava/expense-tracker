@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "./useAuth";
+import { db } from "../firebase";
+import { doc, onSnapshot, setDoc } from "firebase/firestore";
 
 type Settings = {
   lockPastMonths: boolean;
@@ -7,6 +10,7 @@ type Settings = {
   defaultView: "add" | "expenses" | "analytics" | "dashboard";
   exportYear: number;
   monthlyBudget: number;
+  timezone: string;
 };
 
 const DEFAULTS: Settings = {
@@ -16,40 +20,70 @@ const DEFAULTS: Settings = {
   defaultView: "dashboard",
   exportYear: new Date().getFullYear(),
   monthlyBudget: 0,
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 };
 
 export default function useSettings() {
-  const [settings, setSettings] = useState<Settings>(() => {
-    try {
-      const raw = localStorage.getItem("appSettings");
-      return raw ? (JSON.parse(raw) as Settings) : DEFAULTS;
-    } catch {
-      return DEFAULTS;
-    }
-  });
+  const { user } = useAuth();
+  const [settings, setSettings] = useState<Settings>(DEFAULTS);
+  const [loading, setLoading] = useState(true);
 
+  // Load settings from Firestore
   useEffect(() => {
-    try {
-      localStorage.setItem("appSettings", JSON.stringify(settings));
-    } catch (e) {
-      /* ignore */
+    if (!user) {
+      setSettings(DEFAULTS);
+      setLoading(false);
+      return;
     }
-  }, [settings]);
 
-  const setLockPastMonths = (val: boolean) => setSettings((s) => ({ ...s, lockPastMonths: val }));
-  const setCompactListMode = (val: boolean) => setSettings((s) => ({ ...s, compactListMode: val }));
-  const setDefaultCategory = (val: string) => setSettings((s) => ({ ...s, defaultCategory: val }));
-  const setDefaultView = (val: Settings["defaultView"]) => setSettings((s) => ({ ...s, defaultView: val }));
-  const setExportYear = (val: number) => setSettings((s) => ({ ...s, exportYear: val }));
-  const setMonthlyBudget = (val: number) => setSettings((s) => ({ ...s, monthlyBudget: val }));
+    const ref = doc(db, "users", user.uid, "settings", "preferences");
+    const unsub = onSnapshot(ref, (snap) => {
+      if (snap.exists()) {
+        setSettings({ ...DEFAULTS, ...snap.data() } as Settings);
+      } else {
+        // Init defaults if not exists
+        setDoc(ref, DEFAULTS).catch(console.error);
+        setSettings(DEFAULTS);
+      }
+      setLoading(false);
+    });
+
+    return () => unsub();
+  }, [user]);
+
+  // Helper to update specific fields
+  const updateSettings = async (updates: Partial<Settings>) => {
+    if (!user) return;
+
+    // Optimistic update
+    setSettings((prev) => ({ ...prev, ...updates }));
+
+    try {
+      const ref = doc(db, "users", user.uid, "settings", "preferences");
+      await setDoc(ref, updates, { merge: true });
+    } catch (err) {
+      console.error("Failed to save settings", err);
+      // Revert optimization on error? ideally yes, but keeping simple for now
+    }
+  };
+
+  const setLockPastMonths = (val: boolean) => updateSettings({ lockPastMonths: val });
+  const setCompactListMode = (val: boolean) => updateSettings({ compactListMode: val });
+  const setDefaultCategory = (val: string) => updateSettings({ defaultCategory: val });
+  const setDefaultView = (val: Settings["defaultView"]) => updateSettings({ defaultView: val });
+  const setExportYear = (val: number) => updateSettings({ exportYear: val });
+  const setMonthlyBudget = (val: number) => updateSettings({ monthlyBudget: val });
+  const setTimezone = (val: string) => updateSettings({ timezone: val });
 
   return {
     settings,
+    loading,
     setLockPastMonths,
     setCompactListMode,
     setDefaultCategory,
     setDefaultView,
     setExportYear,
     setMonthlyBudget,
+    setTimezone,
   };
 }

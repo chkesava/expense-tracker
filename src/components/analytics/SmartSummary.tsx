@@ -12,9 +12,8 @@ export default function SmartSummary({
 }) {
   if (!expenses.length) {
     return (
-      <div className="card">
-        <strong>Smart Summary</strong>
-        <p style={{ marginTop: 8, fontSize: 13, color: "#6b7280" }}>
+      <div style={{ padding: '0 4px' }}>
+        <p style={{ fontSize: 14, color: "#6b7280" }}>
           No expenses for this month
         </p>
       </div>
@@ -26,10 +25,8 @@ export default function SmartSummary({
   const avgDaily = getAverageDailySpend(expenses);
 
   return (
-    <div className="card">
-      <strong>Smart Summary</strong>
-
-      <div style={{ marginTop: 12, fontSize: 14 }}>
+    <div style={{ color: '#1f2937' }}>
+      <div style={{ fontSize: 15 }}>
         <div>
           📅 <strong>Highest day:</strong>{" "}
           {highestDay
@@ -37,14 +34,14 @@ export default function SmartSummary({
             : "—"}
         </div>
 
-        <div style={{ marginTop: 6 }}>
+        <div style={{ marginTop: 8 }}>
           🏷️ <strong>Top category:</strong>{" "}
           {topCategory
             ? `${topCategory.category} (₹${topCategory.amount})`
             : "—"}
         </div>
 
-        <div style={{ marginTop: 6 }}>
+        <div style={{ marginTop: 8 }}>
           📊 <strong>Avg per day:</strong> ₹{avgDaily}
         </div>
       </div>

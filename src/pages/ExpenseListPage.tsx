@@ -13,6 +13,7 @@ import { exportExpensesToCSV } from "../utils/exportCsv";
 import useSettings from "../hooks/useSettings";
 
 export default function ExpenseListPage() {
+  const { settings } = useSettings();
   const expenses = useExpenses();
 
   const months = useMemo(
@@ -64,15 +65,16 @@ export default function ExpenseListPage() {
     });
   }, [filteredExpenses, debouncedQuery]);
 
-  // group searched expenses by day for sectioned listing
-  const { today, yesterday, earlier } = groupExpensesByDay(searchedExpenses);
+  // group searched expenses by day, respecting user timezone
+  const { today, yesterday, earlier } = useMemo(() => {
+    return groupExpensesByDay(searchedExpenses, settings.timezone);
+  }, [searchedExpenses, settings.timezone]);
 
   const navigate = useNavigate();
   const { user } = useAuth();
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   // user settings (controls whether past months are editable)
-  const { settings } = useSettings();
 
   const doDelete = async (id?: string) => {
     if (!user || !id) return;
@@ -130,7 +132,7 @@ export default function ExpenseListPage() {
     <>
 
 
-      <main className="app-container">
+      <main className="app-container page-enter">
         {/* Month selector */}
         <MonthSelector
           months={months}
@@ -270,7 +272,7 @@ export default function ExpenseListPage() {
                         </div>
                       </div>
                     );
-                  })} 
+                  })}
                 </>
               )}
 
@@ -337,7 +339,7 @@ export default function ExpenseListPage() {
                         </div>
                       </div>
                     );
-                  })} 
+                  })}
                 </>
               )}
 
