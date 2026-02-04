@@ -21,20 +21,20 @@ export default function CategoryBars({ expenses }: { expenses: Expense[] }) {
   const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]);
 
   return (
-    <div className="card">
-      <strong>Category Breakdown</strong>
-
-      <div style={{ marginTop: 12 }}>
+    <div>
+      <div>
         {sorted.map(([category, amount]) => {
           const percent = grandTotal === 0 ? 0 : Math.round((amount / grandTotal) * 100);
 
           return (
-            <div key={category} style={{ marginBottom: 10 }}>
+            <div key={category} style={{ marginBottom: 12 }}>
               <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
                   fontSize: 13,
+                  fontWeight: 500,
+                  marginBottom: 4
                 }}
               >
                 <span>{category}</span>
@@ -43,20 +43,19 @@ export default function CategoryBars({ expenses }: { expenses: Expense[] }) {
 
               <div
                 style={{
-                  height: 8,
-                  background: "#e5e7eb",
-                  borderRadius: 6,
+                  height: 6,
+                  background: "rgba(0,0,0,0.05)",
+                  borderRadius: 99,
                   overflow: "hidden",
-                  marginTop: 4,
                 }}
               >
                 <div
                   style={{
                     width: `${percent}%`,
                     height: "100%",
-                    background: "#2563eb",
-                    borderRadius: 6,
-                    transition: "width 300ms ease",
+                    background: "var(--primary)",
+                    borderRadius: 99,
+                    transition: "width 500ms ease",
                   }}
                 />
               </div>

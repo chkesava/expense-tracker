@@ -22,10 +22,8 @@ export default function WeeklySummary({
   }
 
   return (
-    <div className="card">
-      <strong>Weekly Summary</strong>
-
-      <div style={{ marginTop: 12 }}>
+    <div>
+      <div style={{ marginTop: 4 }}>
         {weeks.map((w) => (
           <div
             key={w.week}
@@ -33,17 +31,19 @@ export default function WeeklySummary({
               display: "flex",
               justifyContent: "space-between",
               fontSize: 14,
-              marginBottom: 6,
+              marginBottom: 8,
+              paddingBottom: 8,
+              borderBottom: "1px solid rgba(0,0,0,0.05)",
               color: w.total === 0 ? "#9ca3af" : "inherit",
             }}
           >
             <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <span>Week {w.week}</span>
               {currentWeek === w.week && (
-                <span style={{ fontSize: 11, color: '#2563eb' }}>(This week)</span>
+                <span style={{ fontSize: 11, color: '#2563eb', fontWeight: 500 }}>(Current)</span>
               )}
             </span>
-            <span>₹{w.total}</span>
+            <span>₹{w.total.toLocaleString()}</span>
           </div>
         ))}
       </div>
@@ -51,18 +51,14 @@ export default function WeeklySummary({
       {currentWeekAvg > 0 && (
         <div
           style={{
-            marginTop: 10,
+            marginTop: 12,
             fontSize: 13,
             color: "#2563eb",
             fontWeight: 600,
+            textAlign: "right"
           }}
         >
-          Daily avg (this week): ₹{currentWeekAvg}
-          {currentWeekDaysSoFar && currentWeekDaysSoFar < 7 && (
-            <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 400, marginLeft: 8 }}>
-              (avg over {currentWeekDaysSoFar} day{currentWeekDaysSoFar > 1 ? 's' : ''})
-            </span>
-          )}
+          Daily avg: ₹{currentWeekAvg}
         </div>
       )}
     </div>

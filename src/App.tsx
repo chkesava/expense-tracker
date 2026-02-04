@@ -10,6 +10,7 @@ import BottomNav from "./components/BottomNav";
 import Header from "./components/Header";
 import SettingsPage from "./pages/Settings";
 import useSettings from "./hooks/useSettings";
+import NotFound from "./pages/NotFound";
 
 export default function App() {
   const { user, login } = useAuth();
@@ -59,6 +60,7 @@ export default function App() {
           {import.meta.env.DEV && (
             <Route path="/seed" element={<SeedDataPage />} />
           )}
+          <Route path="*" element={<NotFound />} />
         </Routes>
 
         <BottomNav />

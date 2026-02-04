@@ -47,8 +47,8 @@ export default function Dashboard() {
     if (!user) return toast.error("Sign in to add expenses");
     setIsAdding(true);
     try {
-      const date = new Date().toISOString().slice(0,10);
-      const month = date.slice(0,7);
+      const date = new Date().toISOString().slice(0, 10);
+      const month = date.slice(0, 7);
       const now = new Date();
       await addDoc(collection(db, "users", user.uid, "expenses"), {
         amount: Number(amount),
@@ -84,7 +84,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="app-container grid gap-4 md:grid-cols-3">
+      <main className="app-container page-enter grid gap-4 md:grid-cols-3">
         {/* LEFT – Quick Add & Month selector */}
         <div className="space-y-4">
           {months.length > 0 && (
@@ -95,7 +95,7 @@ export default function Dashboard() {
             />
           )}
 
-          <section className="card">
+          <section className="card hover-lift">
             <strong>Quick Add</strong>
             <div style={{ marginTop: 10, fontSize: 13, color: '#6b7280' }}>Tap a preset to add quickly</div>
 
@@ -112,7 +112,7 @@ export default function Dashboard() {
             </div>
           </section>
 
-          <section className="card">
+          <section className="card hover-lift">
             <div className="form-label">This month</div>
             <div style={{ fontSize: 20, fontWeight: 700 }}>₹{monthlyComparison.current}</div>
             <div style={{ marginTop: 8, fontSize: 13, color: monthlyComparison.change >= 0 ? '#dc2626' : '#16a34a' }}>
@@ -133,11 +133,11 @@ export default function Dashboard() {
 
         {/* MIDDLE – Top categories */}
         <div className="space-y-4">
-          <section className="card">
+          <section className="card hover-lift">
             <strong>Top categories</strong>
             <div style={{ marginTop: 12 }}>
               {topCategories.length === 0 ? (
-                <p style={{ fontSize: 13, color: '#6b7280' }}>No categories yet</p>
+                <p style={{ fontSize: 13, color: '#6b7280', textAlign: 'center', padding: '20px 0' }}>No categories yet</p>
               ) : (
                 topCategories.map((t) => (
                   <div key={t.category} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -149,7 +149,7 @@ export default function Dashboard() {
             </div>
           </section>
 
-          <section className="card">
+          <section className="card hover-lift">
             <strong>Insight</strong>
             <div style={{ marginTop: 10, fontSize: 13, color: '#6b7280' }}>
               {monthlyComparison.current === 0 ? (
@@ -163,11 +163,11 @@ export default function Dashboard() {
 
         {/* RIGHT – Recent transactions */}
         <div className="space-y-4">
-          <section className="card">
+          <section className="card hover-lift">
             <strong>Recent transactions</strong>
             <div style={{ marginTop: 12 }}>
               {filteredExpenses.slice(0, 5).length === 0 ? (
-                <p style={{ fontSize: 13, color: '#6b7280' }}>No recent expenses</p>
+                <p style={{ fontSize: 13, color: '#6b7280', textAlign: 'center', padding: '20px 0' }}>No recent expenses</p>
               ) : (
                 filteredExpenses.slice(0, 5).map(e => (
                   <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>

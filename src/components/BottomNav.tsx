@@ -1,72 +1,46 @@
 import { NavLink } from "react-router-dom";
 
-function IconAdd({ active }: { active: boolean }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M12 5v14M5 12h14"
-        stroke={active ? "#2563eb" : "#6b7280"}
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
 
-function IconList({ active }: { active: boolean }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
-        stroke={active ? "#2563eb" : "#6b7280"}
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function IconChart({ active }: { active: boolean }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M4 19V5M10 19V10M16 19V3M22 19H2"
-        stroke={active ? "#2563eb" : "#6b7280"}
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
 
 export default function BottomNav() {
   return (
-    <nav className="bottom-nav">
-      <NavLink to="/add" className="nav-item">
-        {({ isActive }) => (
-          <>
-            <IconAdd active={isActive} />
-            <span className="nav-label">Add</span>
-          </>
-        )}
+    <nav className="bottom-nav glass">
+      <NavLink to="/dashboard" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
+        <span style={{ fontSize: 20 }}>🏠</span>
+        <span className="nav-label">Home</span>
       </NavLink>
 
-      <NavLink to="/expenses" className="nav-item">
-        {({ isActive }) => (
-          <>
-            <IconList active={isActive} />
-            <span className="nav-label">List</span>
-          </>
-        )}
+      <NavLink to="/expenses" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
+        <span style={{ fontSize: 20 }}>💸</span>
+        <span className="nav-label">Expenses</span>
       </NavLink>
 
-      <NavLink to="/analytics" className="nav-item">
-        {({ isActive }) => (
-          <>
-            <IconChart active={isActive} />
-            <span className="nav-label">Stats</span>
-          </>
-        )}
+      <NavLink to="/add" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
+        <div style={{
+          width: 48,
+          height: 48,
+          borderRadius: 16,
+          background: "linear-gradient(135deg, hsl(221, 83%, 58%), hsl(221, 83%, 50%))",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "white",
+          fontSize: 26,
+          boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)",
+          marginTop: -24
+        }}>
+          +
+        </div>
+      </NavLink>
+
+      <NavLink to="/analytics" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
+        <span style={{ fontSize: 20 }}>📊</span>
+        <span className="nav-label">Analytics</span>
+      </NavLink>
+
+      <NavLink to="/settings" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
+        <span style={{ fontSize: 20 }}>⚙️</span>
+        <span className="nav-label">Settings</span>
       </NavLink>
     </nav>
   );

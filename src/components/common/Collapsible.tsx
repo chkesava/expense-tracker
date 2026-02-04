@@ -25,23 +25,25 @@ export default function Collapsible({
   }, [open, children]);
 
   return (
-    <div className="collapsible">
+    <div className="glass-card collapsible" style={{ padding: 0, overflow: 'hidden', marginBottom: 16 }}>
       <button
-        className="collapsible-header"
+        className="collapsible-header-btn"
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
       >
-        <div className="collapsible-title">{title}</div>
-        {right && <div className="collapsible-right">{right}</div>}
-        <div className={`chevron ${open ? "open" : ""}`} />
+        <div style={{ fontWeight: 600, fontSize: 16, color: '#1f2937' }}>{title}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {right && <div className="collapsible-right">{right}</div>}
+          <div className={`chevron ${open ? "open" : ""}`} />
+        </div>
       </button>
 
       <div
         className="collapsible-content"
         ref={contentRef}
-        style={{ maxHeight: height }}
+        style={{ maxHeight: height, transition: 'max-height 0.3s ease' }}
       >
-        <div style={{ paddingTop: 12 }}>{children}</div>
+        <div style={{ padding: '0 16px 16px 16px' }}>{children}</div>
       </div>
     </div>
   );
