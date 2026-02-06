@@ -2,7 +2,7 @@ import { useExpenses } from "../hooks/useExpenses";
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { deleteDoc, doc, getDoc, addDoc, collection } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import MonthSelector from "../components/MonthSelector";
 import ConfirmDialog from "../components/common/ConfirmDialog";
@@ -108,7 +108,8 @@ export default function ExpenseListPage() {
             className="px-2 py-1 bg-slate-700 text-white text-xs rounded-md hover:bg-slate-800 transition-colors"
             onClick={async () => {
               try {
-                await addDoc(collection(db, "users", user.uid, "expenses"), data as Record<string, unknown>);
+                // Restore with original ID to preserve consistency
+                await setDoc(doc(db, "users", user.uid, "expenses", id), data);
                 toast.dismiss(toastId);
                 toast.success("Expense restored");
               } catch (err) {
@@ -287,21 +288,19 @@ function ExpenseRow({ expense: e, currentMonth, settings, navigate, setDeleteTar
       <div className="flex items-center gap-4 z-10">
         <div className="text-base font-bold text-slate-900">-₹{e.amount}</div>
 
-        {/* Actions - visible on hover/focus */}
-        <div className={cn("flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity", isLocked && "hidden")}>
+        {/* Actions - visible always */}
+        <div className={cn("flex items-center gap-2", isLocked && "hidden")}>
           <button
-            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+            className="small-btn"
             onClick={(ev) => { ev.stopPropagation(); if (!isLocked) navigate("/add", { state: e }); }}
-            title="Edit"
           >
-            ✏️
+            Edit
           </button>
           <button
-            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+            className="small-btn danger-btn"
             onClick={(ev) => { ev.stopPropagation(); if (!isLocked) setDeleteTarget(e.id ?? null); }}
-            title="Delete"
           >
-            🗑️
+            Delete
           </button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import MonthSelector from "../components/MonthSelector";
+import { getUsageColor, getSmartInsight } from "../utils/insights";
 import { useExpenses } from "../hooks/useExpenses";
 import { useMemo, useState } from "react";
 import { groupByCategory, groupByMonth } from "../utils/analytics";
@@ -112,6 +113,24 @@ export default function Dashboard() {
     return { current, prev, change };
   }, [expenses, selectedMonth]);
 
+  const smartInsight = useMemo(() => {
+    return getSmartInsight(filteredExpenses, settings.monthlyBudget, selectedMonth);
+  }, [filteredExpenses, settings.monthlyBudget, selectedMonth]);
+
+  const budgetUsagePercent = settings.monthlyBudget > 0
+    ? Math.min(100, Math.round((monthlyComparison.current / settings.monthlyBudget) * 100))
+    : 0;
+
+  const budgetColorClass = getUsageColor(budgetUsagePercent).split(' ')[0]; // just bg
+
+  // Dynamic Insight Card Color
+  const insightColors: Record<string, string> = {
+    success: "from-blue-600 to-indigo-700 shadow-blue-500/20",
+    warning: "from-amber-500 to-orange-600 shadow-orange-500/20",
+    danger: "from-red-500 to-rose-600 shadow-red-500/20",
+    neutral: "from-slate-600 to-slate-700 shadow-slate-500/20"
+  };
+
   return (
     <>
       {/* Month Selector Outside Motion Container for Fixed Positioning */}
@@ -213,13 +232,15 @@ export default function Dashboard() {
                     <span className="text-slate-700">₹{settings.monthlyBudget.toLocaleString()}</span>
                   </div>
                   <div className="h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
-                    <div
-                      className={cn("h-full rounded-full transition-all duration-500", monthlyComparison.current > settings.monthlyBudget ? 'bg-red-500' : 'bg-emerald-500')}
-                      style={{ width: `${Math.min(100, Math.round((monthlyComparison.current / settings.monthlyBudget) * 100))}%` }}
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${budgetUsagePercent}%` }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                      className={cn("h-full rounded-full transition-colors duration-500", budgetColorClass)}
                     />
                   </div>
                   <div className="mt-2 text-right text-xs font-bold text-slate-600">
-                    {Math.round((monthlyComparison.current / settings.monthlyBudget) * 100) || 0}% used
+                    {budgetUsagePercent}% used
                   </div>
                 </div>
               )}
@@ -238,30 +259,37 @@ export default function Dashboard() {
                   <p className="text-sm text-slate-400 text-center py-8 italic">No expense data yet</p>
                 ) : (
                   topCategories.map((t, i) => (
-                    <div key={t.category} className="flex items-center justify-between p-3 rounded-xl bg-slate-50/50 border border-slate-100/50">
-                      <div className="flex items-center gap-3">
-                        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white text-xs font-bold text-slate-500 shadow-sm border border-slate-100">
-                          {i + 1}
-                        </span>
-                        <span className="text-sm font-semibold text-slate-700">{t.category}</span>
+                    <div key={t.category} className="group p-3 rounded-xl bg-slate-50/50 border border-slate-100/50 hover:bg-white hover:shadow-sm transition-all">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white text-xs font-bold text-slate-500 shadow-sm border border-slate-100">
+                            {i + 1}
+                          </span>
+                          <span className="text-sm font-semibold text-slate-700">{t.category}</span>
+                        </div>
+                        <div className="text-sm font-bold text-slate-900">₹{t.value.toLocaleString()}</div>
                       </div>
-                      <div className="text-sm font-bold text-slate-900">₹{t.value.toLocaleString()}</div>
+                      {/* Category Usage Bar (Visual Warning support) */}
+                      {settings.monthlyBudget > 0 && (
+                        <div className="h-1.5 w-full bg-slate-200/50 rounded-full overflow-hidden">
+                          <div
+                            className={cn("h-full rounded-full opacity-80", getUsageColor((t.value / settings.monthlyBudget) * 100).split(' ')[0])}
+                            style={{ width: `${Math.min(100, (t.value / settings.monthlyBudget) * 100)}%` }}
+                          />
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
               </div>
             </motion.section>
 
-            <motion.section variants={itemVariants} className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-6 rounded-3xl shadow-lg shadow-blue-500/20">
-              <h3 className="text-sm font-bold opacity-90 uppercase tracking-wider mb-2">💡 Insight</h3>
+            <motion.section variants={itemVariants} className={cn("text-white p-6 rounded-3xl shadow-lg bg-gradient-to-br transition-colors duration-500", insightColors[smartInsight.type])}>
+              <h3 className="text-sm font-bold opacity-90 uppercase tracking-wider mb-2">
+                {smartInsight.type === 'danger' ? '🚨 Warning' : smartInsight.type === 'warning' ? '⚠️ Insight' : '💡 Tip'}
+              </h3>
               <div className="text-sm font-medium leading-relaxed opacity-95">
-                {monthlyComparison.current === 0 ? (
-                  'No spending this month yet — add an expense to get insights.'
-                ) : (
-                  monthlyComparison.change > 0
-                    ? 'Spending is trending up. Check your top categories to see where your money is going.'
-                    : 'Great job! You are spending less compared to last month. Keep it up!'
-                )}
+                {smartInsight.message}
               </div>
             </motion.section>
           </div>
@@ -309,8 +337,8 @@ export default function Dashboard() {
               )}
             </motion.section>
           </div>
-        </div>
-      </motion.div>
+        </div >
+      </motion.div >
     </>
   );
 }

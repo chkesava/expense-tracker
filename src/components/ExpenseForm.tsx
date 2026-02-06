@@ -7,6 +7,7 @@ import { CATEGORIES } from "../types/expense";
 import type { Category, Expense } from "../types/expense";
 import { toast } from 'react-toastify';
 import useSettings from "../hooks/useSettings";
+import { useGamification } from "../hooks/useGamification"; // Import
 import { cn } from "../lib/utils";
 import { motion } from "framer-motion";
 
@@ -14,6 +15,7 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
   const { user } = useAuth();
   const navigate = useNavigate();
   const { settings } = useSettings();
+  const { addXP } = useGamification(); // Destructure
 
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState("");
@@ -76,6 +78,8 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
           createdAt: serverTimestamp(),
         });
         toast.success("Expense added");
+        // Gamification: Award XP for tracking an expense
+        addXP(10);
       }
 
       navigate("/expenses");
