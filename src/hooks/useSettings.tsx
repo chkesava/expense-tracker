@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { useAuth } from "./useAuth";
 import { db } from "../firebase";
 import { doc, onSnapshot, setDoc } from "firebase/firestore";
@@ -23,7 +24,21 @@ const DEFAULTS: Settings = {
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 };
 
-export default function useSettings() {
+type SettingsContextType = {
+  settings: Settings;
+  loading: boolean;
+  setLockPastMonths: (val: boolean) => void;
+  setCompactListMode: (val: boolean) => void;
+  setDefaultCategory: (val: string) => void;
+  setDefaultView: (val: Settings["defaultView"]) => void;
+  setExportYear: (val: number) => void;
+  setMonthlyBudget: (val: number) => void;
+  setTimezone: (val: string) => void;
+};
+
+const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
+
+export function SettingsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
   const [loading, setLoading] = useState(true);
@@ -36,13 +51,15 @@ export default function useSettings() {
       return;
     }
 
-    const ref = doc(db, "users", user.uid, "settings", "preferences");
+    // Changed path to root user document: users/{uid}
+    const ref = doc(db, "users", user.uid);
     const unsub = onSnapshot(ref, (snap) => {
       if (snap.exists()) {
+        // Merge defaults with existing data to ensure new fields are handled
         setSettings({ ...DEFAULTS, ...snap.data() } as Settings);
       } else {
-        // Init defaults if not exists
-        setDoc(ref, DEFAULTS).catch(console.error);
+        // Init defaults if document doesn't exist
+        setDoc(ref, DEFAULTS, { merge: true }).catch(console.error);
         setSettings(DEFAULTS);
       }
       setLoading(false);
@@ -59,11 +76,10 @@ export default function useSettings() {
     setSettings((prev) => ({ ...prev, ...updates }));
 
     try {
-      const ref = doc(db, "users", user.uid, "settings", "preferences");
+      const ref = doc(db, "users", user.uid);
       await setDoc(ref, updates, { merge: true });
     } catch (err) {
       console.error("Failed to save settings", err);
-      // Revert optimization on error? ideally yes, but keeping simple for now
     }
   };
 
@@ -75,15 +91,29 @@ export default function useSettings() {
   const setMonthlyBudget = (val: number) => updateSettings({ monthlyBudget: val });
   const setTimezone = (val: string) => updateSettings({ timezone: val });
 
-  return {
-    settings,
-    loading,
-    setLockPastMonths,
-    setCompactListMode,
-    setDefaultCategory,
-    setDefaultView,
-    setExportYear,
-    setMonthlyBudget,
-    setTimezone,
-  };
+  return (
+    <SettingsContext.Provider
+      value={{
+        settings,
+        loading,
+        setLockPastMonths,
+        setCompactListMode,
+        setDefaultCategory,
+        setDefaultView,
+        setExportYear,
+        setMonthlyBudget,
+        setTimezone,
+      }}
+    >
+      {children}
+    </SettingsContext.Provider>
+  );
+}
+
+export default function useSettings() {
+  const context = useContext(SettingsContext);
+  if (context === undefined) {
+    throw new Error("useSettings must be used within a SettingsProvider");
+  }
+  return context;
 }

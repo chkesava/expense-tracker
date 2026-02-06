@@ -8,9 +8,13 @@ import "./styles/form.css"; // your existing form css
 import { ToastContainer, Slide } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+import { SettingsProvider } from './hooks/useSettings';
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <SettingsProvider>
+      <App />
+    </SettingsProvider>
     <ToastContainer
       position="bottom-right"
       autoClose={3000}
