@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import useOnline from "../hooks/useOnline";
+import Avatar from "./Avatar";
 
 export default function Header() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isOnline } = useOnline();
 
   const [open, setOpen] = useState(false);
@@ -25,137 +27,91 @@ export default function Header() {
     return () => document.removeEventListener("click", onDoc);
   }, []);
 
-  //   return (
-  //     <header className="app-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: '12px 16px' }}>
-  //       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-  //         <div style={{ fontSize: 13, color: isOnline ? "#16a34a" : "#d97706", display: 'flex', alignItems: 'center', gap: 8 }}>
-  //           {isOnline ? (
-  //             <span aria-hidden>🟢</span>
-  //           ) : (
-  //             <span aria-hidden>🟠</span>
-  //           )}
-  //           <span style={{ fontWeight: 600 }}>{isOnline ? "Synced" : "Offline"}</span>
-  //         </div>
-  //       </div>
+  // Close menu on route change
+  useEffect(() => {
+    setOpen(false);
+  }, [location.pathname]);
 
-  //       <div style={{ fontSize: 18, fontWeight: 700, cursor: 'pointer' }} onClick={() => navigate('/expenses')}>
-  //         Expense Tracker
-  //       </div>
-
-  //       <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
-  //         <button
-  //           ref={btnRef}
-  //           onClick={() => setOpen((s) => !s)}
-  //           aria-haspopup="true"
-  //           aria-expanded={open}
-  //           style={{ border: 'none', background: 'transparent', padding: 4, cursor: 'pointer' }}
-  //           title={user?.email ?? undefined}
-  //         >
-  //           <img src={user?.photoURL ?? ''} alt={user?.displayName ?? 'Profile'} style={{ width: 36, height: 36, borderRadius: 999 }} />
-  //         </button>
-
-  //         {open && (
-  //           <div
-  //             ref={popupRef}
-  //             role="dialog"
-  //             aria-label="Profile menu"
-  //             style={{ position: 'absolute', right: 0, top: 44, minWidth: 220, background: 'white', boxShadow: '0 6px 18px rgba(0,0,0,0.08)', borderRadius: 8, padding: 12, zIndex: 40 }}
-  //           >
-  //             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-  //               <img src={user?.photoURL ?? ''} alt="profile" style={{ width: 44, height: 44, borderRadius: 999 }} />
-  //               <div>
-  //                 <div style={{ fontSize: 13, fontWeight: 700 }}>{user?.displayName}</div>
-  //                 <div style={{ fontSize: 12, color: '#6b7280' }}>{user?.email}</div>
-  //               </div>
-  //             </div>
-
-  //             <div style={{ height: 1, background: '#e6e6e6', margin: '8px 0' }} />
-
-  //             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-  //               <button onClick={() => { setOpen(false); navigate('/settings'); }} className="muted-btn">
-  //                 Settings
-  //               </button>
-  //               <button onClick={() => { logout(); }} className="muted-btn danger-btn">
-  //                 Logout
-  //               </button>
-  //             </div>
-
-  //             <div style={{ marginTop: 8, fontSize: 12, color: '#6b7280' }}>
-  //               <div>{isOnline ? '✓ Synced' : 'Offline'}</div>
-  //             </div>
-  //           </div>
-  //         )}
-  //       </div>
-  //     </header>
-  //   );
-  // }
   return (
-    <header className="app-header glass flex flex-row justify-between items-center w-full">
-      {/* LEFT – Online / Offline */}
-      <div className="flex items-center gap-2">
+    <header
+      className="fixed top-0 left-0 w-full z-50 glass flex items-center justify-between px-6 py-3 shadow-sm"
+      style={{
+        background: "rgba(255, 255, 255, 0.8)",
+        backdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(255,255,255,0.4)"
+      }}
+    >
+      {/* LEFT – Status */}
+      <div className="flex items-center gap-2" style={{ flex: 1 }}>
         <div
+          className="transition-opacity hover:opacity-100"
           style={{
             fontSize: 13,
             fontWeight: 600,
-            color: isOnline ? "var(--success)" : "var(--danger)",
+            color: isOnline ? "#059669" : "#dc2626", // emerald-600 : red-600
             display: "flex",
             alignItems: "center",
             gap: 6,
-            background: isOnline ? "rgba(22, 163, 74, 0.1)" : "rgba(217, 119, 6, 0.1)",
+            marginLeft: 16,
+            cursor: "help",
             padding: "4px 8px",
-            borderRadius: "99px",
+            borderRadius: "6px",
+            background: isOnline ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
           }}
+          title={isOnline ? "Connected to database" : "Working offline - changes will sync later"}
         >
-          <span aria-hidden style={{ fontSize: 10 }}>
-            {isOnline ? "●" : "●"}
+          <span className="relative flex h-2.5 w-2.5">
+            {isOnline && (
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            )}
+            <span
+              className="relative inline-flex rounded-full h-2.5 w-2.5"
+              style={{ background: isOnline ? "#10b981" : "#ef4444" }}
+            />
           </span>
-          <span className="hidden sm:inline">{isOnline ? "Synced" : "Offline"}</span>
+          <span style={{ letterSpacing: "0.3px" }}>
+            {isOnline ? "ONLINE" : "OFFLINE"}
+          </span>
         </div>
       </div>
 
       {/* CENTER – Title */}
-      <div
-        className="app-title absolute left-1/2 transform -translate-x-1/2"
+      <button
         onClick={() => navigate("/dashboard")}
+        className="app-title hover:scale-105 transition-transform"
         style={{
+          border: 'none',
+          background: 'transparent',
           cursor: "pointer",
-          background: "linear-gradient(90deg, #1f2937, #4b5563)",
+          fontSize: 18,
+          fontWeight: 800,
+          backgroundClip: "text",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
-          textAlign: "center",
-          width: "max-content",
+          backgroundImage: "linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)",
+          letterSpacing: "-0.5px",
+          flexShrink: 0
         }}
       >
-        Expense Tracker
-      </div>
+        ExpenseTracker
+      </button>
 
       {/* RIGHT – Profile */}
-      <div style={{ position: "relative" }}>
+      <div className="relative" style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
         <button
           ref={btnRef}
           onClick={() => setOpen((s) => !s)}
-          className="profile-btn"
+          className="profile-btn flex items-center justify-center p-0.5 rounded-full transition-transform active:scale-95"
           style={{
-            border: "none",
-            background: "transparent",
-            padding: 0,
-            cursor: "pointer",
-            transition: "transform 0.1s var(--ease-spring)",
+            border: "2px solid rgba(255,255,255,0.8)",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+            background: "white"
           }}
-          onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.95)"}
-          onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
-          onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
         >
-          <img
-            src={user?.photoURL ?? ""}
-            alt={user?.displayName ?? "Profile"}
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 999,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              border: "2px solid white",
-            }}
+          <Avatar
+            src={user?.photoURL}
+            name={user?.displayName || "User"}
+            size={38}
           />
         </button>
 
@@ -166,54 +122,61 @@ export default function Header() {
             style={{
               position: "absolute",
               right: 0,
-              top: 50,
-              minWidth: 240,
-              padding: 16,
-              borderRadius: 16,
-              zIndex: 50,
-              animation: "fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+              top: 54,
+              minWidth: 260,
+              padding: 20,
+              borderRadius: 24,
+              zIndex: 100,
+              animation: "slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
               transformOrigin: "top right",
+              background: "rgba(255, 255, 255, 0.9)",
+              backdropFilter: "blur(24px)",
+              border: "1px solid rgba(255,255,255,0.5)",
+              boxShadow: "0 20px 40px -10px rgba(0,0,0,0.15)"
             }}
           >
             {/* Profile info */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <img
-                src={user?.photoURL ?? ""}
-                alt="profile"
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 999,
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                }}
+            <div className="flex items-center gap-4 mb-4">
+              <Avatar
+                src={user?.photoURL}
+                name={user?.displayName || "User"}
+                size={56}
+                className="shadow-md"
               />
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>
-                  {user?.displayName}
+              <div className="overflow-hidden">
+                <div
+                  className="truncate"
+                  style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}
+                  title={user?.displayName || ""}
+                >
+                  {user?.displayName || "Guest User"}
                 </div>
-                <div style={{ fontSize: 12, color: "#6b7280" }}>
+                <div
+                  className="truncate"
+                  style={{ fontSize: 13, color: "#64748b" }}
+                  title={user?.email || ""}
+                >
                   {user?.email}
                 </div>
               </div>
             </div>
 
-            <div style={{ height: 1, background: "rgba(0,0,0,0.05)", margin: "16px 0" }} />
+            <div style={{ height: 1, background: "rgba(0,0,0,0.06)", margin: "0 -20px 16px -20px" }} />
 
             {/* Actions */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div className="flex flex-col gap-2">
               <button
-                onClick={() => {
-                  setOpen(false);
-                  navigate("/settings");
-                }}
-                className="menu-item"
+                onClick={() => navigate("/settings")}
+                className="menu-item group"
               >
-                ⚙️ Settings
+                <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                  ⚙️
+                </span>
+                <span className="font-medium">Settings</span>
               </button>
 
               <button
                 onClick={async () => {
-                  setOpen(false);
                   try {
                     await logout();
                     navigate('/');
@@ -221,9 +184,12 @@ export default function Header() {
                     console.error(err);
                   }
                 }}
-                className="menu-item danger"
+                className="menu-item danger group"
               >
-                🚪 Logout
+                <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 group-hover:bg-red-100 transition-colors">
+                  🚪
+                </span>
+                <span className="font-medium">Sign Out</span>
               </button>
             </div>
           </div>
@@ -234,24 +200,28 @@ export default function Header() {
         .menu-item {
           width: 100%;
           text-align: left;
-          padding: 10px 12px;
-          border-radius: 10px;
+          padding: 8px;
+          border-radius: 12px;
           border: none;
           background: transparent;
           font-size: 14px;
-          font-weight: 500;
           cursor: pointer;
           transition: all 0.2s;
-          color: #374151;
+          color: #334155;
+          display: flex;
+          align-items: center;
+          gap: 12px;
         }
         .menu-item:hover {
-          background: rgba(0,0,0,0.04);
+          background: rgba(241, 245, 249, 0.8);
+          transform: translateX(4px);
         }
         .menu-item.danger {
-          color: var(--danger);
+          color: #ef4444;
+          margin-top: 4px;
         }
         .menu-item.danger:hover {
-          background: rgba(220, 38, 38, 0.08);
+          background: #fef2f2;
         }
       `}</style>
     </header>
