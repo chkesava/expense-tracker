@@ -2,7 +2,7 @@ import { useExpenses } from "../hooks/useExpenses";
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { deleteDoc, doc, getDoc, addDoc, collection } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import MonthSelector from "../components/MonthSelector";
 import ConfirmDialog from "../components/common/ConfirmDialog";
@@ -11,6 +11,8 @@ import { groupExpensesByDay } from "../utils/dayGrouping";
 import { toast } from 'react-toastify';
 import { exportExpensesToCSV } from "../utils/exportCsv";
 import useSettings from "../hooks/useSettings";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "../lib/utils";
 
 export default function ExpenseListPage() {
   const { settings } = useSettings();
@@ -100,13 +102,14 @@ export default function ExpenseListPage() {
       setDeleteTarget(null);
 
       const toastId = toast(() => (
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className="flex items-center gap-3">
           <div>Expense deleted</div>
           <button
-            className="small-btn muted-btn"
+            className="px-2 py-1 bg-slate-700 text-white text-xs rounded-md hover:bg-slate-800 transition-colors"
             onClick={async () => {
               try {
-                await addDoc(collection(db, "users", user.uid, "expenses"), data as Record<string, unknown>);
+                // Restore with original ID to preserve consistency
+                await setDoc(doc(db, "users", user.uid, "expenses", id), data);
                 toast.dismiss(toastId);
                 toast.success("Expense restored");
               } catch (err) {
@@ -129,300 +132,178 @@ export default function ExpenseListPage() {
   };
 
   return (
-    <>
+    <motion.main
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="max-w-3xl mx-auto pt-24 pb-20 px-4 space-y-6"
+    >
+      <MonthSelector
+        months={months}
+        value={selectedMonth}
+        onChange={setUserSelectedMonth}
+      />
 
+      {/* Monthly summary & Search & Export */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-sm">
+          <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Monthly Summary</h3>
 
-      <main className="app-container page-enter">
-        {/* Month selector */}
-        <MonthSelector
-          months={months}
-          value={selectedMonth}
-          onChange={setUserSelectedMonth}
-        />
-
-        {/* Monthly summary */}
-        <div className="card">
-          <h3 className="form-title">Monthly Summary</h3>
-
-          <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
-            Total Spent: ₹{summary.total}
+          <p className="text-2xl font-extrabold text-slate-900 mb-4">
+            ₹{summary.total.toLocaleString()}
           </p>
 
           {filteredExpenses.length === 0 ? (
-            <p style={{ fontSize: 12, color: "#6b7280" }}>
+            <p className="text-xs text-slate-400">
               No expenses for this month
             </p>
           ) : (
-            Object.entries(summary.byCategory).map(([cat, amt]) => (
-              <div
-                key={cat}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: 13,
-                  marginTop: 6,
-                }}
-              >
-                <span>{cat}</span>
-                <span>₹{amt}</span>
+            <div className="space-y-2">
+              {Object.entries(summary.byCategory).map(([cat, amt]) => (
+                <div key={cat} className="flex justify-between text-sm">
+                  <span className="text-slate-600 font-medium">{cat}</span>
+                  <span className="font-bold text-slate-800">₹{amt.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          <div className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 rounded-3xl shadow-sm">
+            <input
+              type="text"
+              placeholder="Search expenses..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400 font-medium"
+            />
+            {isSearching && (
+              <div className="text-xs text-slate-400 mt-2 ml-1">Searching...</div>
+            )}
+          </div>
+
+          <div className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 rounded-3xl shadow-sm flex items-center justify-between">
+            <span className="text-sm font-semibold text-slate-600 pl-2">Actions</span>
+            <button
+              disabled={!filteredExpenses.length}
+              onClick={() => exportExpensesToCSV(filteredExpenses, `expenses-${selectedMonth}.csv`)}
+              className="px-4 py-2 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 shadow-md shadow-slate-900/10 flex items-center gap-2"
+            >
+              <span>Download CSV</span>
+              <span className="opacity-70">⬇️</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Scrollable expense list (grouped by day) */}
+      <div className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-3xl shadow-sm overflow-hidden min-h-[400px]">
+        {searchedExpenses.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+            <div className="text-4xl mb-2">🔍</div>
+            <p className="text-sm font-medium">No expenses found</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {today.length > 0 && (
+              <div className="p-4 bg-slate-50/50">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 ml-2">Today</h4>
+                <div className="space-y-2">
+                  {today.map((e) => (
+                    <ExpenseRow key={e.id} expense={e} currentMonth={currentMonth} settings={settings} navigate={navigate} setDeleteTarget={setDeleteTarget} />
+                  ))}
+                </div>
               </div>
-            ))
-          )}
+            )}
+
+            {yesterday.length > 0 && (
+              <div className="p-4">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 ml-2">Yesterday</h4>
+                <div className="space-y-2">
+                  {yesterday.map((e) => (
+                    <ExpenseRow key={e.id} expense={e} currentMonth={currentMonth} settings={settings} navigate={navigate} setDeleteTarget={setDeleteTarget} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {earlier.length > 0 && (
+              <div className="p-4 bg-slate-50/30">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 ml-2">Earlier</h4>
+                <div className="space-y-2">
+                  {earlier.map((e) => (
+                    <ExpenseRow key={e.id} expense={e} currentMonth={currentMonth} settings={settings} navigate={navigate} setDeleteTarget={setDeleteTarget} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete expense"
+        message="Do you want to delete this expense? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => doDelete(deleteTarget ?? undefined)}
+      />
+    </motion.main>
+  );
+}
+
+// Extracted ExpenseRow for cleaner code
+function ExpenseRow({ expense: e, currentMonth, settings, navigate, setDeleteTarget }: any) {
+  const isLocked = settings.lockPastMonths && e.month !== currentMonth;
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      className={cn(
+        "group relative flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-100 shadow-sm transition-all hover:shadow-md hover:border-blue-100 cursor-pointer overflow-hidden",
+        isLocked && "opacity-60 grayscale-[0.5] cursor-not-allowed hover:shadow-sm hover:border-slate-100"
+      )}
+      onClick={() => { if (!isLocked) navigate("/add", { state: e }); }}
+      role={!isLocked ? "button" : undefined}
+      tabIndex={!isLocked ? 0 : -1}
+      onKeyDown={(ev) => { if (!isLocked && (ev.key === "Enter" || ev.key === " ")) navigate("/add", { state: e }); }}
+    >
+      <div className="flex flex-col gap-1 z-10">
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-slate-800">{e.category}</span>
+          {isLocked && <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">Locked</span>}
         </div>
 
-        {/* Search */}
-        <div className="card">
-          <input
-            type="text"
-            placeholder="Search expenses..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              borderRadius: 10,
-              border: "1px solid #d1d5db",
-              fontSize: 14,
-            }}
-          />
-          {isSearching && (
-            <div style={{ fontSize: 12, color: "#6b7280", marginTop: 8 }}>Searching...</div>
-          )}
-        </div>
+        {e.note && <span className="text-xs text-slate-500 line-clamp-1">{e.note}</span>}
 
-        {/* Export CSV (current month) */}
-        <div className="card" style={{ display: "flex", gap: 8 }}>
+        <span className="text-[10px] font-semibold text-slate-400">
+          {e.date} {e.time && `• ${e.time}`}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-4 z-10">
+        <div className="text-base font-bold text-slate-900">-₹{e.amount}</div>
+
+        {/* Actions - visible always */}
+        <div className={cn("flex items-center gap-2", isLocked && "hidden")}>
           <button
-            className="primary-btn"
-            disabled={!filteredExpenses.length}
-            onClick={() => exportExpensesToCSV(filteredExpenses, `expenses-${selectedMonth}.csv`)}
+            className="small-btn"
+            onClick={(ev) => { ev.stopPropagation(); if (!isLocked) navigate("/add", { state: e }); }}
           >
-            ⬇️ Export CSV
+            Edit
+          </button>
+          <button
+            className="small-btn danger-btn"
+            onClick={(ev) => { ev.stopPropagation(); if (!isLocked) setDeleteTarget(e.id ?? null); }}
+          >
+            Delete
           </button>
         </div>
-
-        {/* Scrollable expense list (grouped by day) */}
-        <div className="card scroll-card">
-          {searchedExpenses.length === 0 ? (
-            <p style={{ fontSize: 13, color: "#6b7280" }}>
-              No expenses found
-            </p>
-          ) : (
-            <>
-              {today.length > 0 && (
-                <>
-                  <h4 className="list-section-title">Today</h4>
-                  {today.map((e) => {
-                    const isLocked = settings.lockPastMonths && e.month !== currentMonth;
-                    return (
-                      <div
-                        key={e.id}
-                        className="expense-row"
-                        role={!isLocked ? "button" : undefined}
-                        tabIndex={!isLocked ? 0 : -1}
-                        onClick={() => { if (!isLocked) navigate("/add", { state: e }); }}
-                        onKeyDown={(ev) => { if (!isLocked && (ev.key === "Enter" || ev.key === " ")) navigate("/add", { state: e }); }}
-                        aria-disabled={isLocked}
-                      >
-                        <div className="expense-left">
-                          <span className="expense-category">{e.category}</span>
-                          {isLocked && (
-                            <span
-                              title="This expense is locked (past month)"
-                              role="img"
-                              aria-label="Locked expense - past month"
-                              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#9ca3af', marginLeft: 8 }}
-                            >
-                              <span aria-hidden="true">🔒</span>
-                              <span>Locked</span>
-                            </span>
-                          )}
-                          {e.note && <span className="expense-note">{e.note}</span>}
-                          <span className="expense-date">
-                            {e.date}
-                            {e.time && ` • ${e.time}`}
-                          </span>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <button
-                            className="small-btn muted-btn"
-                            onClick={(ev) => { ev.stopPropagation(); if (!isLocked) navigate("/add", { state: e }); }}
-                            disabled={isLocked}
-                            aria-disabled={isLocked}
-                            aria-label={isLocked ? 'Edit (locked)' : 'Edit expense'}
-                            title={isLocked ? 'Cannot edit past-month expense' : 'Edit expense'}
-                            style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? "not-allowed" : "pointer" }}
-                          >
-                            Edit
-                          </button>
-
-                          <div className="expense-amount">₹{e.amount}</div>
-
-                          <button
-                            className="small-btn danger-btn"
-                            onClick={(ev) => { ev.stopPropagation(); if (!isLocked) setDeleteTarget(e.id ?? null); }}
-                            disabled={isLocked}
-                            aria-disabled={isLocked}
-                            aria-label={isLocked ? 'Delete (locked)' : 'Delete expense'}
-                            title={isLocked ? 'Cannot delete past-month expense' : 'Delete expense'}
-                            style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? "not-allowed" : "pointer" }}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </>
-              )}
-
-              {yesterday.length > 0 && (
-                <>
-                  <h4 className="list-section-title">Yesterday</h4>
-                  {yesterday.map((e) => {
-                    const isLocked = settings.lockPastMonths && e.month !== currentMonth;
-                    return (
-                      <div
-                        key={e.id}
-                        className="expense-row"
-                        role={!isLocked ? "button" : undefined}
-                        tabIndex={!isLocked ? 0 : -1}
-                        onClick={() => { if (!isLocked) navigate("/add", { state: e }); }}
-                        onKeyDown={(ev) => { if (!isLocked && (ev.key === "Enter" || ev.key === " ")) navigate("/add", { state: e }); }}
-                        aria-disabled={isLocked}
-                      >
-                        <div className="expense-left">
-                          <span className="expense-category">{e.category}</span>
-                          {isLocked && (
-                            <span
-                              title="This expense is locked (past month)"
-                              role="img"
-                              aria-label="Locked expense - past month"
-                              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#9ca3af', marginLeft: 8 }}
-                            >
-                              <span aria-hidden="true">🔒</span>
-                              <span>Locked</span>
-                            </span>
-                          )}
-                          {e.note && <span className="expense-note">{e.note}</span>}
-                          <span className="expense-date">
-                            {e.date}
-                            {e.time && ` • ${e.time}`}
-                          </span>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <button
-                            className="small-btn muted-btn"
-                            onClick={(ev) => { ev.stopPropagation(); if (!isLocked) navigate("/add", { state: e }); }}
-                            disabled={isLocked}
-                            aria-disabled={isLocked}
-                            aria-label={isLocked ? 'Edit (locked)' : 'Edit expense'}
-                            title={isLocked ? 'Cannot edit past-month expense' : 'Edit expense'}
-                            style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? "not-allowed" : "pointer" }}
-                          >
-                            Edit
-                          </button>
-
-                          <div className="expense-amount">₹{e.amount}</div>
-
-                          <button
-                            className="small-btn danger-btn"
-                            onClick={(ev) => { ev.stopPropagation(); if (!isLocked) setDeleteTarget(e.id ?? null); }}
-                            disabled={isLocked}
-                            aria-disabled={isLocked}
-                            aria-label={isLocked ? 'Delete (locked)' : 'Delete expense'}
-                            title={isLocked ? 'Cannot delete past-month expense' : 'Delete expense'}
-                            style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? "not-allowed" : "pointer" }}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </>
-              )}
-
-              {earlier.length > 0 && (
-                <>
-                  <h4 className="list-section-title">Earlier</h4>
-                  {earlier.map((e) => {
-                    const isLocked = settings.lockPastMonths && e.month !== currentMonth;
-                    return (
-                      <div
-                        key={e.id}
-                        className="expense-row"
-                        role={!isLocked ? "button" : undefined}
-                        tabIndex={!isLocked ? 0 : -1}
-                        onClick={() => { if (!isLocked) navigate("/add", { state: e }); }}
-                        onKeyDown={(ev) => { if (!isLocked && (ev.key === "Enter" || ev.key === " ")) navigate("/add", { state: e }); }}
-                        aria-disabled={isLocked}
-                      >
-                        <div className="expense-left">
-                          <span className="expense-category">{e.category}</span>
-                          {isLocked && (
-                            <span
-                              title="This expense is locked (past month)"
-                              role="img"
-                              aria-label="Locked expense - past month"
-                              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#9ca3af', marginLeft: 8 }}
-                            >
-                              <span aria-hidden="true">🔒</span>
-                              <span>Locked</span>
-                            </span>
-                          )}
-                          {e.note && <span className="expense-note">{e.note}</span>}
-                          <span className="expense-date">
-                            {e.date}
-                            {e.time && ` • ${e.time}`}
-                          </span>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <button
-                            className="small-btn muted-btn"
-                            onClick={(ev) => { ev.stopPropagation(); if (!isLocked) navigate("/add", { state: e }); }}
-                            disabled={isLocked}
-                            aria-disabled={isLocked}
-                            aria-label={isLocked ? 'Edit (locked)' : 'Edit expense'}
-                            title={isLocked ? 'Cannot edit past-month expense' : 'Edit expense'}
-                            style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? "not-allowed" : "pointer" }}
-                          >
-                            Edit
-                          </button>
-
-                          <div className="expense-amount">₹{e.amount}</div>
-
-                          <button
-                            className="small-btn danger-btn"
-                            onClick={(ev) => { ev.stopPropagation(); if (!isLocked) setDeleteTarget(e.id ?? null); }}
-                            disabled={isLocked}
-                            aria-disabled={isLocked}
-                            aria-label={isLocked ? 'Delete (locked)' : 'Delete expense'}
-                            title={isLocked ? 'Cannot delete past-month expense' : 'Delete expense'}
-                            style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? "not-allowed" : "pointer" }}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </>
-              )}
-            </>
-          )}
-        </div>
-
-        <ConfirmDialog
-          open={!!deleteTarget}
-          title="Delete expense"
-          message="Do you want to delete this expense? This action cannot be undone."
-          confirmText="Delete"
-          cancelText="Cancel"
-          onCancel={() => setDeleteTarget(null)}
-          onConfirm={() => doDelete(deleteTarget ?? undefined)}
-        />
-      </main>
-    </>
+      </div>
+    </motion.div>
   );
 }

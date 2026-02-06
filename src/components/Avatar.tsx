@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { cn } from "../lib/utils";
 
 type AvatarProps = {
     src?: string | null;
@@ -21,21 +22,21 @@ export default function Avatar({ src, name, size = 40, className = "" }: AvatarP
     }, [name]);
 
     const bgColor = useMemo(() => {
-        if (!name) return "#cbd5e1"; // slate-300
+        if (!name) return "bg-slate-300";
         const colors = [
-            "#ef4444", // red
-            "#f97316", // orange
-            "#f59e0b", // amber
-            "#84cc16", // lime
-            "#22c55e", // green
-            "#10b981", // emerald
-            "#06b6d4", // cyan
-            "#0ea5e9", // sky
-            "#3b82f6", // blue
-            "#6366f1", // indigo
-            "#8b5cf6", // violet
-            "#d946ef", // fuchsia
-            "#f43f5e", // rose
+            "bg-red-500",
+            "bg-orange-500",
+            "bg-amber-500",
+            "bg-lime-500",
+            "bg-green-500",
+            "bg-emerald-500",
+            "bg-cyan-500",
+            "bg-sky-500",
+            "bg-blue-500",
+            "bg-indigo-500",
+            "bg-violet-500",
+            "bg-fuchsia-500",
+            "bg-rose-500",
         ];
         let hash = 0;
         for (let i = 0; i < name.length; i++) {
@@ -49,7 +50,7 @@ export default function Avatar({ src, name, size = 40, className = "" }: AvatarP
             <img
                 src={src}
                 alt={name ?? "Avatar"}
-                className={`object-cover rounded-full ${className}`}
+                className={cn("object-cover rounded-full", className)}
                 style={{ width: size, height: size }}
                 onError={() => setError(true)}
             />
@@ -58,13 +59,15 @@ export default function Avatar({ src, name, size = 40, className = "" }: AvatarP
 
     return (
         <div
-            className={`flex items-center justify-center rounded-full text-white font-bold ${className}`}
+            className={cn(
+                "flex items-center justify-center rounded-full text-white font-bold select-none",
+                bgColor,
+                className
+            )}
             style={{
                 width: size,
                 height: size,
-                backgroundColor: bgColor,
                 fontSize: size * 0.4,
-                userSelect: "none",
             }}
         >
             {initials}

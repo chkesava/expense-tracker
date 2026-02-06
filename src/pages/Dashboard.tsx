@@ -1,5 +1,5 @@
 import MonthSelector from "../components/MonthSelector";
-import "../styles/form.css";
+import { getUsageColor, getSmartInsight } from "../utils/insights";
 import { useExpenses } from "../hooks/useExpenses";
 import { useMemo, useState } from "react";
 import { groupByCategory, groupByMonth } from "../utils/analytics";
@@ -9,9 +9,38 @@ import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { toast } from "react-toastify";
 import useSettings from "../hooks/useSettings";
+import { motion, type Variants } from "framer-motion";
+import { cn } from "../lib/utils";
+import GamificationCard from "../components/GamificationCard";
+import { Link } from "react-router-dom";
+import { useSubscriptions } from "../hooks/useSubscriptions";
+
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 15
+    }
+  }
+};
 
 export default function Dashboard() {
   const expenses = useExpenses();
+  const { subscriptions } = useSubscriptions();
 
   /* ----------------------------------
    * Months (unique, sorted, latest first)
@@ -38,6 +67,8 @@ export default function Dashboard() {
   }, [expenses, selectedMonth]);
 
 
+  // Load More State
+  const [visibleCount, setVisibleCount] = useState(7);
 
   const { user } = useAuth();
   const { settings } = useSettings();
@@ -82,110 +113,232 @@ export default function Dashboard() {
     return { current, prev, change };
   }, [expenses, selectedMonth]);
 
+  const smartInsight = useMemo(() => {
+    return getSmartInsight(filteredExpenses, settings.monthlyBudget, selectedMonth);
+  }, [filteredExpenses, settings.monthlyBudget, selectedMonth]);
+
+  const budgetUsagePercent = settings.monthlyBudget > 0
+    ? Math.min(100, Math.round((monthlyComparison.current / settings.monthlyBudget) * 100))
+    : 0;
+
+  const budgetColorClass = getUsageColor(budgetUsagePercent).split(' ')[0]; // just bg
+
+  // Dynamic Insight Card Color
+  const insightColors: Record<string, string> = {
+    success: "from-blue-600 to-indigo-700 shadow-blue-500/20",
+    warning: "from-amber-500 to-orange-600 shadow-orange-500/20",
+    danger: "from-red-500 to-rose-600 shadow-red-500/20",
+    neutral: "from-slate-600 to-slate-700 shadow-slate-500/20"
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="app-container page-enter grid gap-4 md:grid-cols-3">
-        {/* LEFT – Quick Add & Month selector */}
-        <div className="space-y-4">
-          {months.length > 0 && (
-            <MonthSelector
-              months={months}
-              value={selectedMonth}
-              onChange={setUserSelectedMonth}
-            />
-          )}
+    <>
+      {/* Month Selector Outside Motion Container for Fixed Positioning */}
+      <MonthSelector
+        months={months}
+        value={selectedMonth}
+        onChange={setUserSelectedMonth}
+      />
 
-          <section className="card hover-lift">
-            <strong>Quick Add</strong>
-            <div style={{ marginTop: 10, fontSize: 13, color: '#6b7280' }}>Tap a preset to add quickly</div>
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="min-h-screen pt-20 md:pt-24 pb-32 px-4 md:px-8 max-w-7xl mx-auto"
+      >
+        <div className="grid gap-6 md:grid-cols-3">
+          {/* LEFT – Quick Add & Month selector */}
+          <div className="space-y-6">
 
-            <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {CATEGORIES.slice(0, 6).map(c => (
-                <button key={c} className="small-btn" onClick={() => quickAddDirect(c, 100)} disabled={isAdding}>{c} • ₹100</button>
-              ))}
-            </div>
+            {/* Gamification Stats */}
+            <motion.div variants={itemVariants}>
+              <GamificationCard />
+            </motion.div>
 
-            <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-              <button className="small-btn" onClick={() => quickAddDirect('Food', 50)} disabled={isAdding}>₹50</button>
-              <button className="small-btn" onClick={() => quickAddDirect('Transport', 100)} disabled={isAdding}>₹100</button>
-              <button className="small-btn" onClick={() => quickAddDirect('Other', 200)} disabled={isAdding}>₹200</button>
-            </div>
-          </section>
-
-          <section className="card hover-lift">
-            <div className="form-label">This month</div>
-            <div style={{ fontSize: 20, fontWeight: 700 }}>₹{monthlyComparison.current}</div>
-            <div style={{ marginTop: 8, fontSize: 13, color: monthlyComparison.change >= 0 ? '#dc2626' : '#16a34a' }}>
-              {monthlyComparison.change === 0 ? 'No change vs last month' : `${monthlyComparison.change > 0 ? '↑' : '↓'} ${Math.abs(monthlyComparison.change)}% vs last month`}
-            </div>
-
-            {settings.monthlyBudget > 0 && (
-              <div style={{ marginTop: 12 }}>
-                <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Budget: ₹{settings.monthlyBudget}</div>
-                <div style={{ height: 10, background: '#e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
-                  <div style={{ width: `${Math.min(100, Math.round((monthlyComparison.current / settings.monthlyBudget) * 100))}%`, height: '100%', background: monthlyComparison.current > settings.monthlyBudget ? '#dc2626' : '#16a34a', transition: 'width 300ms ease' }} />
+            {/* Subscriptions Card */}
+            <Link to="/subscriptions" className="block mb-4">
+              <motion.section
+                variants={itemVariants}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 rounded-3xl shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-xl text-indigo-600 group-hover:scale-110 transition-transform">
+                    📅
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800 text-sm">Subscriptions</h3>
+                    <p className="text-xs text-slate-500 font-medium">
+                      {subscriptions.filter(s => s.isActive).length} active
+                    </p>
+                  </div>
                 </div>
-                <div style={{ marginTop: 6, fontSize: 12 }}>{Math.round((monthlyComparison.current / settings.monthlyBudget) * 100) || 0}% used</div>
+                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+                  ➔
+                </div>
+              </motion.section>
+            </Link>
+
+            <motion.section variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow duration-300">
+              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600">⚡</span>
+                Quick Add
+              </h3>
+              <div className="mt-2 text-xs text-slate-500 font-medium ml-1">Tap a preset to add instantly</div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {CATEGORIES.slice(0, 6).map(c => (
+                  <button
+                    key={c}
+                    className={cn(
+                      "px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 transition-all active:scale-95 disabled:opacity-50",
+                      "hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
+                    )}
+                    onClick={() => quickAddDirect(c, 100)}
+                    disabled={isAdding}
+                  >
+                    {c} • ₹100
+                  </button>
+                ))}
               </div>
-            )}
-          </section>
-        </div>
 
-        {/* MIDDLE – Top categories */}
-        <div className="space-y-4">
-          <section className="card hover-lift">
-            <strong>Top categories</strong>
-            <div style={{ marginTop: 12 }}>
-              {topCategories.length === 0 ? (
-                <p style={{ fontSize: 13, color: '#6b7280', textAlign: 'center', padding: '20px 0' }}>No categories yet</p>
-              ) : (
-                topCategories.map((t) => (
-                  <div key={t.category} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                    <div style={{ fontSize: 13 }}>{t.category}</div>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>₹{t.value}</div>
+              <div className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
+                <button className="flex-1 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 transition-colors" onClick={() => quickAddDirect('Food', 50)} disabled={isAdding}>₹50</button>
+                <button className="flex-1 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 transition-colors" onClick={() => quickAddDirect('Transport', 100)} disabled={isAdding}>₹100</button>
+                <button className="flex-1 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 transition-colors" onClick={() => quickAddDirect('Other', 200)} disabled={isAdding}>₹200</button>
+              </div>
+            </motion.section>
+
+            <motion.section variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow duration-300">
+              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">This Month</h3>
+              <div className="text-4xl font-extrabold text-slate-900 tracking-tight">₹{monthlyComparison.current.toLocaleString()}</div>
+              <div className={cn("mt-2 text-sm font-semibold flex items-center gap-1", monthlyComparison.change >= 0 ? 'text-red-500' : 'text-emerald-600')}>
+                {monthlyComparison.change === 0
+                  ? <span className="text-slate-500">No change vs last month</span>
+                  : (
+                    <>
+                      <span className="p-0.5 rounded-full bg-current/10">{monthlyComparison.change > 0 ? '↑' : '↓'}</span>
+                      {Math.abs(monthlyComparison.change)}% vs last month
+                    </>
+                  )
+                }
+              </div>
+
+              {settings.monthlyBudget > 0 && (
+                <div className="mt-6">
+                  <div className="flex justify-between text-xs font-semibold mb-2">
+                    <span className="text-slate-500">Budget Usage</span>
+                    <span className="text-slate-700">₹{settings.monthlyBudget.toLocaleString()}</span>
                   </div>
-                ))
-              )}
-            </div>
-          </section>
-
-          <section className="card hover-lift">
-            <strong>Insight</strong>
-            <div style={{ marginTop: 10, fontSize: 13, color: '#6b7280' }}>
-              {monthlyComparison.current === 0 ? (
-                'No spending this month yet — add an expense to get insights.'
-              ) : (
-                monthlyComparison.change > 0 ? 'You are spending more than last month — consider reviewing your top categories.' : 'Good job — you are spending less than last month.'
-              )}
-            </div>
-          </section>
-        </div>
-
-        {/* RIGHT – Recent transactions */}
-        <div className="space-y-4">
-          <section className="card hover-lift">
-            <strong>Recent transactions</strong>
-            <div style={{ marginTop: 12 }}>
-              {filteredExpenses.slice(0, 5).length === 0 ? (
-                <p style={{ fontSize: 13, color: '#6b7280', textAlign: 'center', padding: '20px 0' }}>No recent expenses</p>
-              ) : (
-                filteredExpenses.slice(0, 5).map(e => (
-                  <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <div style={{ fontSize: 13 }}>
-                      <div style={{ fontWeight: 600 }}>{e.category}</div>
-                      <div style={{ fontSize: 12, color: '#6b7280' }}>{e.note ?? ''}</div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div>₹{e.amount}</div>
-                      <div style={{ fontSize: 12, color: '#6b7280' }}>{e.date}</div>
-                    </div>
+                  <div className="h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${budgetUsagePercent}%` }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                      className={cn("h-full rounded-full transition-colors duration-500", budgetColorClass)}
+                    />
                   </div>
-                ))
+                  <div className="mt-2 text-right text-xs font-bold text-slate-600">
+                    {budgetUsagePercent}% used
+                  </div>
+                </div>
               )}
-            </div>
-          </section>
-        </div>
-      </main>
-    </div>
+            </motion.section>
+          </div>
+
+          {/* MIDDLE – Top categories */}
+          <div className="space-y-6">
+            <motion.section variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow duration-300">
+              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
+                <span className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">📊</span>
+                Top Categories
+              </h3>
+              <div className="space-y-3">
+                {topCategories.length === 0 ? (
+                  <p className="text-sm text-slate-400 text-center py-8 italic">No expense data yet</p>
+                ) : (
+                  topCategories.map((t, i) => (
+                    <div key={t.category} className="group p-3 rounded-xl bg-slate-50/50 border border-slate-100/50 hover:bg-white hover:shadow-sm transition-all">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white text-xs font-bold text-slate-500 shadow-sm border border-slate-100">
+                            {i + 1}
+                          </span>
+                          <span className="text-sm font-semibold text-slate-700">{t.category}</span>
+                        </div>
+                        <div className="text-sm font-bold text-slate-900">₹{t.value.toLocaleString()}</div>
+                      </div>
+                      {/* Category Usage Bar (Visual Warning support) */}
+                      {settings.monthlyBudget > 0 && (
+                        <div className="h-1.5 w-full bg-slate-200/50 rounded-full overflow-hidden">
+                          <div
+                            className={cn("h-full rounded-full opacity-80", getUsageColor((t.value / settings.monthlyBudget) * 100).split(' ')[0])}
+                            style={{ width: `${Math.min(100, (t.value / settings.monthlyBudget) * 100)}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.section>
+
+            <motion.section variants={itemVariants} className={cn("text-white p-6 rounded-3xl shadow-lg bg-gradient-to-br transition-colors duration-500", insightColors[smartInsight.type])}>
+              <h3 className="text-sm font-bold opacity-90 uppercase tracking-wider mb-2">
+                {smartInsight.type === 'danger' ? '🚨 Warning' : smartInsight.type === 'warning' ? '⚠️ Insight' : '💡 Tip'}
+              </h3>
+              <div className="text-sm font-medium leading-relaxed opacity-95">
+                {smartInsight.message}
+              </div>
+            </motion.section>
+          </div>
+
+          {/* RIGHT – Recent transactions */}
+          <div className="space-y-6">
+            <motion.section variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow duration-300 h-full">
+              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
+                <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">🕒</span>
+                Recent
+              </h3>
+              <div className="space-y-0.5">
+                {filteredExpenses.slice(0, visibleCount).length === 0 ? (
+                  <p className="text-sm text-slate-400 text-center py-10 italic">No recent transactions</p>
+                ) : (
+                  filteredExpenses.slice(0, visibleCount).map((e, i) => (
+                    <div key={e.id} className="group flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors cursor-default">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-lg shadow-sm group-hover:scale-110 transition-transform">
+                          {/* Simple category icon based on first letter or map */}
+                          {e.category[0]}
+                        </div>
+                        <div>
+                          <div className="text-sm font-bold text-slate-800">{e.category}</div>
+                          <div className="text-xs text-slate-500 font-medium">{e.note || e.time || 'No note'}</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-bold text-slate-900">-₹{e.amount.toLocaleString()}</div>
+                        <div className="text-[10px] text-slate-400 font-semibold">{e.date}</div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+              {filteredExpenses.length > visibleCount && (
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={() => setVisibleCount(prev => prev + 5)}
+                    className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer p-2"
+                  >
+                    View More ({filteredExpenses.length - visibleCount} remaining)
+                  </button>
+                </div>
+              )}
+            </motion.section>
+          </div>
+        </div >
+      </motion.div >
+    </>
   );
 }

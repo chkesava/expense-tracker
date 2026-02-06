@@ -105,7 +105,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setTimezone,
       }}
     >
-      {children}
+      {!loading && children}
     </SettingsContext.Provider>
   );
 }
