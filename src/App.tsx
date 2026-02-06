@@ -1,6 +1,9 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "./hooks/useAuth";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useEffect } from "react";
 
 import AddExpense from "./pages/AddExpense";
 import ExpenseListPage from "./pages/ExpenseListPage";
@@ -10,13 +13,21 @@ import SeedDataPage from "./pages/SeedData";
 import BottomNav from "./components/BottomNav";
 import Header from "./components/Header";
 import SettingsPage from "./pages/Settings";
-import useSettings from "./hooks/useSettings";
+import SubscriptionsPage from "./pages/SubscriptionsPage";
+import useSettings, { SettingsProvider } from "./hooks/useSettings";
 import NotFound from "./pages/NotFound";
-import { cn } from "./lib/utils";
+import { useSubscriptions } from "./hooks/useSubscriptions";
 
-export default function App() {
+function AppContent() {
+  const location = useLocation();
   const { user, login } = useAuth();
   const { settings } = useSettings();
+  const { processSubscriptions } = useSubscriptions();
+
+  // Auto-process subscriptions on app load (when this component mounts)
+  useEffect(() => {
+    processSubscriptions();
+  }, [processSubscriptions]);
 
   // -------- LOGIN SCREEN --------
   if (!user) {
@@ -68,24 +79,24 @@ export default function App() {
   }
 
   // -------- APP ROUTES --------
-
   return (
-    <BrowserRouter>
+    <>
       {/* Global animated background */}
       <div className="fixed inset-0 z-[-1] bg-gradient-to-br from-slate-50 to-blue-50/50 pointer-events-none" />
 
       <div className="min-h-screen flex flex-col font-sans text-slate-900">
         <Header />
 
-        <div className="flex-1 w-full">
+        <div className="flex-1 w-full pb-24 md:pb-0">
           <AnimatePresence mode="wait">
-            <Routes>
-              <Route path="/" element={<Navigate to={`/${settings.defaultView}`} replace />} />
+            <Routes location={location} key={location.pathname}>
+              <Route path="/" element={<Navigate to={`/${settings.defaultView || 'dashboard'}`} replace />} />
               <Route path="/add" element={<AddExpense />} />
               <Route path="/expenses" element={<ExpenseListPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/subscriptions" element={<SubscriptionsPage />} />
               {import.meta.env.DEV && (
                 <Route path="/seed" element={<SeedDataPage />} />
               )}
@@ -96,6 +107,19 @@ export default function App() {
 
         <BottomNav />
       </div>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <SettingsProvider>
+          <AppContent />
+        </SettingsProvider>
+      </AuthProvider>
+      <ToastContainer position="top-center" theme="light" autoClose={2000} hideProgressBar newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
     </BrowserRouter>
   );
 }

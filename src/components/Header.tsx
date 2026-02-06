@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../hooks/useAuth";
 import useOnline from "../hooks/useOnline";
+import { useGamification } from "../hooks/useGamification";
 import Avatar from "./Avatar";
 import { cn } from "../lib/utils";
 
@@ -11,6 +12,7 @@ export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isOnline } = useOnline();
+  const { stats } = useGamification();
 
   const [open, setOpen] = useState(false);
   const popupRef = useRef<HTMLDivElement | null>(null);
@@ -45,7 +47,8 @@ export default function Header() {
       )}
     >
       {/* LEFT – Status */}
-      <div className="flex-1 flex items-center gap-2">
+      {/* LEFT – Status & Logo */}
+      <div className="flex-1 flex items-center gap-3">
         <div
           className={cn(
             "flex items-center gap-2 px-2.5 py-1 rounded-full text-[13px] font-medium transition-all duration-300 cursor-help",
@@ -73,17 +76,66 @@ export default function Header() {
       </div>
 
       {/* CENTER – Title */}
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => navigate("/dashboard")}
-        className="text-xl font-bold bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent cursor-pointer tracking-tight"
-      >
-        ExpenseTracker
-      </motion.button>
+      <div className="flex-1 flex items-center gap-2">
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => navigate("/dashboard")}
+          className="text-xl font-bold bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent cursor-pointer tracking-tight"
+        >
+          ExpenseTracker
+        </motion.button>
+      </div>
 
-      {/* RIGHT – Profile */}
-      <div className="flex-1 flex justify-end relative">
+      {/* CENTER - Desktop Nav */}
+      <nav className="hidden md:flex items-center gap-1 bg-slate-100/50 p-1 rounded-full border border-slate-200/60 backdrop-blur-md">
+        {[
+          { path: "/dashboard", label: "Home", icon: "🏠" },
+          { path: "/expenses", label: "Expenses", icon: "💸" },
+          { path: "/analytics", label: "Analytics", icon: "📊" },
+        ].map((link) => {
+          const isActive = location.pathname === link.path;
+          return (
+            <motion.button
+              key={link.path}
+              onClick={() => navigate(link.path)}
+              className={cn(
+                "relative px-4 py-1.5 rounded-full text-sm font-semibold transition-colors duration-200 flex items-center gap-2",
+                isActive ? "text-blue-600" : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="header-nav-pill"
+                  className="absolute inset-0 bg-white shadow-sm rounded-full border border-slate-100"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+              <span className="relative z-10">{link.icon}</span>
+              <span className="relative z-10">{link.label}</span>
+            </motion.button>
+          );
+        })}
+      </nav>
+
+      {/* RIGHT – Profile & Actions */}
+      <div className="flex-1 flex justify-end items-center gap-3 relative">
+        {/* Desktop Add Button */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => navigate("/add")}
+          className="hidden md:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full font-bold text-sm shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-shadow"
+        >
+          <span>＋</span>
+          <span>Add</span>
+        </motion.button>
+        {stats.currentStreak > 0 && (
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-100/50 rounded-full text-xs font-bold text-orange-600 shadow-sm" title="Current Login Streak">
+            <span className="text-sm">🔥</span>
+            <span>{stats.currentStreak}</span>
+          </div>
+        )}
         <motion.button
           ref={btnRef}
           whileHover={{ scale: 1.05 }}

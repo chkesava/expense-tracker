@@ -136,7 +136,6 @@ export default function ExpenseListPage() {
       animate={{ opacity: 1 }}
       className="max-w-3xl mx-auto pt-24 pb-20 px-4 space-y-6"
     >
-      {/* Month selector */}
       <MonthSelector
         months={months}
         value={selectedMonth}
