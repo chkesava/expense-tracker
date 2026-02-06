@@ -7,6 +7,7 @@ import { exportExpensesToCSV } from "../utils/exportCsv";
 import { deleteDoc, collection, getDocs, doc } from "firebase/firestore";
 import { db } from "../firebase";
 import { toast } from "react-toastify";
+import Avatar from "../components/Avatar";
 
 const TIMEZONES = [
   "UTC",
@@ -58,14 +59,14 @@ export default function SettingsPage() {
     <main className="app-container page-enter">
       {/* Profile Section */}
       <div className="card hover-lift" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <img
-          src={user?.photoURL ?? ''}
-          alt="profile"
-          style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '3px solid white', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}
-          onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="100%" height="100%" fill="%23e5e7eb"/><text x="50%" y="50%" fill="%239ca3af" font-size="14" font-family="sans-serif" text-anchor="middle" dy=".35em">User</text></svg>'; }}
+        <Avatar
+          src={user?.photoURL}
+          name={user?.displayName || "User"}
+          size={64}
+          className="shadow-sm border-2 border-white"
         />
         <div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#111827' }}>{user?.displayName}</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#111827' }}>{user?.displayName || "Guest User"}</div>
           <div style={{ fontSize: 14, color: '#6b7280' }}>{user?.email}</div>
         </div>
       </div>
