@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../hooks/useAuth";
 import useOnline from "../hooks/useOnline";
 import Avatar from "./Avatar";
+import { cn } from "../lib/utils";
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -33,197 +35,130 @@ export default function Header() {
   }, [location.pathname]);
 
   return (
-    <header
-      className="fixed top-0 left-0 w-full z-50 glass flex items-center justify-between px-6 py-3 shadow-sm"
-      style={{
-        background: "rgba(255, 255, 255, 0.8)",
-        backdropFilter: "blur(20px)",
-        borderBottom: "1px solid rgba(255,255,255,0.4)"
-      }}
+    <motion.header
+      initial={{ y: -100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      className={cn(
+        "fixed top-0 left-0 w-full z-50 px-6 py-3 flex items-center justify-between",
+        "bg-white/70 backdrop-blur-xl border-b border-white/50 shadow-sm transition-all duration-300"
+      )}
     >
       {/* LEFT – Status */}
-      <div className="flex items-center gap-2" style={{ flex: 1 }}>
+      <div className="flex-1 flex items-center gap-2">
         <div
-          className="transition-opacity hover:opacity-100"
-          style={{
-            fontSize: 13,
-            fontWeight: 600,
-            color: isOnline ? "#059669" : "#dc2626", // emerald-600 : red-600
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            marginLeft: 16,
-            cursor: "help",
-            padding: "4px 8px",
-            borderRadius: "6px",
-            background: isOnline ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
-          }}
+          className={cn(
+            "flex items-center gap-2 px-2.5 py-1 rounded-full text-[13px] font-medium transition-all duration-300 cursor-help",
+            isOnline
+              ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"
+              : "bg-red-500/10 text-red-600 hover:bg-red-500/20"
+          )}
           title={isOnline ? "Connected to database" : "Working offline - changes will sync later"}
         >
-          <span className="relative flex h-2.5 w-2.5">
+          <span className="relative flex h-2 w-2">
             {isOnline && (
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
             )}
             <span
-              className="relative inline-flex rounded-full h-2.5 w-2.5"
-              style={{ background: isOnline ? "#10b981" : "#ef4444" }}
+              className={cn(
+                "relative inline-flex rounded-full h-2 w-2",
+                isOnline ? "bg-emerald-500" : "bg-red-500"
+              )}
             />
           </span>
-          <span style={{ letterSpacing: "0.3px" }}>
+          <span className="tracking-wide">
             {isOnline ? "ONLINE" : "OFFLINE"}
           </span>
         </div>
       </div>
 
       {/* CENTER – Title */}
-      <button
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
         onClick={() => navigate("/dashboard")}
-        className="app-title hover:scale-105 transition-transform"
-        style={{
-          border: 'none',
-          background: 'transparent',
-          cursor: "pointer",
-          fontSize: 18,
-          fontWeight: 800,
-          backgroundClip: "text",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          backgroundImage: "linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)",
-          letterSpacing: "-0.5px",
-          flexShrink: 0
-        }}
+        className="text-xl font-bold bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent cursor-pointer tracking-tight"
       >
         ExpenseTracker
-      </button>
+      </motion.button>
 
       {/* RIGHT – Profile */}
-      <div className="relative" style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
-        <button
+      <div className="flex-1 flex justify-end relative">
+        <motion.button
           ref={btnRef}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => setOpen((s) => !s)}
-          className="profile-btn flex items-center justify-center p-0.5 rounded-full transition-transform active:scale-95"
-          style={{
-            border: "2px solid rgba(255,255,255,0.8)",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-            background: "white"
-          }}
+          className="rounded-full p-0.5 border-2 border-white/80 shadow-sm bg-white hover:shadow-md transition-shadow"
         >
           <Avatar
             src={user?.photoURL}
             name={user?.displayName || "User"}
             size={38}
           />
-        </button>
+        </motion.button>
 
-        {open && (
-          <div
-            ref={popupRef}
-            className="glass-card"
-            style={{
-              position: "absolute",
-              right: 0,
-              top: 54,
-              minWidth: 260,
-              padding: 20,
-              borderRadius: 24,
-              zIndex: 100,
-              animation: "slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-              transformOrigin: "top right",
-              background: "rgba(255, 255, 255, 0.9)",
-              backdropFilter: "blur(24px)",
-              border: "1px solid rgba(255,255,255,0.5)",
-              boxShadow: "0 20px 40px -10px rgba(0,0,0,0.15)"
-            }}
-          >
-            {/* Profile info */}
-            <div className="flex items-center gap-4 mb-4">
-              <Avatar
-                src={user?.photoURL}
-                name={user?.displayName || "User"}
-                size={56}
-                className="shadow-md"
-              />
-              <div className="overflow-hidden">
-                <div
-                  className="truncate"
-                  style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}
-                  title={user?.displayName || ""}
-                >
-                  {user?.displayName || "Guest User"}
-                </div>
-                <div
-                  className="truncate"
-                  style={{ fontSize: 13, color: "#64748b" }}
-                  title={user?.email || ""}
-                >
-                  {user?.email}
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              ref={popupRef}
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="absolute right-0 top-14 w-64 p-2 bg-white/80 backdrop-blur-2xl border border-white/60 rounded-2xl shadow-xl overflow-hidden z-[60]"
+            >
+              <div className="p-3 mb-2 flex items-center gap-3">
+                <Avatar
+                  src={user?.photoURL}
+                  name={user?.displayName || "User"}
+                  size={48}
+                  className="shadow-sm"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-slate-800 truncate text-[15px]">
+                    {user?.displayName || "Guest User"}
+                  </div>
+                  <div className="text-xs text-slate-500 truncate">
+                    {user?.email}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div style={{ height: 1, background: "rgba(0,0,0,0.06)", margin: "0 -20px 16px -20px" }} />
+              <div className="h-px bg-slate-200/50 mx-2 mb-2" />
 
-            {/* Actions */}
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={() => navigate("/settings")}
-                className="menu-item group"
-              >
-                <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                  ⚙️
-                </span>
-                <span className="font-medium">Settings</span>
-              </button>
+              <div className="space-y-1">
+                <button
+                  onClick={() => navigate("/settings")}
+                  className="w-full flex items-center gap-3 p-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100/80 hover:text-blue-600 transition-colors"
+                >
+                  <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+                    ⚙️
+                  </span>
+                  Settings
+                </button>
 
-              <button
-                onClick={async () => {
-                  try {
-                    await logout();
-                    navigate('/');
-                  } catch (err) {
-                    console.error(err);
-                  }
-                }}
-                className="menu-item danger group"
-              >
-                <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 group-hover:bg-red-100 transition-colors">
-                  🚪
-                </span>
-                <span className="font-medium">Sign Out</span>
-              </button>
-            </div>
-          </div>
-        )}
+                <button
+                  onClick={async () => {
+                    try {
+                      await logout();
+                      navigate('/');
+                    } catch (err) {
+                      console.error(err);
+                    }
+                  }}
+                  className="w-full flex items-center gap-3 p-2 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
+                >
+                  <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500">
+                    🚪
+                  </span>
+                  Sign Out
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-
-      <style>{`
-        .menu-item {
-          width: 100%;
-          text-align: left;
-          padding: 8px;
-          border-radius: 12px;
-          border: none;
-          background: transparent;
-          font-size: 14px;
-          cursor: pointer;
-          transition: all 0.2s;
-          color: #334155;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-        .menu-item:hover {
-          background: rgba(241, 245, 249, 0.8);
-          transform: translateX(4px);
-        }
-        .menu-item.danger {
-          color: #ef4444;
-          margin-top: 4px;
-        }
-        .menu-item.danger:hover {
-          background: #fef2f2;
-        }
-      `}</style>
-    </header>
+    </motion.header>
   );
 }
