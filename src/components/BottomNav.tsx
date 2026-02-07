@@ -1,9 +1,14 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "../lib/utils";
 import { motion } from "framer-motion";
+import { useUserRole } from "../hooks/useUserRole";
 
 export default function BottomNav() {
   const location = useLocation();
+
+
+
+  const { isAdmin } = useUserRole();
 
   const links = [
     { path: "/dashboard", label: "Home", icon: "🏠" },
@@ -11,6 +16,7 @@ export default function BottomNav() {
     { path: "/add", label: "Add", icon: "➕" },
     { path: "/analytics", label: "Analytics", icon: "📊" },
     { path: "/settings", label: "Settings", icon: "⚙️" },
+    ...(isAdmin ? [{ path: "/admin", label: "Admin", icon: "🛡️" }] : []),
   ];
 
   return (

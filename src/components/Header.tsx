@@ -7,12 +7,15 @@ import { useGamification } from "../hooks/useGamification";
 import Avatar from "./Avatar";
 import { cn } from "../lib/utils";
 
+import { useUserRole } from "../hooks/useUserRole";
+
 export default function Header() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { isOnline } = useOnline();
   const { stats } = useGamification();
+  const { isAdmin } = useUserRole();
 
   const [open, setOpen] = useState(false);
   const popupRef = useRef<HTMLDivElement | null>(null);
@@ -93,6 +96,7 @@ export default function Header() {
           { path: "/dashboard", label: "Home", icon: "🏠" },
           { path: "/expenses", label: "Expenses", icon: "💸" },
           { path: "/analytics", label: "Analytics", icon: "📊" },
+          ...(isAdmin ? [{ path: "/admin", label: "Admin", icon: "🛡️" }] : []),
         ].map((link) => {
           const isActive = location.pathname === link.path;
           return (
