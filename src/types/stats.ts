@@ -9,6 +9,8 @@ export interface UserStats {
     // New fields for Shields vs Fire
     shields: number; // Current no-spend streak
     fires: number;   // Current spend streak
+    focusStreak: number; // Days of successful focus mode
+    focusWins: number;   // Total successful focus days
     monthlyRecords: {
         [key: string]: { // "YYYY-MM"
             maxShields: number;

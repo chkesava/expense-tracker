@@ -30,6 +30,13 @@ export default function GamificationCard() {
             transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
             className="relative overflow-hidden rounded-[2rem] p-1 mb-6"
         >
+            <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="absolute top-0 right-4 z-50 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-b-lg shadow-lg shadow-pink-500/40 animate-pulse"
+            >
+                NEW
+            </motion.div>
             {/* Animated Border Gradient */}
             <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/0 to-white/40 opacity-50 pointer-events-none" />
 

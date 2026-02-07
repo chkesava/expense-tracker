@@ -12,6 +12,12 @@ type Settings = {
   exportYear: number;
   monthlyBudget: number;
   timezone: string;
+  dashboardWidgets: {
+    subscriptions: boolean;
+    focus: boolean;
+    gamification: boolean;
+    topCategories: boolean;
+  };
 };
 
 const DEFAULTS: Settings = {
@@ -22,6 +28,12 @@ const DEFAULTS: Settings = {
   exportYear: new Date().getFullYear(),
   monthlyBudget: 0,
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  dashboardWidgets: {
+    subscriptions: true,
+    focus: true,
+    gamification: true,
+    topCategories: true,
+  },
 };
 
 type SettingsContextType = {
@@ -34,6 +46,7 @@ type SettingsContextType = {
   setExportYear: (val: number) => void;
   setMonthlyBudget: (val: number) => void;
   setTimezone: (val: string) => void;
+  toggleDashboardWidget: (key: keyof Settings["dashboardWidgets"]) => void;
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -56,7 +69,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     const unsub = onSnapshot(ref, (snap) => {
       if (snap.exists()) {
         // Merge defaults with existing data to ensure new fields are handled
-        setSettings({ ...DEFAULTS, ...snap.data() } as Settings);
+        const data = snap.data();
+        setSettings({
+          ...DEFAULTS,
+          ...data,
+          dashboardWidgets: {
+            ...DEFAULTS.dashboardWidgets,
+            ...(data.dashboardWidgets || {}),
+          },
+        } as Settings);
       } else {
         // Init defaults if document doesn't exist
         setDoc(ref, DEFAULTS, { merge: true }).catch(console.error);
@@ -91,6 +112,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const setMonthlyBudget = (val: number) => updateSettings({ monthlyBudget: val });
   const setTimezone = (val: string) => updateSettings({ timezone: val });
 
+  const toggleDashboardWidget = (key: keyof Settings["dashboardWidgets"]) => {
+    const newWidgets = { ...settings.dashboardWidgets, [key]: !settings.dashboardWidgets[key] };
+    updateSettings({ dashboardWidgets: newWidgets });
+  };
+
   return (
     <SettingsContext.Provider
       value={{
@@ -103,6 +129,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setExportYear,
         setMonthlyBudget,
         setTimezone,
+        toggleDashboardWidget,
       }}
     >
       {!loading && children}
