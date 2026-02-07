@@ -49,7 +49,7 @@ const itemVariants: Variants = {
 };
 
 export default function SettingsPage() {
-  const { settings, setLockPastMonths, setDefaultCategory, setDefaultView, setExportYear, setMonthlyBudget, setTimezone } = useSettings();
+  const { settings, setLockPastMonths, setDefaultCategory, setDefaultView, setExportYear, setMonthlyBudget, setTimezone, toggleDashboardWidget } = useSettings();
   const { user } = useAuth();
   const expenses = useExpenses();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -196,6 +196,38 @@ export default function SettingsPage() {
                 placeholder="0 to disable"
               />
             </div>
+          </div>
+        </motion.div>
+
+        {/* Dashboard Customization Section */}
+        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
+          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">📊</span>
+            Dashboard Widgets
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[
+              { id: 'subscriptions', label: 'Subscriptions', desc: 'Track recurring payments' },
+              { id: 'focus', label: 'Focus Mode', desc: 'Goals & daily limits' },
+              { id: 'gamification', label: 'Gamification', desc: 'Level, XP & stats' },
+              { id: 'topCategories', label: 'Top Categories', desc: 'Ranking by spend' },
+            ].map((widget) => (
+              <div key={widget.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50/50 border border-slate-100/50">
+                <div>
+                  <div className="text-[14px] font-semibold text-slate-800">{widget.label}</div>
+                  <div className="text-[10px] text-slate-500 font-medium">{widget.desc}</div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.dashboardWidgets?.[widget.id as keyof typeof settings.dashboardWidgets] ?? true}
+                    onChange={() => toggleDashboardWidget(widget.id as any)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+            ))}
           </div>
         </motion.div>
 

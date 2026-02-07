@@ -15,6 +15,8 @@ const DEFAULT_STATS: UserStats = {
     badges: [],
     shields: 0,
     fires: 0,
+    focusStreak: 0,
+    focusWins: 0,
     monthlyRecords: {}
 };
 
@@ -127,7 +129,48 @@ export function useGamification() {
 
                 let newShields = currentStats.shields;
                 let newFires = currentStats.fires;
+                let newFocusStreak = currentStats.focusStreak || 0;
+                let newFocusWins = currentStats.focusWins || 0;
                 let xpToAdd = 0;
+
+                // --- FOCUS MODE CHECK (YESTERDAY) ---
+                const focusRef = doc(db, 'users', user.uid, 'focus', 'active');
+                const focusSnap = await getDoc(focusRef);
+
+                if (focusSnap.exists()) {
+                    const focusData = focusSnap.data();
+                    if (focusData.status === 'active') {
+                        // Check if Yesterday was within the focus period
+                        const focusStart = new Date(focusData.startDate);
+                        const focusEnd = new Date(focusData.endDate);
+                        const yDate = new Date(yesterdayStr);
+
+                        // Simple check: is yesterday >= start AND yesterday <= end? (Ignoring time for simplicity)
+                        // We compare YYYY-MM-DD strings to be safe
+                        if (yesterdayStr >= focusData.startDate.split('T')[0] && yesterdayStr <= focusData.endDate.split('T')[0]) {
+
+                            // Calculate yesterday's spend for this category
+                            const focusQ = query(
+                                expensesRef,
+                                where("date", "==", yesterdayStr),
+                                where("category", "==", focusData.category)
+                            );
+                            const focusExpenses = await getDocs(focusQ);
+                            let dailyFocusSpend = 0;
+                            focusExpenses.forEach(d => dailyFocusSpend += Number(d.data().amount));
+
+                            if (dailyFocusSpend <= focusData.dailyLimit) {
+                                newFocusStreak += 1;
+                                newFocusWins += 1;
+                                xpToAdd += 50; // Bonus for keeping focus!
+                                console.log("🎯 Focus Goal Met!", dailyFocusSpend, "/", focusData.dailyLimit);
+                            } else {
+                                newFocusStreak = 0;
+                                console.log("❌ Focus Goal Failed", dailyFocusSpend);
+                            }
+                        }
+                    }
+                }
 
                 if (lastDate === yesterdayStr) {
                     // Consecutive login, process streaks based on YESTERDAY's activity
@@ -190,6 +233,8 @@ export function useGamification() {
                     fires: newFires,
                     points: newPoints,
                     level: newLevel,
+                    focusStreak: newFocusStreak,
+                    focusWins: newFocusWins,
                     monthlyRecords
                 }, { merge: true });
 
