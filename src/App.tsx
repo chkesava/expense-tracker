@@ -11,6 +11,7 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import Dashboard from "./pages/Dashboard";
 import SeedDataPage from "./pages/SeedData";
 import BottomNav from "./components/BottomNav";
+import AppTour from "./components/common/AppTour";
 import Header from "./components/Header";
 import SettingsPage from "./pages/Settings";
 import SubscriptionsPage from "./pages/SubscriptionsPage";
@@ -93,14 +94,9 @@ function AppContent() {
         <Header />
 
         <div className="flex-1 w-full pb-24 md:pb-0">
+          <AppTour />
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
-              <Route path="/" element={<Navigate to={`/${settings.defaultView || 'dashboard'}`} replace />} />
-              <Route path="/add" element={<AddExpense />} />
-              <Route path="/expenses" element={<ExpenseListPage />} />
-              <Route path="/analytics" element={<AnalyticsPage />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/settings" element={<SettingsPage />} />
               <Route path="/subscriptions" element={<SubscriptionsPage />} />
               {import.meta.env.DEV && (
                 <Route path="/seed" element={<SeedDataPage />} />
@@ -108,13 +104,21 @@ function AppContent() {
               <Route path="/admin" element={<AdminRouteGuard><AdminDashboard /></AdminRouteGuard>} />
               <Route path="/admin/users" element={<AdminRouteGuard><AdminUsers /></AdminRouteGuard>} />
               <Route path="/admin/user/:userId" element={<AdminRouteGuard><AdminUserDetail /></AdminRouteGuard>} />
+
+              <Route path="/" element={<Navigate to={`/${settings.defaultView || 'dashboard'}`} replace />} />
+              <Route path="/add" element={<AddExpense />} />
+              <Route path="/expenses" element={<ExpenseListPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/settings" element={<SettingsPage />} />
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AnimatePresence>
         </div>
 
         <BottomNav />
-      </div>
+      </div >
     </>
   );
 }

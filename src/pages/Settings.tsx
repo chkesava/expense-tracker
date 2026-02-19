@@ -163,7 +163,7 @@ export default function SettingsPage() {
         className="max-w-2xl mx-auto px-4 pt-24 pb-20 space-y-6"
       >
         {/* Profile Section */}
-        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center gap-4 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
+        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col md:flex-row items-start md:items-center gap-4 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
           <Avatar
             src={user?.photoURL}
             name={user?.displayName || "User"}
@@ -175,13 +175,13 @@ export default function SettingsPage() {
             <div className="text-sm text-slate-500 font-medium">{user?.email}</div>
           </div>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="w-full md:w-auto md:ml-auto flex items-center gap-2 mt-4 md:mt-0" id="settings-username-section">
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Set username"
-              className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 w-32 md:w-48 outline-none"
+              className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 flex-1 md:w-48 outline-none"
             />
             <button
               onClick={handleSaveProfile}
@@ -274,7 +274,11 @@ export default function SettingsPage() {
         </motion.div>
 
         {/* Dashboard Customization Section */}
-        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
+        <motion.div
+          variants={itemVariants}
+          className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4"
+          id="settings-widgets-section"
+        >
           <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
             <span className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">📊</span>
             Dashboard Widgets

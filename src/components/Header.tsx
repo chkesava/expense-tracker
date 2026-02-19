@@ -96,12 +96,13 @@ export default function Header() {
           { path: "/dashboard", label: "Home", icon: "🏠" },
           { path: "/expenses", label: "Expenses", icon: "💸" },
           { path: "/analytics", label: "Analytics", icon: "📊" },
-          ...(isAdmin ? [{ path: "/admin", label: "Admin", icon: "🛡️" }] : []),
+          ...(isAdmin ? [{ path: "/admin", label: "Admin", icon: "🛡️", id: "nav-admin-link" }] : []),
         ].map((link) => {
           const isActive = location.pathname === link.path;
           return (
             <motion.button
               key={link.path}
+              id={link.id} // Apply ID here
               onClick={() => navigate(link.path)}
               className={cn(
                 "relative px-4 py-1.5 rounded-full text-sm font-semibold transition-colors duration-200 flex items-center gap-2",
