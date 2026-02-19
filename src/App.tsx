@@ -18,6 +18,11 @@ import useSettings, { SettingsProvider } from "./hooks/useSettings";
 import NotFound from "./pages/NotFound";
 import { useSubscriptions } from "./hooks/useSubscriptions";
 
+import AdminDashboard from "./admin/pages/AdminDashboard";
+import AdminUsers from "./admin/pages/AdminUsers";
+import AdminUserDetail from "./admin/pages/AdminUserDetail";
+import AdminRouteGuard from "./guards/AdminRouteGuard";
+
 function AppContent() {
   const location = useLocation();
   const { user, login } = useAuth();
@@ -100,6 +105,9 @@ function AppContent() {
               {import.meta.env.DEV && (
                 <Route path="/seed" element={<SeedDataPage />} />
               )}
+              <Route path="/admin" element={<AdminRouteGuard><AdminDashboard /></AdminRouteGuard>} />
+              <Route path="/admin/users" element={<AdminRouteGuard><AdminUsers /></AdminRouteGuard>} />
+              <Route path="/admin/user/:userId" element={<AdminRouteGuard><AdminUserDetail /></AdminRouteGuard>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AnimatePresence>

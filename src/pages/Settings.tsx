@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import useSettings from "../hooks/useSettings";
 import { CATEGORIES } from "../types/expense";
 import { useAuth } from "../hooks/useAuth";
 import { useExpenses } from "../hooks/useExpenses";
 import { exportExpensesToCSV } from "../utils/exportCsv";
-import { deleteDoc, collection, getDocs, doc, writeBatch } from "firebase/firestore";
+import { deleteDoc, collection, getDocs, doc, writeBatch, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { toast } from "react-toastify";
 import Avatar from "../components/Avatar";
@@ -54,6 +54,63 @@ export default function SettingsPage() {
   const expenses = useExpenses();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [username, setUsername] = useState("");
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  // Fetch existing username on mount
+  useEffect(() => {
+    async function fetchProfile() {
+      if (user?.uid) {
+        try {
+          const docRef = doc(db, "users", user.uid);
+          const snap = await getDoc(docRef);
+          if (snap.exists()) {
+            setUsername(snap.data().username || "");
+          }
+        } catch (err) {
+          console.error("Failed to fetch profile", err);
+        }
+      }
+    }
+    fetchProfile();
+  }, [user]);
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    setIsSavingProfile(true);
+    try {
+      const docRef = doc(db, "users", user.uid);
+      // Sync Auth data (email, displayName) to Firestore along with new username
+      // This ensures Admin Dashboard has data to display
+      await updateDoc(docRef, {
+        username,
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL
+      });
+      toast.success("Profile updated successfully");
+    } catch (err) {
+      console.error(err);
+      // If doc doesn't exist (updateDoc fails), try setDoc with merge
+      try {
+        const { setDoc } = await import("firebase/firestore");
+        const docRef = doc(db, "users", user.uid);
+        await setDoc(docRef, {
+          username,
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+          role: "USER" // Default role if creating new
+        }, { merge: true });
+        toast.success("Profile updated successfully");
+      } catch (retryErr) {
+        console.error("Retry failed", retryErr);
+        toast.error("Failed to update profile");
+      }
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
 
   const handleExportYear = () => {
     if (!user) return toast.error("Sign in to export data");
@@ -116,6 +173,23 @@ export default function SettingsPage() {
           <div>
             <div className="text-xl font-bold text-slate-900">{user?.displayName || "Guest User"}</div>
             <div className="text-sm text-slate-500 font-medium">{user?.email}</div>
+          </div>
+
+          <div className="ml-auto flex items-center gap-2">
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Set username"
+              className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 w-32 md:w-48 outline-none"
+            />
+            <button
+              onClick={handleSaveProfile}
+              disabled={isSavingProfile}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors disabled:opacity-50"
+            >
+              {isSavingProfile ? "..." : "Save"}
+            </button>
           </div>
         </motion.div>
 
