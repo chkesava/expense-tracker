@@ -1,6 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  Activity,
+  BarChart3,
+  Home,
+  LogOut,
+  Plus,
+  Settings,
+  Shield,
+  Wallet,
+} from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import useOnline from "../hooks/useOnline";
 import { useGamification } from "../hooks/useGamification";
@@ -16,6 +26,13 @@ export default function Header() {
   const { isOnline } = useOnline();
   const { stats } = useGamification();
   const { isAdmin } = useUserRole();
+
+  const desktopLinks = [
+    { path: "/dashboard", label: "Home", icon: Home },
+    { path: "/expenses", label: "Expenses", icon: Wallet },
+    { path: "/analytics", label: "Analytics", icon: BarChart3 },
+    ...(isAdmin ? [{ path: "/admin", label: "Admin", icon: Shield }] : []),
+  ];
 
   const [open, setOpen] = useState(false);
   const popupRef = useRef<HTMLDivElement | null>(null);
@@ -45,8 +62,8 @@ export default function Header() {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
-        "fixed top-0 left-0 w-full z-50 px-6 py-3 flex items-center justify-between",
-        "bg-white/70 backdrop-blur-xl border-b border-white/50 shadow-sm transition-all duration-300"
+        "fixed top-0 left-0 w-full z-50 px-4 sm:px-6 py-3 flex items-center justify-between",
+        "bg-white/75 backdrop-blur-2xl border-b border-slate-200/60 shadow-[0_8px_30px_rgb(15,23,42,0.06)] transition-all duration-300"
       )}
     >
       {/* LEFT – Status */}
@@ -54,7 +71,7 @@ export default function Header() {
       <div className="flex-1 flex items-center gap-3">
         <div
           className={cn(
-            "flex items-center gap-2 px-2.5 py-1 rounded-full text-[13px] font-medium transition-all duration-300 cursor-help",
+            "flex items-center gap-2 px-2.5 py-1 rounded-full text-[12px] font-semibold tracking-wide transition-all duration-300 cursor-help",
             isOnline
               ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"
               : "bg-red-500/10 text-red-600 hover:bg-red-500/20"
@@ -84,21 +101,20 @@ export default function Header() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => navigate("/dashboard")}
-          className="text-xl font-bold bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent cursor-pointer tracking-tight"
+          className="inline-flex items-center gap-2 text-lg sm:text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent cursor-pointer tracking-tight"
         >
+          <span className="hidden sm:inline-flex w-7 h-7 rounded-lg bg-blue-600/10 items-center justify-center text-blue-600">
+            <Activity size={16} />
+          </span>
           ExpenseTracker
         </motion.button>
       </div>
 
       {/* CENTER - Desktop Nav */}
-      <nav className="hidden md:flex items-center gap-1 bg-slate-100/50 p-1 rounded-full border border-slate-200/60 backdrop-blur-md">
-        {[
-          { path: "/dashboard", label: "Home", icon: "🏠" },
-          { path: "/expenses", label: "Expenses", icon: "💸" },
-          { path: "/analytics", label: "Analytics", icon: "📊" },
-          ...(isAdmin ? [{ path: "/admin", label: "Admin", icon: "🛡️" }] : []),
-        ].map((link) => {
+      <nav className="hidden md:flex items-center gap-1 bg-slate-100/70 p-1 rounded-full border border-slate-200/70 backdrop-blur-md">
+        {desktopLinks.map((link) => {
           const isActive = location.pathname === link.path;
+          const Icon = link.icon;
           return (
             <motion.button
               key={link.path}
@@ -115,7 +131,7 @@ export default function Header() {
                   transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
               )}
-              <span className="relative z-10">{link.icon}</span>
+              <Icon size={15} className="relative z-10" />
               <span className="relative z-10">{link.label}</span>
             </motion.button>
           );
@@ -131,7 +147,7 @@ export default function Header() {
           onClick={() => navigate("/add")}
           className="hidden md:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full font-bold text-sm shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-shadow"
         >
-          <span>＋</span>
+          <Plus size={16} />
           <span>Add</span>
         </motion.button>
         {stats.currentStreak > 0 && (
@@ -189,7 +205,7 @@ export default function Header() {
                   className="w-full flex items-center gap-3 p-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100/80 hover:text-blue-600 transition-colors"
                 >
                   <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500">
-                    ⚙️
+                    <Settings size={16} />
                   </span>
                   Settings
                 </button>
@@ -206,7 +222,7 @@ export default function Header() {
                   className="w-full flex items-center gap-3 p-2 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
                 >
                   <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500">
-                    🚪
+                    <LogOut size={16} />
                   </span>
                   Sign Out
                 </button>
