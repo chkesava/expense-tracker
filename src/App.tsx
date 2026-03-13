@@ -38,47 +38,34 @@ function AppContent() {
   // -------- LOGIN SCREEN --------
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-page-gradient flex items-center justify-center p-6">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-white/60 p-8 rounded-3xl shadow-[0_20px_40px_-5px_rgb(0,0,0,0.1)] text-center relative overflow-hidden"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="w-full max-w-sm bg-card-gradient border border-border p-8 rounded-2xl shadow-card-hover text-center"
         >
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-600" />
+          <h1 className="text-2xl font-semibold text-foreground tracking-tight mb-1">Expense Tracker</h1>
+          <p className="text-muted-foreground text-sm mb-8">
+            Track your spending. Stay in control.
+          </p>
 
-          <div className="mb-8">
-            <motion.div
-              initial={{ y: 10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-3xl shadow-sm rotate-3"
-            >
-              💸
-            </motion.div>
-            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">Expense Tracker</h1>
-            <p className="text-slate-500 text-lg">
-              Track your spending. <br /> Stay in control.
-            </p>
-          </div>
-
-          <motion.button
-            whileHover={{ scale: 1.02, y: -2 }}
-            whileTap={{ scale: 0.98 }}
+          <button
+            type="button"
             onClick={login}
-            className="w-full bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md text-slate-700 font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-3 transition-all duration-300 group"
+            className="w-full bg-gradient-primary text-primary-foreground font-medium py-3.5 px-6 rounded-xl flex items-center justify-center gap-3 shadow-glow hover:shadow-glow-lg transition-all hover:opacity-95 active:scale-[0.99]"
           >
             <img
-              className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300"
+              className="w-5 h-5 opacity-90"
               src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-              alt="Google"
+              alt=""
             />
             <span>Sign in with Google</span>
-          </motion.button>
+          </button>
 
-          <div className="mt-8 text-xs text-slate-400 font-medium">
+          <p className="mt-6 text-xs text-muted-foreground">
             Your data is private and secure
-          </div>
+          </p>
         </motion.div>
       </div>
     );
@@ -87,10 +74,7 @@ function AppContent() {
   // -------- APP ROUTES --------
   return (
     <>
-      {/* Global animated background */}
-      <div className="fixed inset-0 z-[-1] bg-gradient-to-br from-slate-50 to-blue-50/50 pointer-events-none" />
-
-      <div className="min-h-screen flex flex-col font-sans text-slate-900">
+      <div className="min-h-screen flex flex-col bg-page-gradient text-foreground">
         <Header />
 
         <div className="flex-1 w-full pb-24 md:pb-0">

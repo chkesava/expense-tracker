@@ -5,26 +5,23 @@ import { db } from "../firebase";
 import { useAuth } from "../hooks/useAuth";
 import { CATEGORIES } from "../types/expense";
 import type { Category, Expense } from "../types/expense";
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import useSettings from "../hooks/useSettings";
-import { useGamification } from "../hooks/useGamification"; // Import
+import { useGamification } from "../hooks/useGamification";
 import { cn } from "../lib/utils";
-import { motion } from "framer-motion";
 
 export default function ExpenseForm({ editingExpense }: { editingExpense?: Expense | null }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { settings } = useSettings();
-  const { addXP } = useGamification(); // Destructure
+  const { addXP } = useGamification();
 
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState("");
-  const [category, setCategory] = useState<Category>(settings.defaultCategory as Category || "Food");
+  const [category, setCategory] = useState<Category>((settings.defaultCategory as Category) || "Food");
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Online status
-  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
     const handleStatus = () => setIsOnline(navigator.onLine);
@@ -36,7 +33,6 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
     };
   }, []);
 
-  // Initialize form
   useEffect(() => {
     if (editingExpense) {
       setAmount(editingExpense.amount.toString());
@@ -78,7 +74,6 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
           createdAt: serverTimestamp(),
         });
         toast.success("Expense added");
-        // Gamification: Award XP for tracking an expense
         addXP(10);
       }
 
@@ -92,94 +87,75 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
   };
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="space-y-4">
-      {/* Amount Input - Prominent */}
-      <div className="relative">
-        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Amount</label>
+    <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="space-y-5">
+      <div>
+        <label className="block text-xs font-medium text-muted-foreground mb-1.5">Amount</label>
         <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xl">₹</span>
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">₹</span>
           <input
             type="number"
             autoFocus
             required
-            className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 pl-10 pr-4 text-2xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-inner"
+            min={1}
+            className="w-full bg-background border border-input rounded-lg py-3 pl-9 pr-4 text-xl font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary"
             placeholder="0"
             value={amount}
-            onChange={e => setAmount(e.target.value)}
+            onChange={(e) => setAmount(e.target.value)}
           />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {/* Date Input */}
         <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Date</label>
+          <label className="block text-xs font-medium text-muted-foreground mb-1.5">Date</label>
           <input
             type="date"
             required
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+            className="w-full bg-background border border-input rounded-lg px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary"
             value={date}
-            onChange={e => setDate(e.target.value)}
+            onChange={(e) => setDate(e.target.value)}
           />
         </div>
-
-        {/* Category Select */}
         <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Category</label>
-          <div className="relative">
-            <select
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 font-medium text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
-              value={category}
-              onChange={e => setCategory(e.target.value as Category)}
-            >
-              {CATEGORIES.map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">▼</div>
-          </div>
+          <label className="block text-xs font-medium text-muted-foreground mb-1.5">Category</label>
+          <select
+            className="w-full bg-background border border-input rounded-lg px-4 py-2.5 text-sm text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary cursor-pointer"
+            value={category}
+            onChange={(e) => setCategory(e.target.value as Category)}
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {/* Note Input */}
       <div>
-        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Note (Optional)</label>
+        <label className="block text-xs font-medium text-muted-foreground mb-1.5">Note (optional)</label>
         <input
-          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+          type="text"
+          className="w-full bg-background border border-input rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary"
           placeholder="What was this for?"
           value={note}
-          onChange={e => setNote(e.target.value)}
+          onChange={(e) => setNote(e.target.value)}
         />
       </div>
 
-      {/* Submit Button */}
-      <motion.button
+      <button
         type="submit"
-        disabled={(isSubmitting) || (!!editingExpense && isLocked)}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
+        disabled={isSubmitting || (!!editingExpense && isLocked)}
         className={cn(
-          "w-full py-3.5 rounded-2xl font-bold text-white shadow-lg transition-all mt-2",
-          isLocked
-            ? "bg-slate-400 cursor-not-allowed"
-            : "bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-500/30 hover:shadow-blue-500/40"
+          "w-full py-3.5 rounded-xl font-medium text-primary-foreground transition-all hover:shadow-glow disabled:opacity-60 disabled:cursor-not-allowed",
+          isLocked ? "bg-muted" : "bg-gradient-primary shadow-glow"
         )}
       >
-        {isLocked && editingExpense
-          ? "🔒 Month Locked"
-          : isSubmitting
-            ? "Saving..."
-            : (editingExpense ? "Update Expense" : "Add Expense")
-        }
-      </motion.button>
+        {isLocked && editingExpense ? "Month locked" : isSubmitting ? "Saving…" : editingExpense?.id ? "Update expense" : "Add expense"}
+      </button>
 
-      {/* Status Indicators */}
-      <div className="flex justify-between items-center px-1">
-        <span className={cn("text-xs font-medium flex items-center gap-1.5", isOnline ? "text-emerald-600" : "text-amber-600")}>
-          <span className={cn("w-2 h-2 rounded-full", isOnline ? "bg-emerald-500" : "bg-amber-500")} />
-          {isOnline ? "Online & Syncing" : "Offline Mode"}
-        </span>
-      </div>
+      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+        <span className={cn("w-1.5 h-1.5 rounded-full", isOnline ? "bg-success" : "bg-warning")} />
+        {isOnline ? "Online" : "Offline — will sync when back online"}
+      </p>
     </form>
   );
 }

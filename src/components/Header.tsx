@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { Home, Wallet, BarChart3, Shield, Plus, Settings, LogOut } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import useOnline from "../hooks/useOnline";
 import { useGamification } from "../hooks/useGamification";
 import Avatar from "./Avatar";
 import { cn } from "../lib/utils";
-
 import { useUserRole } from "../hooks/useUserRole";
 
 export default function Header() {
@@ -29,189 +29,143 @@ export default function Header() {
         setOpen(false);
       }
     }
-
     document.addEventListener("click", onDoc);
     return () => document.removeEventListener("click", onDoc);
   }, []);
 
-  // Close menu on route change
   useEffect(() => {
     setOpen(false);
   }, [location.pathname]);
 
+  const desktopLinks = [
+    { path: "/dashboard", label: "Home", icon: Home },
+    { path: "/expenses", label: "Expenses", icon: Wallet },
+    { path: "/analytics", label: "Analytics", icon: BarChart3 },
+    ...(isAdmin ? [{ path: "/admin", label: "Admin", icon: Shield, id: "nav-admin-link" as const }] : []),
+  ];
+
   return (
     <motion.header
-      initial={{ y: -100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className={cn(
-        "fixed top-0 left-0 w-full z-50 px-6 py-3 flex items-center justify-between",
-        "bg-white/70 backdrop-blur-xl border-b border-white/50 shadow-sm transition-all duration-300"
-      )}
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+      className="fixed top-0 left-0 w-full z-50 px-4 sm:px-6 py-3 flex items-center justify-between bg-card/95 backdrop-blur-md border-b border-border shadow-card"
     >
-      {/* LEFT – Status */}
-      {/* LEFT – Status & Logo */}
       <div className="flex-1 flex items-center gap-3">
         <div
           className={cn(
-            "flex items-center gap-2 px-2.5 py-1 rounded-full text-[13px] font-medium transition-all duration-300 cursor-help",
-            isOnline
-              ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"
-              : "bg-red-500/10 text-red-600 hover:bg-red-500/20"
+            "flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-medium cursor-help",
+            isOnline ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
           )}
-          title={isOnline ? "Connected to database" : "Working offline - changes will sync later"}
+          title={isOnline ? "Connected" : "Offline — changes will sync when back online"}
         >
-          <span className="relative flex h-2 w-2">
-            {isOnline && (
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
-            )}
-            <span
-              className={cn(
-                "relative inline-flex rounded-full h-2 w-2",
-                isOnline ? "bg-emerald-500" : "bg-red-500"
-              )}
-            />
-          </span>
-          <span className="tracking-wide">
-            {isOnline ? "ONLINE" : "OFFLINE"}
-          </span>
+          <span className="relative flex h-1.5 w-1.5 rounded-full bg-current" />
+          {isOnline ? "Online" : "Offline"}
         </div>
       </div>
 
-      {/* CENTER – Title */}
-      <div className="flex-1 flex items-center gap-2">
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+      <div className="flex-1 flex justify-center">
+        <button
+          type="button"
           onClick={() => navigate("/dashboard")}
-          className="text-xl font-bold bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent cursor-pointer tracking-tight"
+          className="text-lg font-semibold text-foreground tracking-tight"
         >
-          ExpenseTracker
-        </motion.button>
+          Expense Tracker
+        </button>
       </div>
 
-      {/* CENTER - Desktop Nav */}
-      <nav className="hidden md:flex items-center gap-1 bg-slate-100/50 p-1 rounded-full border border-slate-200/60 backdrop-blur-md">
-        {[
-          { path: "/dashboard", label: "Home", icon: "🏠" },
-          { path: "/expenses", label: "Expenses", icon: "💸" },
-          { path: "/analytics", label: "Analytics", icon: "📊" },
-          ...(isAdmin ? [{ path: "/admin", label: "Admin", icon: "🛡️", id: "nav-admin-link" }] : []),
-        ].map((link) => {
+      <nav className="hidden md:flex items-center gap-1 bg-muted/80 p-1 rounded-lg border border-border">
+        {desktopLinks.map((link) => {
           const isActive = location.pathname === link.path;
+          const Icon = link.icon;
           return (
-            <motion.button
+            <button
               key={link.path}
-              id={link.id} // Apply ID here
+              id={link.id}
+              type="button"
               onClick={() => navigate(link.path)}
               className={cn(
-                "relative px-4 py-1.5 rounded-full text-sm font-semibold transition-colors duration-200 flex items-center gap-2",
-                isActive ? "text-blue-600" : "text-slate-500 hover:text-slate-700"
+                "relative px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2",
+                isActive ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {isActive && (
-                <motion.div
-                  layoutId="header-nav-pill"
-                  className="absolute inset-0 bg-white shadow-sm rounded-full border border-slate-100"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                />
-              )}
-              <span className="relative z-10">{link.icon}</span>
-              <span className="relative z-10">{link.label}</span>
-            </motion.button>
+              <Icon size={16} />
+              {link.label}
+            </button>
           );
         })}
       </nav>
 
-      {/* RIGHT – Profile & Actions */}
-      <div className="flex-1 flex justify-end items-center gap-3 relative">
-        {/* Desktop Add Button */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+      <div className="flex-1 flex justify-end items-center gap-2 relative">
+        <button
+          type="button"
           onClick={() => navigate("/add")}
-          className="hidden md:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full font-bold text-sm shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-shadow"
+          className="hidden md:flex items-center gap-2 px-4 py-2 bg-gradient-primary text-primary-foreground rounded-xl font-medium text-sm shadow-glow hover:shadow-glow-lg transition-all hover:opacity-95"
         >
-          <span>＋</span>
-          <span>Add</span>
-        </motion.button>
+          <Plus size={18} />
+          Add
+        </button>
         {stats.currentStreak > 0 && (
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-100/50 rounded-full text-xs font-bold text-orange-600 shadow-sm" title="Current Login Streak">
-            <span className="text-sm">🔥</span>
+          <span className="hidden md:flex items-center gap-1 text-xs text-muted-foreground" title="Login streak">
             <span>{stats.currentStreak}</span>
-          </div>
+          </span>
         )}
-        <motion.button
+        <button
           ref={btnRef}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          type="button"
           onClick={() => setOpen((s) => !s)}
-          className="rounded-full p-0.5 border-2 border-white/80 shadow-sm bg-white hover:shadow-md transition-shadow"
+          className="rounded-full p-0.5 border border-border bg-card hover:shadow-card-hover transition-shadow"
         >
           <Avatar
             src={user?.photoURL}
             name={user?.displayName || "User"}
-            size={38}
+            size={36}
           />
-        </motion.button>
+        </button>
 
         <AnimatePresence>
           {open && (
             <motion.div
               ref={popupRef}
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.2 }}
-              className="absolute right-0 top-14 w-64 p-2 bg-white/80 backdrop-blur-2xl border border-white/60 rounded-2xl shadow-xl overflow-hidden z-[60]"
+              className="absolute right-0 top-12 w-56 py-2 bg-card border border-border rounded-xl shadow-card-hover z-[60]"
             >
-              <div className="p-3 mb-2 flex items-center gap-3">
-                <Avatar
-                  src={user?.photoURL}
-                  name={user?.displayName || "User"}
-                  size={48}
-                  className="shadow-sm"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="font-bold text-slate-800 truncate text-[15px]">
-                    {user?.displayName || "Guest User"}
+              <div className="px-4 py-2 mb-2 flex items-center gap-3">
+                <Avatar src={user?.photoURL} name={user?.displayName || "User"} size={40} className="shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium text-foreground truncate text-sm">
+                    {user?.displayName || "Guest"}
                   </div>
-                  <div className="text-xs text-slate-500 truncate">
-                    {user?.email}
-                  </div>
+                  <div className="text-xs text-muted-foreground truncate">{user?.email}</div>
                 </div>
               </div>
-
-              <div className="h-px bg-slate-200/50 mx-2 mb-2" />
-
-              <div className="space-y-1">
-                <button
-                  onClick={() => navigate("/settings")}
-                  className="w-full flex items-center gap-3 p-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100/80 hover:text-blue-600 transition-colors"
-                >
-                  <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500">
-                    ⚙️
-                  </span>
-                  Settings
-                </button>
-
-                <button
-                  onClick={async () => {
-                    try {
-                      await logout();
-                      navigate('/');
-                    } catch (err) {
-                      console.error(err);
-                    }
-                  }}
-                  className="w-full flex items-center gap-3 p-2 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
-                >
-                  <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500">
-                    🚪
-                  </span>
-                  Sign Out
-                </button>
-              </div>
+              <div className="h-px bg-border mx-2 mb-2" />
+              <button
+                type="button"
+                onClick={() => { navigate("/settings"); setOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+              >
+                <Settings size={18} className="text-muted-foreground" />
+                Settings
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await logout();
+                    navigate("/");
+                  } catch (err) {
+                    console.error(err);
+                  }
+                }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <LogOut size={18} />
+                Sign out
+              </button>
             </motion.div>
           )}
         </AnimatePresence>

@@ -62,12 +62,12 @@ export default function SubscriptionsPage() {
         >
             <header className="mb-8 flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-800">Subscriptions</h1>
-                    <p className="text-slate-500 text-sm">Manage recurring expenses</p>
+                    <h1 className="text-2xl font-bold text-foreground">Subscriptions</h1>
+                    <p className="text-muted-foreground text-sm">Manage recurring expenses</p>
                 </div>
                 <button
                     onClick={() => setIsAdding(!isAdding)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg shadow-blue-500/30 active:scale-95 transition-all"
+                    className="bg-gradient-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-medium shadow-glow hover:shadow-glow-lg transition-all"
                 >
                     {isAdding ? "Cancel" : "+ New"}
                 </button>
@@ -82,12 +82,12 @@ export default function SubscriptionsPage() {
                         className="mb-8 overflow-hidden"
                         onSubmit={handleSubmit}
                     >
-                        <div className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-sm space-y-4">
+                        <div className="bg-card border border-border p-6 rounded-xl shadow-card space-y-4">
                             <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase">Service Name</label>
+                                <label className="text-xs font-bold text-muted-foreground uppercase">Service Name</label>
                                 <input
                                     autoFocus
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 mt-1 font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500/20 outline-none"
+                                    className="w-full bg-muted border border-border rounded-xl px-4 py-2.5 mt-1 font-semibold text-foreground focus:ring-2 focus:ring-ring/20 focus:border-primary outline-none"
                                     placeholder="e.g. Netflix, Rent"
                                     value={name}
                                     onChange={e => setName(e.target.value)}
@@ -97,12 +97,12 @@ export default function SubscriptionsPage() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase">Amount</label>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase">Amount</label>
                                     <div className="relative mt-1">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">₹</span>
                                         <input
                                             type="number"
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-4 py-2.5 font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500/20 outline-none"
+                                            className="w-full bg-muted border border-border rounded-xl pl-8 pr-4 py-2.5 font-semibold text-foreground focus:ring-2 focus:ring-ring/20 focus:border-primary outline-none"
                                             placeholder="0"
                                             value={amount}
                                             onChange={e => setAmount(e.target.value)}
@@ -111,9 +111,9 @@ export default function SubscriptionsPage() {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase">Day of Month</label>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase">Day of Month</label>
                                     <select
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 mt-1 font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500/20 outline-none"
+                                        className="w-full bg-muted border border-border rounded-xl px-4 py-2.5 mt-1 font-semibold text-foreground focus:ring-2 focus:ring-ring/20 focus:border-primary outline-none"
                                         value={day}
                                         onChange={e => setDay(e.target.value)}
                                     >
@@ -125,9 +125,9 @@ export default function SubscriptionsPage() {
                             </div>
 
                             <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase">Category</label>
+                                <label className="text-xs font-bold text-muted-foreground uppercase">Category</label>
                                 <select
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 mt-1 font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500/20 outline-none"
+                                    className="w-full bg-muted border border-border rounded-xl px-4 py-2.5 mt-1 font-semibold text-foreground focus:ring-2 focus:ring-ring/20 focus:border-primary outline-none"
                                     value={category}
                                     onChange={e => setCategory(e.target.value as Category)}
                                 >
@@ -143,8 +143,8 @@ export default function SubscriptionsPage() {
                                 className={cn(
                                     "w-full font-bold py-3 rounded-xl mt-2 shadow-lg transition-all flex items-center justify-center gap-2",
                                     isDisabled
-                                        ? "bg-slate-100 text-slate-400 cursor-not-allowed shadow-none"
-                                        : "bg-slate-900 text-white hover:bg-slate-800"
+                                        ? "bg-muted text-muted-foreground cursor-not-allowed"
+                                        : "bg-gradient-primary text-primary-foreground shadow-glow hover:shadow-glow-lg"
                                 )}
                             >
                                 {isDisabled ? (
@@ -173,23 +173,23 @@ export default function SubscriptionsPage() {
                             layout
                             key={sub.id}
                             className={cn(
-                                "group relative bg-white/80 backdrop-blur-md border rounded-2xl p-5 shadow-sm transition-all",
-                                sub.isActive ? "border-white/60" : "border-slate-100 opacity-75 grayscale"
+                                "group relative bg-card border rounded-xl p-5 shadow-card transition-colors",
+                                sub.isActive ? "border-border" : "border-border opacity-60"
                             )}
                         >
                             <div className="flex justify-between items-start">
                                 <div className="flex items-center gap-3">
                                     <div className={cn(
                                         "w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-sm border",
-                                        sub.isActive ? "bg-indigo-50 border-indigo-100 text-indigo-600" : "bg-slate-100 border-slate-200 text-slate-400"
+                                        sub.isActive ? "bg-primary/10 border-primary/20 text-primary" : "bg-muted border-border text-muted-foreground"
                                     )}>
                                         {/* Using first letter or category icon logic if available */}
                                         {sub.name[0].toUpperCase()}
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-slate-800">{sub.name}</h3>
-                                        <div className="text-xs font-medium text-slate-500 flex items-center gap-1">
-                                            <span className="bg-slate-100 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wide">
+                                        <h3 className="font-bold text-foreground">{sub.name}</h3>
+                                        <div className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                                            <span className="bg-muted px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wide">
                                                 Day {sub.dayOfMonth}
                                             </span>
                                             <span>• {sub.category}</span>
@@ -198,24 +198,24 @@ export default function SubscriptionsPage() {
                                 </div>
 
                                 <div className="text-right">
-                                    <div className="font-bold text-slate-900">₹{sub.amount}</div>
-                                    <div className={cn("text-[10px] font-bold mt-1", sub.isActive ? "text-emerald-500" : "text-slate-400")}>
+                                    <div className="font-bold text-foreground">₹{sub.amount}</div>
+                                    <div className={cn("text-[10px] font-bold mt-1", sub.isActive ? "text-success" : "text-muted-foreground")}>
                                         {sub.isActive ? "ACTIVE" : "PAUSED"}
                                     </div>
                                 </div>
                             </div>
 
                             {/* Actions */}
-                            <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                            <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
                                 <button
                                     onClick={() => deleteSubscription(sub.id!)}
-                                    className="text-xs font-bold text-red-400 hover:text-red-600 transition-colors"
+                                    className="text-xs font-bold text-destructive hover:opacity-90 transition-colors"
                                 >
                                     Delete
                                 </button>
 
                                 <label className="flex items-center gap-2 cursor-pointer">
-                                    <span className="text-xs font-bold text-slate-400">
+                                    <span className="text-xs font-bold text-muted-foreground">
                                         {sub.isActive ? "Pause" : "Resume"}
                                     </span>
                                     <div className="relative">
@@ -225,7 +225,7 @@ export default function SubscriptionsPage() {
                                             checked={sub.isActive}
                                             onChange={() => updateSubscription(sub.id!, { isActive: !sub.isActive })}
                                         />
-                                        <div className={cn("w-10 h-6 rounded-full transition-colors", sub.isActive ? "bg-emerald-500" : "bg-slate-200")} />
+                                        <div className={cn("w-10 h-6 rounded-full transition-colors", sub.isActive ? "bg-success" : "bg-muted")} />
                                         <div className={cn(
                                             "absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform shadow-sm",
                                             sub.isActive && "translate-x-4"

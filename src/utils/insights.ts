@@ -1,9 +1,9 @@
 import type { Expense } from "../types/expense";
 
 export const getUsageColor = (percentage: number) => {
-    if (percentage >= 100) return "bg-red-500 text-red-600";
-    if (percentage >= 80) return "bg-yellow-500 text-yellow-600";
-    return "bg-emerald-500 text-emerald-600";
+  if (percentage >= 100) return "bg-destructive text-destructive";
+  if (percentage >= 80) return "bg-warning text-warning";
+  return "bg-success text-success";
 };
 
 export const getSmartInsight = (

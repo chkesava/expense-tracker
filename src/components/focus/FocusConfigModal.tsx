@@ -31,13 +31,13 @@ export default function FocusConfigModal({ isOpen, onClose }: FocusConfigModalPr
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.9 }}
-                    className="bg-white w-full max-w-sm rounded-[2rem] p-6 shadow-2xl relative overflow-hidden"
+                    className="bg-card border border-border w-full max-w-sm rounded-xl p-6 shadow-card-hover relative overflow-hidden"
                 >
                     {/* Header */}
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-bold text-slate-800">Start a Focus</h2>
-                        <button onClick={onClose} className="p-2 bg-slate-100 rounded-full hover:bg-slate-200 transition">
-                            <X size={20} className="text-slate-600" />
+                        <h2 className="text-xl font-bold text-foreground">Start a Focus</h2>
+                        <button onClick={onClose} className="p-2 bg-muted rounded-full hover:bg-accent transition">
+                            <X size={20} className="text-muted-foreground" />
                         </button>
                     </div>
 
@@ -48,7 +48,7 @@ export default function FocusConfigModal({ isOpen, onClose }: FocusConfigModalPr
                             <select
                                 value={category}
                                 onChange={(e) => setCategory(e.target.value as any)}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20"
+                                className="w-full bg-muted border border-border rounded-xl px-4 py-3 font-medium text-foreground outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary"
                             >
                                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
@@ -58,13 +58,13 @@ export default function FocusConfigModal({ isOpen, onClose }: FocusConfigModalPr
                         <div>
                             <label className="block text-sm font-semibold text-slate-500 mb-2">Daily Spending Limit</label>
                             <div className="relative">
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">₹</span>
                                 <input
                                     type="number"
                                     value={limit}
                                     onChange={(e) => setLimit(e.target.value)}
                                     placeholder="e.g. 500"
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20"
+                                    className="w-full bg-muted border border-border rounded-xl pl-10 pr-4 py-3 font-bold text-foreground outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary"
                                 />
                             </div>
                         </div>
@@ -78,8 +78,8 @@ export default function FocusConfigModal({ isOpen, onClose }: FocusConfigModalPr
                                         key={d}
                                         onClick={() => setDuration(d)}
                                         className={`py-2 rounded-xl text-sm font-bold transition-all ${duration === d
-                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                            ? 'bg-primary text-primary-foreground'
+                                            : 'bg-muted text-muted-foreground hover:bg-accent'
                                             }`}
                                     >
                                         {d} Days
@@ -92,7 +92,7 @@ export default function FocusConfigModal({ isOpen, onClose }: FocusConfigModalPr
                         <button
                             onClick={handleSubmit}
                             disabled={!limit}
-                            className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full py-4 bg-gradient-primary text-primary-foreground font-medium rounded-xl shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Activate Focus Mode
                         </button>

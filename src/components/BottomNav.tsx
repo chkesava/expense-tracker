@@ -1,44 +1,43 @@
 import { NavLink, useLocation } from "react-router-dom";
+import { Home, Wallet, Plus, BarChart3, Settings, Shield } from "lucide-react";
 import { cn } from "../lib/utils";
-import { motion } from "framer-motion";
 import { useUserRole } from "../hooks/useUserRole";
+
+const navLinks = [
+  { path: "/dashboard", label: "Home", icon: Home },
+  { path: "/expenses", label: "Expenses", icon: Wallet },
+  { path: "/add", label: "Add", icon: Plus },
+  { path: "/analytics", label: "Analytics", icon: BarChart3 },
+  { path: "/settings", label: "Settings", icon: Settings },
+];
 
 export default function BottomNav() {
   const location = useLocation();
-
-
-
   const { isAdmin } = useUserRole();
 
-  const links = [
-    { path: "/dashboard", label: "Home", icon: "🏠" },
-    { path: "/expenses", label: "Expenses", icon: "💸" },
-    { path: "/add", label: "Add", icon: "➕" },
-    { path: "/analytics", label: "Analytics", icon: "📊" },
-    { path: "/settings", label: "Settings", icon: "⚙️" },
-    ...(isAdmin ? [{ path: "/admin", label: "Admin", icon: "🛡️", id: "mobile-nav-admin-link" }] : []),
-  ];
+  const links: { path: string; label: string; icon: typeof Home; id?: string }[] = [
+  ...navLinks,
+  ...(isAdmin ? [{ path: "/admin", label: "Admin", icon: Shield, id: "mobile-nav-admin-link" }] : []),
+];
 
   return (
-    <div className="fixed bottom-6 left-0 w-full flex justify-center z-50 px-4 pointer-events-none md:hidden transition-all duration-300">
-      <nav className="bg-white/90 backdrop-blur-2xl border border-white/40 rounded-full px-2 py-2 shadow-xl shadow-indigo-500/20 pointer-events-auto flex items-center justify-between gap-1 max-w-sm w-full">
+    <div className="fixed bottom-0 left-0 w-full flex justify-center z-50 px-4 pb-6 pt-2 md:hidden bg-card/90 backdrop-blur-xl border-t border-border shadow-[0_-4px_20px_-5px_rgb(0_0_0_/0.06)]">
+      <nav className="flex items-center justify-center gap-1 w-full max-w-md bg-muted/50 rounded-xl py-2 px-2 border border-border">
         {links.map((link) => {
           const isActive = location.pathname === link.path;
+          const Icon = link.icon;
 
           if (link.path === "/add") {
             return (
               <NavLink
                 key={link.path}
                 to={link.path}
-                className="relative -top-6 mx-1"
+                className="flex flex-col items-center justify-center min-w-[56px] -mt-6"
               >
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center text-2xl shadow-lg shadow-blue-500/40 border-4 border-slate-50"
-                >
-                  {link.icon}
-                </motion.div>
+                <span className="w-12 h-12 rounded-full bg-gradient-primary text-primary-foreground flex items-center justify-center shadow-glow-lg">
+                  <Icon size={22} />
+                </span>
+                <span className="text-[10px] font-medium text-muted-foreground mt-1">Add</span>
               </NavLink>
             );
           }
@@ -46,29 +45,15 @@ export default function BottomNav() {
           return (
             <NavLink
               key={link.path}
+              {...(link.id ? { id: link.id } : {})}
               to={link.path}
-              id={link.id}
-              className="relative px-3 py-2 rounded-full flex flex-col items-center justify-center min-w-[3.5rem] h-full"
+              className={cn(
+                "flex flex-col items-center justify-center min-w-[52px] py-1.5 rounded-lg transition-colors",
+                isActive ? "text-primary" : "text-muted-foreground"
+              )}
             >
-              {isActive && (
-                <motion.div
-                  layoutId="bottom-nav-pill"
-                  className="absolute inset-0 bg-blue-50 rounded-full border border-blue-100/50"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                />
-              )}
-              <span className="relative z-10 text-xl mb-0.5 filter drop-shadow-sm">
-                {link.icon}
-              </span>
-              {isActive && (
-                <motion.span
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="relative z-10 text-[9px] font-bold text-blue-600"
-                >
-                  {link.label}
-                </motion.span>
-              )}
+              <Icon size={22} />
+              <span className="text-[10px] font-medium mt-0.5">{link.label}</span>
             </NavLink>
           );
         })}

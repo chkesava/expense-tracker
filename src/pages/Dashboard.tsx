@@ -9,7 +9,7 @@ import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { toast } from "react-toastify";
 import useSettings from "../hooks/useSettings";
-import { motion, type Variants } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "../lib/utils";
 import GamificationCard from "../components/GamificationCard";
 import { Link } from "react-router-dom";
@@ -18,62 +18,24 @@ import FocusWidget from "../components/focus/FocusWidget";
 import FocusConfigModal from "../components/focus/FocusConfigModal";
 import StoryViewer from "../components/story/StoryViewer";
 import { useStoryGenerator } from "../hooks/useStoryGenerator";
-
-const containerVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
-};
-
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      type: "spring",
-      stiffness: 100,
-      damping: 15
-    }
-  }
-};
+import { ChevronRight } from "lucide-react";
 
 export default function Dashboard() {
   const expenses = useExpenses();
   const { subscriptions } = useSubscriptions();
-
-  /* ----------------------------------
-   * Months (unique, sorted, latest first)
-   * ---------------------------------- */
   const months = useMemo(() => {
-    return Array.from(new Set(expenses.map(e => e.month)))
-      .sort()
-      .reverse();
+    return Array.from(new Set(expenses.map((e) => e.month))).sort().reverse();
   }, [expenses]);
 
-  /* ----------------------------------
-   * Selected month (derived correctly)
-   * ---------------------------------- */
   const [userSelectedMonth, setUserSelectedMonth] = useState<string | null>(null);
-
   const selectedMonth = userSelectedMonth ?? months[0] ?? "";
 
-  /* ----------------------------------
-   * Filtered expenses (month-wise)
-   * ---------------------------------- */
   const filteredExpenses = useMemo(() => {
     if (!selectedMonth) return [];
-    return expenses.filter(e => e.month === selectedMonth);
+    return expenses.filter((e) => e.month === selectedMonth);
   }, [expenses, selectedMonth]);
 
-
-  // Load More State
   const [visibleCount, setVisibleCount] = useState(7);
-
   const { user } = useAuth();
   const { settings } = useSettings();
   const [isAdding, setIsAdding] = useState(false);
@@ -91,7 +53,7 @@ export default function Dashboard() {
         category,
         note: "",
         month,
-        time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         createdAt: serverTimestamp(),
       });
       toast.success("Expense added");
@@ -109,9 +71,9 @@ export default function Dashboard() {
   }, [filteredExpenses]);
 
   const monthlyComparison = useMemo(() => {
-    const byMonth = groupByMonth(expenses); // monthly totals
-    const current = byMonth.find(m => m.month === selectedMonth)?.value ?? 0;
-    const idx = byMonth.findIndex(m => m.month === selectedMonth);
+    const byMonth = groupByMonth(expenses);
+    const current = byMonth.find((m) => m.month === selectedMonth)?.value ?? 0;
+    const idx = byMonth.findIndex((m) => m.month === selectedMonth);
     const prev = idx >= 0 && byMonth[idx + 1] ? byMonth[idx + 1].value : 0;
     const change = prev === 0 ? 0 : Math.round(((current - prev) / prev) * 100);
     return { current, prev, change };
@@ -121,296 +83,270 @@ export default function Dashboard() {
     return getSmartInsight(filteredExpenses, settings.monthlyBudget, selectedMonth);
   }, [filteredExpenses, settings.monthlyBudget, selectedMonth]);
 
-  const budgetUsagePercent = settings.monthlyBudget > 0
-    ? Math.min(100, Math.round((monthlyComparison.current / settings.monthlyBudget) * 100))
-    : 0;
+  const budgetUsagePercent =
+    settings.monthlyBudget > 0
+      ? Math.min(100, Math.round((monthlyComparison.current / settings.monthlyBudget) * 100))
+      : 0;
+  const budgetColorClass = getUsageColor(budgetUsagePercent).split(" ")[0];
 
-  const budgetColorClass = getUsageColor(budgetUsagePercent).split(' ')[0]; // just bg
-
-  // Dynamic Insight Card Color
-  const insightColors: Record<string, string> = {
-    success: "from-blue-600 to-indigo-700 shadow-blue-500/20",
-    warning: "from-amber-500 to-orange-600 shadow-orange-500/20",
-    danger: "from-red-500 to-rose-600 shadow-red-500/20",
-    neutral: "from-slate-600 to-slate-700 shadow-slate-500/20"
-  };
-
-  /* ----------------------------------
-   * Focus Mode State
-   * ---------------------------------- */
-  /* ----------------------------------
-   * Focus Mode State
-   * ---------------------------------- */
   const [showFocusConfig, setShowFocusConfig] = useState(false);
-
-  /* ----------------------------------
-   * Story State
-   * ---------------------------------- */
   const [showStory, setShowStory] = useState(false);
   const storySlides = useStoryGenerator(filteredExpenses, selectedMonth);
 
-  /* ----------------------------------
-   * Widget Visibility Logic
-   * ---------------------------------- */
   const widgets = settings.dashboardWidgets;
   const showFocus = widgets?.focus !== false;
   const showGamification = widgets?.gamification !== false;
   const showSubscriptions = widgets?.subscriptions !== false;
   const showTopCategories = widgets?.topCategories !== false;
-
   const showLeftColumn = showFocus || showGamification || showSubscriptions || showTopCategories;
 
   return (
     <>
       <StoryViewer isOpen={showStory} onClose={() => setShowStory(false)} slides={storySlides} />
-
-      {/* Month Selector Outside Motion Container for Fixed Positioning */}
-      <MonthSelector
-        months={months}
-        value={selectedMonth}
-        onChange={setUserSelectedMonth}
-      />
-
+      <MonthSelector months={months} value={selectedMonth} onChange={setUserSelectedMonth} />
       <FocusConfigModal isOpen={showFocusConfig} onClose={() => setShowFocusConfig(false)} />
 
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="min-h-screen pt-20 md:pt-24 pb-32 px-4 md:px-8 max-w-7xl mx-auto"
+      <motion.main
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.25 }}
+        className="min-h-screen pt-20 md:pt-24 pb-32 px-4 md:px-6 max-w-5xl mx-auto"
       >
-        <div className={cn("grid gap-6", showLeftColumn ? "md:grid-cols-3" : "md:grid-cols-2 max-w-5xl mx-auto")}>
-          {/* LEFT – Quick Add & Month selector */}
+        <div className={cn("grid gap-6", showLeftColumn ? "md:grid-cols-3" : "md:grid-cols-1 max-w-2xl mx-auto")}>
           {showLeftColumn && (
             <div className="space-y-6">
-
-              {/* Focus Widget */}
               {showFocus && (
-                <motion.div variants={itemVariants}>
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                   <FocusWidget onOpenConfig={() => setShowFocusConfig(true)} />
                 </motion.div>
               )}
-
-              {/* Gamification Stats */}
               {showGamification && (
-                <motion.div variants={itemVariants}>
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.05 }}>
                   <GamificationCard />
                 </motion.div>
               )}
-
-              {/* Subscriptions Card */}
               {showSubscriptions && (
-                <Link to="/subscriptions" className="block mb-4 relative group">
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="absolute -top-2 -right-2 z-20 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg shadow-pink-500/40 animate-pulse"
-                  >
-                    NEW
-                  </motion.div>
+                <Link to="/subscriptions" className="block">
                   <motion.section
-                    variants={itemVariants}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 rounded-3xl shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-between relative overflow-hidden"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, delay: 0.1 }}
+                    className="bg-card-gradient border border-border rounded-xl p-4 flex items-center justify-between hover:shadow-card-hover transition-all"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <div className="flex items-center gap-3 relative z-10">
-                      <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-xl text-indigo-600 group-hover:scale-110 transition-transform">
+                    <div className="flex items-center gap-3">
+                      <span className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-lg">
                         📅
-                      </div>
+                      </span>
                       <div>
-                        <h3 className="font-bold text-slate-800 text-sm">Subscriptions</h3>
-                        <p className="text-xs text-slate-500 font-medium">
-                          {subscriptions.filter(s => s.isActive).length} active
+                        <h3 className="font-medium text-foreground text-sm">Subscriptions</h3>
+                        <p className="text-xs text-muted-foreground">
+                          {subscriptions.filter((s) => s.isActive).length} active
                         </p>
                       </div>
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-indigo-500 group-hover:text-white transition-colors relative z-10">
-                      ➔
-                    </div>
+                    <ChevronRight size={18} className="text-muted-foreground" />
                   </motion.section>
                 </Link>
               )}
-
               {showTopCategories && (
-                <motion.section variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow duration-300">
-                  <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
-                    <span className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">📊</span>
-                    Top Categories
-                  </h3>
+                <motion.section
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: 0.1 }}
+                  className="bg-card-gradient border border-border rounded-xl p-4 shadow-card"
+                >
+                  <h3 className="text-sm font-medium text-foreground mb-4">Top categories</h3>
                   <div className="space-y-3">
                     {topCategories.length === 0 ? (
-                      <p className="text-sm text-slate-400 text-center py-8 italic">No expense data yet</p>
+                      <p className="text-sm text-muted-foreground py-4 text-center">No expenses this month</p>
                     ) : (
                       topCategories.map((t, i) => (
-                        <div key={t.category} className="group p-3 rounded-xl bg-slate-50/50 border border-slate-100/50 hover:bg-white hover:shadow-sm transition-all">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-3">
-                              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white text-xs font-bold text-slate-500 shadow-sm border border-slate-100">
-                                {i + 1}
-                              </span>
-                              <span className="text-sm font-semibold text-slate-700">{t.category}</span>
-                            </div>
-                            <div className="text-sm font-bold text-slate-900">₹{t.value.toLocaleString()}</div>
+                        <div key={t.category} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-medium text-muted-foreground w-5">{i + 1}</span>
+                            <span className="text-sm text-foreground">{t.category}</span>
                           </div>
-                          {/* Category Usage Bar (Visual Warning support) */}
-                          {settings.monthlyBudget > 0 && (
-                            <div className="h-1.5 w-full bg-slate-200/50 rounded-full overflow-hidden">
-                              <div
-                                className={cn("h-full rounded-full opacity-80", getUsageColor((t.value / settings.monthlyBudget) * 100).split(' ')[0])}
-                                style={{ width: `${Math.min(100, (t.value / settings.monthlyBudget) * 100)}%` }}
-                              />
-                            </div>
-                          )}
+                          <span className="text-sm font-medium text-foreground">₹{t.value.toLocaleString()}</span>
                         </div>
                       ))
                     )}
                   </div>
                 </motion.section>
               )}
-
             </div>
           )}
 
-          {/* MIDDLE – Top categories */}
           <div className="space-y-6">
-
-            <motion.section variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow duration-300">
-              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">This Month</h3>
-              <div className="text-4xl font-extrabold text-slate-900 tracking-tight">₹{monthlyComparison.current.toLocaleString()}</div>
-
-              <div className="flex justify-between items-center mt-2">
-                <div className={cn("text-sm font-semibold flex items-center gap-1", monthlyComparison.change >= 0 ? 'text-red-500' : 'text-emerald-600')}>
+            <motion.section
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="bg-card-gradient border border-border rounded-2xl p-6 shadow-card-hover relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-accent/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" aria-hidden />
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">This month</p>
+              <p className="text-3xl md:text-4xl font-semibold text-foreground tracking-tight relative">
+                ₹{monthlyComparison.current.toLocaleString()}
+              </p>
+              <div className="flex flex-wrap items-center justify-between gap-2 mt-3">
+                <span
+                  className={cn(
+                    "text-sm font-medium",
+                    monthlyComparison.change > 0 ? "text-destructive" : monthlyComparison.change < 0 ? "text-success" : "text-muted-foreground"
+                  )}
+                >
                   {monthlyComparison.change === 0
-                    ? <span className="text-slate-500">No change vs last month</span>
-                    : (
-                      <>
-                        <span className="p-0.5 rounded-full bg-current/10">{monthlyComparison.change > 0 ? '↑' : '↓'}</span>
-                        {Math.abs(monthlyComparison.change)}% vs last month
-                      </>
-                    )
-                  }
-                </div>
-
+                    ? "No change vs last month"
+                    : `${monthlyComparison.change > 0 ? "+" : ""}${monthlyComparison.change}% vs last month`}
+                </span>
                 {filteredExpenses.length > 0 && (
                   <button
+                    type="button"
                     onClick={() => setShowStory(true)}
-                    className="flex items-center gap-1 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md hover:scale-105 transition-transform animate-pulse"
+                    className="text-xs font-medium text-primary hover:underline decoration-2"
                   >
-                    <span>▶ Recap</span>
-                    <span className="bg-white text-pink-600 px-1 rounded-[4px] text-[8px]">NEW</span>
+                    Recap
                   </button>
                 )}
               </div>
-
               {settings.monthlyBudget > 0 && (
                 <div className="mt-6">
-                  <div className="flex justify-between text-xs font-semibold mb-2">
-                    <span className="text-slate-500">Budget Usage</span>
-                    <span className="text-slate-700">₹{settings.monthlyBudget.toLocaleString()}</span>
+                  <div className="flex justify-between text-xs font-medium text-muted-foreground mb-2">
+                    <span>Budget</span>
+                    <span>₹{settings.monthlyBudget.toLocaleString()}</span>
                   </div>
-                  <div className="h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${budgetUsagePercent}%` }}
-                      transition={{ duration: 1, ease: "easeOut" }}
-                      className={cn("h-full rounded-full transition-colors duration-500", budgetColorClass)}
+                      transition={{ duration: 0.5, ease: "easeOut" }}
+                      className={cn("h-full rounded-full", budgetColorClass)}
                     />
                   </div>
-                  <div className="mt-2 text-right text-xs font-bold text-slate-600">
-                    {budgetUsagePercent}% used
-                  </div>
+                  <p className="mt-1.5 text-right text-xs text-muted-foreground">{budgetUsagePercent}% used</p>
                 </div>
               )}
             </motion.section>
 
-            <motion.section variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow duration-300">
-              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600">⚡</span>
-                Quick Add
-              </h3>
-              <div className="mt-2 text-xs text-slate-500 font-medium ml-1">Tap a preset to add instantly</div>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {CATEGORIES.slice(0, 6).map(c => (
+            <motion.section
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, delay: 0.05 }}
+              className="bg-card-gradient border border-border rounded-xl p-4 shadow-card"
+            >
+              <h3 className="text-sm font-medium text-foreground mb-2">Quick add</h3>
+              <p className="text-xs text-muted-foreground mb-4">Tap to add an expense</p>
+              <div className="flex flex-wrap gap-2">
+                {CATEGORIES.slice(0, 6).map((c) => (
                   <button
                     key={c}
-                    className={cn(
-                      "px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 transition-all active:scale-95 disabled:opacity-50",
-                      "hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
-                    )}
+                    type="button"
+                    className="px-3 py-2 bg-muted/80 border border-border rounded-xl text-sm font-medium text-foreground hover:bg-gradient-primary hover:text-primary-foreground hover:border-transparent hover:shadow-glow transition-all disabled:opacity-50"
                     onClick={() => quickAddDirect(c, 100)}
                     disabled={isAdding}
                   >
-                    {c} • ₹100
+                    {c} · ₹100
                   </button>
                 ))}
               </div>
-
-              <div className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
-                <button className="flex-1 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 transition-colors" onClick={() => quickAddDirect('Food', 50)} disabled={isAdding}>₹50</button>
-                <button className="flex-1 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 transition-colors" onClick={() => quickAddDirect('Transport', 100)} disabled={isAdding}>₹100</button>
-                <button className="flex-1 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 transition-colors" onClick={() => quickAddDirect('Other', 200)} disabled={isAdding}>₹200</button>
+              <div className="mt-4 pt-4 border-t border-border flex gap-2">
+                <button
+                  type="button"
+                  className="flex-1 py-2 bg-muted/80 rounded-xl text-sm font-medium text-foreground hover:bg-gradient-primary hover:text-primary-foreground hover:shadow-glow transition-all disabled:opacity-50"
+                  onClick={() => quickAddDirect("Food", 50)}
+                  disabled={isAdding}
+                >
+                  ₹50
+                </button>
+                <button
+                  type="button"
+                  className="flex-1 py-2 bg-muted/80 rounded-xl text-sm font-medium text-foreground hover:bg-gradient-primary hover:text-primary-foreground hover:shadow-glow transition-all disabled:opacity-50"
+                  onClick={() => quickAddDirect("Transport", 100)}
+                  disabled={isAdding}
+                >
+                  ₹100
+                </button>
+                <button
+                  type="button"
+                  className="flex-1 py-2 bg-muted/80 rounded-xl text-sm font-medium text-foreground hover:bg-gradient-primary hover:text-primary-foreground hover:shadow-glow transition-all disabled:opacity-50"
+                  onClick={() => quickAddDirect("Other", 200)}
+                  disabled={isAdding}
+                >
+                  ₹200
+                </button>
               </div>
             </motion.section>
 
-
-            <motion.section variants={itemVariants} className={cn("text-white p-6 rounded-3xl shadow-lg bg-gradient-to-br transition-colors duration-500", insightColors[smartInsight.type])}>
-              <h3 className="text-sm font-bold opacity-90 uppercase tracking-wider mb-2">
-                {smartInsight.type === 'danger' ? '🚨 Warning' : smartInsight.type === 'warning' ? '⚠️ Insight' : '💡 Tip'}
-              </h3>
-              <div className="text-sm font-medium leading-relaxed opacity-95">
-                {smartInsight.message}
-              </div>
+            <motion.section
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, delay: 0.1 }}
+              className={cn(
+                "rounded-xl p-4 border",
+                smartInsight.type === "danger" && "bg-destructive/10 border-destructive/20 text-destructive",
+                smartInsight.type === "warning" && "bg-warning/10 border-warning/20 text-foreground",
+                smartInsight.type === "success" && "bg-success/10 border-success/20 text-foreground",
+                smartInsight.type === "neutral" && "bg-muted border-border text-foreground"
+              )}
+            >
+              <p className="text-xs font-medium uppercase tracking-wide opacity-90 mb-1">
+                {smartInsight.type === "danger" ? "Notice" : smartInsight.type === "warning" ? "Insight" : "Tip"}
+              </p>
+              <p className="text-sm leading-relaxed">{smartInsight.message}</p>
             </motion.section>
           </div>
 
-          {/* RIGHT – Recent transactions */}
           <div className="space-y-6">
-            <motion.section variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow duration-300 h-full">
-              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
-                <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">🕒</span>
-                Recent
-              </h3>
-              <div className="space-y-0.5">
+            <motion.section
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, delay: 0.1 }}
+              className="bg-card-gradient border border-border rounded-xl overflow-hidden shadow-card"
+            >
+              <div className="px-4 py-3 border-b border-border">
+                <h3 className="text-sm font-medium text-foreground">Recent</h3>
+              </div>
+              <div className="divide-y divide-border">
                 {filteredExpenses.slice(0, visibleCount).length === 0 ? (
-                  <p className="text-sm text-slate-400 text-center py-10 italic">No recent transactions</p>
+                  <p className="text-sm text-muted-foreground py-10 text-center">No recent transactions</p>
                 ) : (
-                  filteredExpenses.slice(0, visibleCount).map((e, i) => (
-                    <div key={e.id} className="group flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors cursor-default">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-lg shadow-sm group-hover:scale-110 transition-transform">
-                          {/* Simple category icon based on first letter or map */}
+                  filteredExpenses.slice(0, visibleCount).map((e) => (
+                    <div
+                      key={e.id}
+                      className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-sm font-medium text-muted-foreground shrink-0">
                           {e.category[0]}
-                        </div>
-                        <div>
-                          <div className="text-sm font-bold text-slate-800">{e.category}</div>
-                          <div className="text-xs text-slate-500 font-medium">{e.note || e.time || 'No note'}</div>
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{e.category}</p>
+                          <p className="text-xs text-muted-foreground truncate">{e.note || e.time || "—"}</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-sm font-bold text-slate-900">-₹{e.amount.toLocaleString()}</div>
-                        <div className="text-[10px] text-slate-400 font-semibold">{e.date}</div>
+                      <div className="text-right shrink-0">
+                        <p className="text-sm font-medium text-foreground">−₹{e.amount.toLocaleString()}</p>
+                        <p className="text-[11px] text-muted-foreground">{e.date}</p>
                       </div>
                     </div>
                   ))
                 )}
               </div>
               {filteredExpenses.length > visibleCount && (
-                <div className="mt-4 text-center">
+                <div className="px-4 py-3 border-t border-border">
                   <button
-                    onClick={() => setVisibleCount(prev => prev + 5)}
-                    className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer p-2"
+                    type="button"
+                    onClick={() => setVisibleCount((prev) => prev + 5)}
+                    className="text-xs font-medium text-primary hover:underline w-full text-center"
                   >
-                    View More ({filteredExpenses.length - visibleCount} remaining)
+                    View more ({filteredExpenses.length - visibleCount} left)
                   </button>
                 </div>
               )}
             </motion.section>
           </div>
-        </div >
-      </motion.div >
+        </div>
+      </motion.main>
     </>
   );
 }
