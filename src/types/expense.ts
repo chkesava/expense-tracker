@@ -16,15 +16,33 @@ export const CATEGORIES = [
   "Other",
 ] as const;
 
-export type Category = (typeof CATEGORIES)[number];
+export interface Category {
+  id: string;
+  name: string;
+  createdAt?: unknown;
+}
+
+export interface AccountType {
+  id: string;
+  name: string;
+  createdAt?: unknown;
+}
+
+export interface Account {
+  id: string;
+  name: string;
+  typeId: string;
+  createdAt?: unknown;
+}
 
 export interface Expense {
   id?: string;
   amount: number;
-  category: Category;
+  category: string;
   note: string;
   date: string;
   month: string;
   time?: string;
+  accountId?: string;
   createdAt: unknown;
 }

@@ -3,7 +3,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper function to check if the user is a super admin
+    // Helper function to check if the user is a super admin based on their user document
     function isSuperAdmin() {
       return request.auth != null && 
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
@@ -11,11 +11,10 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // 1. Base User Document
+      // Allow user to access their own profile OR Super Admin to access any profile
       allow read, write: if request.auth != null && (request.auth.uid == userId || isSuperAdmin());
 
-      // 2. All Subcollections (expenses, stats, focus, subscriptions, etc.)
-      // This wildcard match ensures we don't accidentally block features like 'focus' or 'gamification'
+      // Matches all subcollections including expenses, stats, subscriptions, accountTypes, accounts, and categories
       match /{document=**} {
         allow read, write: if request.auth != null && (request.auth.uid == userId || isSuperAdmin());
       }
