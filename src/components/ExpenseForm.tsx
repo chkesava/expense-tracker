@@ -3,8 +3,10 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import { useAuth } from "../hooks/useAuth";
+import { useAccounts } from "../hooks/useAccounts";
+import { useCategories } from "../hooks/useCategories";
 import { CATEGORIES } from "../types/expense";
-import type { Category, Expense } from "../types/expense";
+import type { Expense } from "../types/expense";
 import { toast } from 'react-toastify';
 import useSettings from "../hooks/useSettings";
 import { useGamification } from "../hooks/useGamification"; // Import
@@ -19,9 +21,13 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
 
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState("");
-  const [category, setCategory] = useState<Category>(settings.defaultCategory as Category || "Food");
+  const [category, setCategory] = useState<string>(settings.defaultCategory || "Food");
+  const [accountId, setAccountId] = useState("");
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { accounts } = useAccounts();
+  const { categories: userCategories } = useCategories();
 
   // Online status
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
@@ -43,8 +49,9 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
       setCategory(editingExpense.category);
       setNote(editingExpense.note ?? "");
       setDate(editingExpense.date);
+      setAccountId(editingExpense.accountId ?? "");
     } else {
-      const last = localStorage.getItem("lastCategory") as Category | null;
+      const last = localStorage.getItem("lastCategory");
       if (last) setCategory(last);
       setDate(new Date().toISOString().slice(0, 10));
     }
@@ -66,6 +73,7 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
         category,
         note,
         month,
+        accountId,
       };
 
       if (editingExpense?.id) {
@@ -130,14 +138,41 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
             <select
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 font-medium text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
               value={category}
-              onChange={e => setCategory(e.target.value as Category)}
+              onChange={e => setCategory(e.target.value)}
             >
-              {CATEGORIES.map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
+              <optgroup label="Default">
+                {CATEGORIES.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </optgroup>
+              {userCategories.length > 0 && (
+                <optgroup label="Custom">
+                  {userCategories.map(c => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                </optgroup>
+              )}
             </select>
             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">▼</div>
           </div>
+        </div>
+      </div>
+
+      {/* Account Select */}
+      <div>
+        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Account (Optional)</label>
+        <div className="relative">
+          <select
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 font-medium text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
+            value={accountId}
+            onChange={e => setAccountId(e.target.value)}
+          >
+            <option value="">Select Account</option>
+            {accounts.map(acc => (
+              <option key={acc.id} value={acc.id}>{acc.name}</option>
+            ))}
+          </select>
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">▼</div>
         </div>
       </div>
 

@@ -3,6 +3,9 @@ import useSettings from "../hooks/useSettings";
 import { CATEGORIES } from "../types/expense";
 import { useAuth } from "../hooks/useAuth";
 import { useExpenses } from "../hooks/useExpenses";
+import { useCategories } from "../hooks/useCategories";
+import { useAccountTypes } from "../hooks/useAccountTypes";
+import { useAccounts } from "../hooks/useAccounts";
 import { exportExpensesToCSV } from "../utils/exportCsv";
 import { deleteDoc, collection, getDocs, doc, writeBatch, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
@@ -56,6 +59,14 @@ export default function SettingsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [username, setUsername] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const { categories, addCategory, deleteCategory } = useCategories();
+  const { accountTypes, addAccountType, deleteAccountType } = useAccountTypes();
+  const { accounts, addAccount, deleteAccount } = useAccounts();
+
+  const [newCategory, setNewCategory] = useState("");
+  const [newAccountType, setNewAccountType] = useState("");
+  const [newAccountName, setNewAccountName] = useState("");
+  const [selectedAccountType, setSelectedAccountType] = useState("");
 
   // Fetch existing username on mount
   useEffect(() => {
@@ -160,33 +171,33 @@ export default function SettingsPage() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="max-w-2xl mx-auto px-4 pt-24 pb-20 space-y-6"
+        className="max-w-2xl mx-auto px-4 pt-20 md:pt-24 pb-20 space-y-4 md:space-y-6"
       >
         {/* Profile Section */}
-        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center gap-4 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
+        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col sm:flex-row items-center gap-4 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
           <Avatar
             src={user?.photoURL}
             name={user?.displayName || "User"}
             size={64}
             className="shadow-md ring-4 ring-white"
           />
-          <div>
-            <div className="text-xl font-bold text-slate-900">{user?.displayName || "Guest User"}</div>
-            <div className="text-sm text-slate-500 font-medium">{user?.email}</div>
+          <div className="text-center sm:text-left flex-1">
+            <div className="text-lg md:text-xl font-bold text-slate-900">{user?.displayName || "Guest User"}</div>
+            <div className="text-sm text-slate-500 font-medium break-all">{user?.email}</div>
           </div>
-
-          <div className="ml-auto flex items-center gap-2">
+          
+          <div className="w-full sm:w-auto flex items-center gap-2">
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Set username"
-              className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 w-32 md:w-48 outline-none"
+              placeholder="Username"
+              className="flex-1 sm:w-32 md:w-48 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none"
             />
             <button
               onClick={handleSaveProfile}
               disabled={isSavingProfile}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors disabled:opacity-50"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded-xl text-sm transition-all shadow-sm active:scale-95 disabled:opacity-50"
             >
               {isSavingProfile ? "..." : "Save"}
             </button>
@@ -194,7 +205,7 @@ export default function SettingsPage() {
         </motion.div>
 
         {/* Preferences Section */}
-        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-6">
+        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-6">
           <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
             <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600">🎨</span>
             Preferences
@@ -274,7 +285,7 @@ export default function SettingsPage() {
         </motion.div>
 
         {/* Dashboard Customization Section */}
-        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
+        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
           <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
             <span className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">📊</span>
             Dashboard Widgets
@@ -306,7 +317,7 @@ export default function SettingsPage() {
         </motion.div>
 
         {/* Protection Section */}
-        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
           <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
             <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">🛡️</span>
             Protection
@@ -329,12 +340,12 @@ export default function SettingsPage() {
         </motion.div>
 
         {/* Data Section */}
-        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
+        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
           <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
             <span className="p-1.5 rounded-lg bg-amber-50 text-amber-600">💾</span>
             Data Management
           </h3>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <select
                 value={String(settings.exportYear)}
@@ -352,15 +363,142 @@ export default function SettingsPage() {
             </div>
             <button
               onClick={handleExportYear}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all duration-200"
+              className="w-full sm:flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all duration-200"
             >
               Export CSV
             </button>
           </div>
         </motion.div>
 
+        {/* Account Types Section */}
+        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
+          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-purple-50 text-purple-600">🏷️</span>
+            Account Types
+          </h3>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newAccountType}
+              onChange={(e) => setNewAccountType(e.target.value)}
+              placeholder="e.g. Bank, Cash, Card"
+              className="flex-1 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500/20"
+            />
+            <button
+              onClick={() => { addAccountType(newAccountType); setNewAccountType(""); }}
+              className="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm active:scale-95"
+            >
+              Add
+            </button>
+          </div>
+          <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+            {accountTypes.map((type) => (
+              <div key={type.id} className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/50 border border-slate-100 group">
+                <span className="text-sm font-semibold text-slate-700">{type.name}</span>
+                <button
+                  onClick={() => deleteAccountType(type.id)}
+                  className="text-slate-400 hover:text-red-500 p-1 transition-colors opacity-0 group-hover:opacity-100"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                </button>
+              </div>
+            ))}
+            {accountTypes.length === 0 && <p className="text-xs text-slate-400 text-center py-4 italic">No account types added yet.</p>}
+          </div>
+        </motion.div>
+
+        {/* Accounts Section */}
+        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
+          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">🏦</span>
+            Accounts
+          </h3>
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input
+                type="text"
+                value={newAccountName}
+                onChange={(e) => setNewAccountName(e.target.value)}
+                placeholder="Account Name"
+                className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+              <select
+                value={selectedAccountType}
+                onChange={(e) => setSelectedAccountType(e.target.value)}
+                className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 outline-none cursor-pointer appearance-none"
+              >
+                <option value="">Select Type</option>
+                {accountTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </div>
+            <button
+              onClick={() => { addAccount(newAccountName, selectedAccountType); setNewAccountName(""); setSelectedAccountType(""); }}
+              disabled={!newAccountName || !selectedAccountType}
+              className="w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-50 transition-all shadow-md shadow-blue-500/10 active:scale-[0.98]"
+            >
+              Add Account
+            </button>
+          </div>
+          <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+            {accounts.map((acc) => (
+              <div key={acc.id} className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/50 border border-slate-100 group">
+                <div>
+                  <div className="text-sm font-bold text-slate-800">{acc.name}</div>
+                  <div className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">
+                    {accountTypes.find(t => t.id === acc.typeId)?.name || 'Unknown Type'}
+                  </div>
+                </div>
+                <button
+                  onClick={() => deleteAccount(acc.id)}
+                  className="text-slate-400 hover:text-red-500 p-1 transition-colors opacity-0 group-hover:opacity-100"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                </button>
+              </div>
+            ))}
+            {accounts.length === 0 && <p className="text-xs text-slate-400 text-center py-4 italic">No accounts added yet.</p>}
+          </div>
+        </motion.div>
+
+        {/* Custom Categories Section */}
+        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
+          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-orange-50 text-orange-600">📁</span>
+            Custom Categories
+          </h3>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              placeholder="New category name"
+              className="flex-1 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500/20"
+            />
+            <button
+              onClick={() => { addCategory(newCategory); setNewCategory(""); }}
+              className="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm active:scale-95"
+            >
+              Add
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+            {categories.map((cat) => (
+              <div key={cat.id} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/50 border border-slate-100 group">
+                <span className="text-xs font-bold text-slate-700">{cat.name}</span>
+                <button
+                  onClick={() => deleteCategory(cat.id)}
+                  className="text-slate-400 hover:text-red-500 p-1 transition-colors opacity-0 group-hover:opacity-100"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                </button>
+              </div>
+            ))}
+            {categories.length === 0 && <p className="text-xs text-slate-400 text-center col-span-2 py-4 italic">No custom categories. (Defaults available)</p>}
+          </div>
+        </motion.div>
+
         {/* Danger Zone */}
-        <motion.div variants={itemVariants} className="bg-red-50/50 backdrop-blur-sm border border-red-100 p-6 rounded-3xl space-y-4">
+        <motion.div variants={itemVariants} className="bg-red-50/50 backdrop-blur-sm border border-red-100 p-4 md:p-6 rounded-3xl space-y-4">
           <h3 className="text-lg font-bold text-red-600 flex items-center gap-2">
             <span className="p-1.5 rounded-lg bg-red-100/50 text-red-600">⚠️</span>
             Danger Zone

@@ -1,4 +1,5 @@
 import { useExpenses } from "../hooks/useExpenses";
+import { useAccounts } from "../hooks/useAccounts";
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
@@ -17,6 +18,7 @@ import { cn } from "../lib/utils";
 export default function ExpenseListPage() {
   const { settings } = useSettings();
   const expenses = useExpenses();
+  const { accounts } = useAccounts();
 
   const months = useMemo(
     () => [...new Set(expenses.map(e => e.month))].sort().reverse(),
@@ -210,7 +212,7 @@ export default function ExpenseListPage() {
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 ml-2">Today</h4>
                 <div className="space-y-2">
                   {today.map((e) => (
-                    <ExpenseRow key={e.id} expense={e} currentMonth={currentMonth} settings={settings} navigate={navigate} setDeleteTarget={setDeleteTarget} />
+                    <ExpenseRow key={e.id} expense={e} currentMonth={currentMonth} settings={settings} navigate={navigate} setDeleteTarget={setDeleteTarget} accounts={accounts} />
                   ))}
                 </div>
               </div>
@@ -221,7 +223,7 @@ export default function ExpenseListPage() {
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 ml-2">Yesterday</h4>
                 <div className="space-y-2">
                   {yesterday.map((e) => (
-                    <ExpenseRow key={e.id} expense={e} currentMonth={currentMonth} settings={settings} navigate={navigate} setDeleteTarget={setDeleteTarget} />
+                    <ExpenseRow key={e.id} expense={e} currentMonth={currentMonth} settings={settings} navigate={navigate} setDeleteTarget={setDeleteTarget} accounts={accounts} />
                   ))}
                 </div>
               </div>
@@ -232,7 +234,7 @@ export default function ExpenseListPage() {
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 ml-2">Earlier</h4>
                 <div className="space-y-2">
                   {earlier.map((e) => (
-                    <ExpenseRow key={e.id} expense={e} currentMonth={currentMonth} settings={settings} navigate={navigate} setDeleteTarget={setDeleteTarget} />
+                    <ExpenseRow key={e.id} expense={e} currentMonth={currentMonth} settings={settings} navigate={navigate} setDeleteTarget={setDeleteTarget} accounts={accounts} />
                   ))}
                 </div>
               </div>
@@ -255,8 +257,9 @@ export default function ExpenseListPage() {
 }
 
 // Extracted ExpenseRow for cleaner code
-function ExpenseRow({ expense: e, currentMonth, settings, navigate, setDeleteTarget }: any) {
+function ExpenseRow({ expense: e, currentMonth, settings, navigate, setDeleteTarget, accounts }: any) {
   const isLocked = settings.lockPastMonths && e.month !== currentMonth;
+  const account = accounts.find((a: any) => a.id === e.accountId);
 
   return (
     <motion.div
@@ -275,6 +278,11 @@ function ExpenseRow({ expense: e, currentMonth, settings, navigate, setDeleteTar
       <div className="flex flex-col gap-1 z-10">
         <div className="flex items-center gap-2">
           <span className="font-bold text-slate-800">{e.category}</span>
+          {account && (
+            <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100 font-bold">
+              {account.name}
+            </span>
+          )}
           {isLocked && <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">Locked</span>}
         </div>
 
