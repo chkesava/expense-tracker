@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSubscriptions } from "../hooks/useSubscriptions";
-import { CATEGORIES, type Category } from "../types/expense";
+import { CATEGORIES } from "../types/expense";
 import { cn } from "../lib/utils";
 import { Link } from "react-router-dom";
 
@@ -12,7 +12,7 @@ export default function SubscriptionsPage() {
     // Form State
     const [name, setName] = useState("");
     const [amount, setAmount] = useState("");
-    const [category, setCategory] = useState<Category>("Subscriptions");
+    const [category, setCategory] = useState<string>("Subscriptions");
     const [day, setDay] = useState("1");
 
     const [isDisabled, setIsDisabled] = useState(false);
@@ -129,7 +129,7 @@ export default function SubscriptionsPage() {
                                 <select
                                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 mt-1 font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500/20 outline-none"
                                     value={category}
-                                    onChange={e => setCategory(e.target.value as Category)}
+                                    onChange={e => setCategory(e.target.value)}
                                 >
                                     {CATEGORIES.map(c => (
                                         <option key={c} value={c}>{c}</option>
