@@ -68,6 +68,48 @@ export default function SettingsPage() {
   const [newAccountName, setNewAccountName] = useState("");
   const [selectedAccountType, setSelectedAccountType] = useState("");
 
+  const getAccountTypePalette = (name: string) => {
+    const normalized = name.trim().toLowerCase();
+
+    if (normalized.includes("bank")) {
+      return {
+        ribbon: "bg-emerald-600 text-white",
+        chip: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        dot: "bg-emerald-500",
+      };
+    }
+
+    if (normalized.includes("cash")) {
+      return {
+        ribbon: "bg-amber-500 text-amber-950",
+        chip: "bg-amber-50 text-amber-700 border-amber-200",
+        dot: "bg-amber-500",
+      };
+    }
+
+    if (normalized.includes("card") || normalized.includes("credit") || normalized.includes("debit")) {
+      return {
+        ribbon: "bg-violet-600 text-white",
+        chip: "bg-violet-50 text-violet-700 border-violet-200",
+        dot: "bg-violet-500",
+      };
+    }
+
+    if (normalized.includes("wallet") || normalized.includes("upi")) {
+      return {
+        ribbon: "bg-sky-600 text-white",
+        chip: "bg-sky-50 text-sky-700 border-sky-200",
+        dot: "bg-sky-500",
+      };
+    }
+
+    return {
+      ribbon: "bg-slate-700 text-white",
+      chip: "bg-slate-100 text-slate-700 border-slate-200",
+      dot: "bg-slate-500",
+    };
+  };
+
   // Fetch existing username on mount
   useEffect(() => {
     async function fetchProfile() {
@@ -171,7 +213,7 @@ export default function SettingsPage() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="max-w-2xl mx-auto px-4 pt-20 md:pt-24 pb-20 space-y-4 md:space-y-6"
+        className="max-w-3xl mx-auto px-4 pt-20 md:pt-24 pb-28 md:pb-20 space-y-4 md:space-y-6"
       >
         {/* Profile Section */}
         <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col sm:flex-row items-center gap-4 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
@@ -186,18 +228,18 @@ export default function SettingsPage() {
             <div className="text-sm text-slate-500 font-medium break-all">{user?.email}</div>
           </div>
           
-          <div className="w-full sm:w-auto flex items-center gap-2">
+          <div className="w-full sm:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Username"
-              className="flex-1 sm:w-32 md:w-48 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none"
+              className="min-h-11 flex-1 sm:w-32 md:w-48 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block px-3 py-2.5 outline-none"
             />
             <button
               onClick={handleSaveProfile}
               disabled={isSavingProfile}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded-xl text-sm transition-all shadow-sm active:scale-95 disabled:opacity-50"
+              className="min-h-11 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded-xl text-sm transition-all shadow-sm active:scale-95 disabled:opacity-50"
             >
               {isSavingProfile ? "..." : "Save"}
             </button>
@@ -297,10 +339,10 @@ export default function SettingsPage() {
               { id: 'gamification', label: 'Gamification', desc: 'Level, XP & stats' },
               { id: 'topCategories', label: 'Top Categories', desc: 'Ranking by spend' },
             ].map((widget) => (
-              <div key={widget.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50/50 border border-slate-100/50">
+              <div key={widget.id} className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50/70 border border-slate-100/80 min-h-20">
                 <div>
                   <div className="text-[14px] font-semibold text-slate-800">{widget.label}</div>
-                  <div className="text-[10px] text-slate-500 font-medium">{widget.desc}</div>
+                  <div className="mt-1 text-[11px] leading-4 text-slate-500 font-medium">{widget.desc}</div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -322,7 +364,7 @@ export default function SettingsPage() {
             <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">🛡️</span>
             Protection
           </h3>
-          <div className="flex items-center justify-between p-2">
+          <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50/70 border border-slate-100/80 px-4 py-3">
             <div>
               <div className="text-[15px] font-semibold text-slate-800">Lock past months</div>
               <div className="text-xs text-slate-500 font-medium mt-0.5">Prevent changes to history</div>
@@ -376,34 +418,37 @@ export default function SettingsPage() {
             <span className="p-1.5 rounded-lg bg-purple-50 text-purple-600">🏷️</span>
             Account Types
           </h3>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
               value={newAccountType}
               onChange={(e) => setNewAccountType(e.target.value)}
               placeholder="e.g. Bank, Cash, Card"
-              className="flex-1 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="min-h-11 flex-1 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-blue-500/20"
             />
             <button
               onClick={() => { addAccountType(newAccountType); setNewAccountType(""); }}
-              className="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm active:scale-95"
+              className="min-h-11 bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm active:scale-95"
             >
               Add
             </button>
           </div>
-          <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-1 scrollbar-thin">
             {accountTypes.map((type) => (
-              <div key={type.id} className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/50 border border-slate-100 group">
-                <span className="text-sm font-semibold text-slate-700">{type.name}</span>
+              <div key={type.id} className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50/70 border border-slate-100 group">
+                <span className={cn("inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold uppercase tracking-[0.24em]", getAccountTypePalette(type.name).chip)}>
+                  <span className={cn("h-2 w-2 rounded-full", getAccountTypePalette(type.name).dot)} />
+                  {type.name}
+                </span>
                 <button
                   onClick={() => deleteAccountType(type.id)}
-                  className="text-slate-400 hover:text-red-500 p-1 transition-colors opacity-0 group-hover:opacity-100"
+                  className="text-slate-400 hover:text-red-500 p-1 transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                 </button>
               </div>
             ))}
-            {accountTypes.length === 0 && <p className="text-xs text-slate-400 text-center py-4 italic">No account types added yet.</p>}
+            {accountTypes.length === 0 && <p className="text-xs text-slate-400 text-center py-4 italic sm:col-span-2">No account types added yet.</p>}
           </div>
         </motion.div>
 
@@ -420,12 +465,12 @@ export default function SettingsPage() {
                 value={newAccountName}
                 onChange={(e) => setNewAccountName(e.target.value)}
                 placeholder="Account Name"
-                className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-blue-500/20"
               />
               <select
                 value={selectedAccountType}
                 onChange={(e) => setSelectedAccountType(e.target.value)}
-                className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 outline-none cursor-pointer appearance-none"
+                className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none cursor-pointer appearance-none"
               >
                 <option value="">Select Type</option>
                 {accountTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -434,29 +479,43 @@ export default function SettingsPage() {
             <button
               onClick={() => { addAccount(newAccountName, selectedAccountType); setNewAccountName(""); setSelectedAccountType(""); }}
               disabled={!newAccountName || !selectedAccountType}
-              className="w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-50 transition-all shadow-md shadow-blue-500/10 active:scale-[0.98]"
+              className="w-full min-h-11 bg-blue-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-50 transition-all shadow-md shadow-blue-500/10 active:scale-[0.98]"
             >
               Add Account
             </button>
           </div>
-          <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-            {accounts.map((acc) => (
-              <div key={acc.id} className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/50 border border-slate-100 group">
-                <div>
-                  <div className="text-sm font-bold text-slate-800">{acc.name}</div>
-                  <div className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">
-                    {accountTypes.find(t => t.id === acc.typeId)?.name || 'Unknown Type'}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1 scrollbar-thin">
+            {accounts.map((acc) => {
+              const typeName = accountTypes.find(t => t.id === acc.typeId)?.name || "Unknown Type";
+              const palette = getAccountTypePalette(typeName);
+
+              return (
+                <div key={acc.id} className="group relative overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-gradient-to-br from-white to-slate-50/80 p-4 pt-12 shadow-[0_8px_30px_rgb(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_35px_rgb(15,23,42,0.08)]">
+                  <div className={cn("absolute right-3 top-3 rounded-full px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.24em] shadow-sm", palette.ribbon)}>
+                    {typeName}
+                  </div>
+
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-bold text-slate-900">{acc.name}</div>
+                      <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                        <span className={cn("h-2.5 w-2.5 rounded-full", palette.dot)} />
+                        Ready for expense tagging
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => deleteAccount(acc.id)}
+                      className="shrink-0 rounded-xl border border-slate-200 bg-white p-2 text-slate-400 transition-colors hover:border-red-200 hover:text-red-500 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                      aria-label={`Delete ${acc.name}`}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                    </button>
                   </div>
                 </div>
-                <button
-                  onClick={() => deleteAccount(acc.id)}
-                  className="text-slate-400 hover:text-red-500 p-1 transition-colors opacity-0 group-hover:opacity-100"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                </button>
-              </div>
-            ))}
-            {accounts.length === 0 && <p className="text-xs text-slate-400 text-center py-4 italic">No accounts added yet.</p>}
+              );
+            })}
+            {accounts.length === 0 && <p className="text-xs text-slate-400 text-center py-4 italic sm:col-span-2">No accounts added yet.</p>}
           </div>
         </motion.div>
 
@@ -466,28 +525,28 @@ export default function SettingsPage() {
             <span className="p-1.5 rounded-lg bg-orange-50 text-orange-600">📁</span>
             Custom Categories
           </h3>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
               placeholder="New category name"
-              className="flex-1 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="min-h-11 flex-1 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-blue-500/20"
             />
             <button
               onClick={() => { addCategory(newCategory); setNewCategory(""); }}
-              className="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm active:scale-95"
+              className="min-h-11 bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm active:scale-95"
             >
               Add
             </button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
             {categories.map((cat) => (
               <div key={cat.id} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/50 border border-slate-100 group">
                 <span className="text-xs font-bold text-slate-700">{cat.name}</span>
                 <button
                   onClick={() => deleteCategory(cat.id)}
-                  className="text-slate-400 hover:text-red-500 p-1 transition-colors opacity-0 group-hover:opacity-100"
+                  className="text-slate-400 hover:text-red-500 p-1 transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                 </button>
