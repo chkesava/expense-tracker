@@ -70,7 +70,6 @@ export default function Header() {
         "bg-white/75 dark:bg-slate-950/75 backdrop-blur-2xl border-b border-slate-200/60 dark:border-slate-800 shadow-[0_8px_30px_rgb(15,23,42,0.06)] transition-all duration-300"
       )}
     >
-      {/* LEFT – Status */}
       {/* LEFT – Status & Logo */}
       <div className="flex-1 flex items-center gap-3">
         <div
@@ -176,6 +175,7 @@ export default function Header() {
           whileTap={{ scale: 0.95 }}
           onClick={() => setOpen((s) => !s)}
           className="rounded-full p-0.5 border-2 border-white/80 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 hover:shadow-md transition-shadow"
+          aria-label="User menu"
         >
           <Avatar
             src={user?.photoURL}
