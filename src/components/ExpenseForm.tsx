@@ -12,6 +12,7 @@ import useSettings from "../hooks/useSettings";
 import { useGamification } from "../hooks/useGamification"; // Import
 import { cn } from "../lib/utils";
 import { motion } from "framer-motion";
+import { useCategorizationRules } from "../hooks/useCategorizationRules";
 
 export default function ExpenseForm({ editingExpense }: { editingExpense?: Expense | null }) {
   const { user } = useAuth();
@@ -25,9 +26,12 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
   const [accountId, setAccountId] = useState("");
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categoryTouched, setCategoryTouched] = useState(false);
+  const [matchedRule, setMatchedRule] = useState<string | null>(null);
 
   const { accounts } = useAccounts();
   const { categories: userCategories } = useCategories();
+  const { rules } = useCategorizationRules();
 
   // Online status
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
@@ -50,12 +54,33 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
       setNote(editingExpense.note ?? "");
       setDate(editingExpense.date);
       setAccountId(editingExpense.accountId ?? "");
+      setCategoryTouched(true);
     } else {
       const last = localStorage.getItem("lastCategory");
       if (last) setCategory(last);
       setDate(new Date().toISOString().slice(0, 10));
+      setCategoryTouched(false);
     }
   }, [editingExpense]);
+
+  useEffect(() => {
+    if (editingExpense || categoryTouched) return;
+
+    const normalizedNote = note.trim().toLowerCase();
+    if (!normalizedNote) {
+      setMatchedRule(null);
+      return;
+    }
+
+    const match = rules.find((rule) => normalizedNote.includes(rule.keyword.toLowerCase()));
+    if (!match) {
+      setMatchedRule(null);
+      return;
+    }
+
+    setCategory(match.category);
+    setMatchedRule(match.keyword);
+  }, [note, rules, editingExpense, categoryTouched]);
 
   const currentMonth = new Date().toISOString().slice(0, 7);
   const isLocked = !!editingExpense && settings.lockPastMonths && editingExpense.month !== currentMonth;
@@ -138,7 +163,11 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
             <select
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 font-medium text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
               value={category}
-              onChange={e => setCategory(e.target.value)}
+              onChange={e => {
+                setCategoryTouched(true);
+                setMatchedRule(null);
+                setCategory(e.target.value);
+              }}
             >
               <optgroup label="Default">
                 {CATEGORIES.map(c => (
@@ -185,6 +214,11 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
           value={note}
           onChange={e => setNote(e.target.value)}
         />
+        {matchedRule && !editingExpense && (
+          <div className="mt-2 text-xs font-medium text-blue-600">
+            Auto-categorized from rule: "{matchedRule}"
+          </div>
+        )}
       </div>
 
       {/* Submit Button */}

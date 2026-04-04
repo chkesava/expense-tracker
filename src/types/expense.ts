@@ -35,6 +35,30 @@ export interface Account {
   createdAt?: unknown;
 }
 
+export interface CategoryBudget {
+  id: string;
+  category: string;
+  amount: number;
+  month: string;
+  createdAt?: unknown;
+}
+
+export interface FinancialGoal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline?: string;
+  createdAt?: unknown;
+}
+
+export interface CategorizationRule {
+  id: string;
+  keyword: string;
+  category: string;
+  createdAt?: unknown;
+}
+
 export interface Expense {
   id?: string;
   amount: number;

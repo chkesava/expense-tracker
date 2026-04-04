@@ -6,9 +6,11 @@ import {
   BarChart3,
   Home,
   LogOut,
+  Moon,
   Plus,
   Settings,
   Shield,
+  Sun,
   Wallet,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
@@ -16,6 +18,7 @@ import useOnline from "../hooks/useOnline";
 import { useGamification } from "../hooks/useGamification";
 import Avatar from "./Avatar";
 import { cn } from "../lib/utils";
+import { useTheme } from "../hooks/useTheme";
 
 import { useUserRole } from "../hooks/useUserRole";
 
@@ -26,6 +29,7 @@ export default function Header() {
   const { isOnline } = useOnline();
   const { stats } = useGamification();
   const { isAdmin } = useUserRole();
+  const { theme, toggleTheme } = useTheme();
 
   const desktopLinks = [
     { path: "/dashboard", label: "Home", icon: Home },
@@ -63,7 +67,7 @@ export default function Header() {
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
         "fixed top-0 left-0 w-full z-50 px-4 sm:px-6 py-3 flex items-center justify-between",
-        "bg-white/75 backdrop-blur-2xl border-b border-slate-200/60 shadow-[0_8px_30px_rgb(15,23,42,0.06)] transition-all duration-300"
+        "bg-white/75 dark:bg-slate-950/75 backdrop-blur-2xl border-b border-slate-200/60 dark:border-slate-800 shadow-[0_8px_30px_rgb(15,23,42,0.06)] transition-all duration-300"
       )}
     >
       {/* LEFT – Status */}
@@ -101,7 +105,7 @@ export default function Header() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => navigate("/dashboard")}
-          className="inline-flex items-center gap-2 text-lg sm:text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent cursor-pointer tracking-tight"
+          className="inline-flex items-center gap-2 text-lg sm:text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent cursor-pointer tracking-tight"
         >
           <span className="hidden sm:inline-flex w-7 h-7 rounded-lg bg-blue-600/10 items-center justify-center text-blue-600">
             <Activity size={16} />
@@ -111,7 +115,7 @@ export default function Header() {
       </div>
 
       {/* CENTER - Desktop Nav */}
-      <nav className="hidden md:flex items-center gap-1 bg-slate-100/70 p-1 rounded-full border border-slate-200/70 backdrop-blur-md">
+      <nav className="hidden md:flex items-center gap-1 bg-slate-100/70 dark:bg-slate-900/70 p-1 rounded-full border border-slate-200/70 dark:border-slate-800 backdrop-blur-md">
         {desktopLinks.map((link) => {
           const isActive = location.pathname === link.path;
           const Icon = link.icon;
@@ -121,13 +125,13 @@ export default function Header() {
               onClick={() => navigate(link.path)}
               className={cn(
                 "relative px-4 py-1.5 rounded-full text-sm font-semibold transition-colors duration-200 flex items-center gap-2",
-                isActive ? "text-blue-600" : "text-slate-500 hover:text-slate-700"
+                isActive ? "text-blue-600" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-100"
               )}
             >
               {isActive && (
                 <motion.div
                   layoutId="header-nav-pill"
-                  className="absolute inset-0 bg-white shadow-sm rounded-full border border-slate-100"
+                  className="absolute inset-0 bg-white dark:bg-slate-950 shadow-sm rounded-full border border-slate-100 dark:border-slate-800"
                   transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
               )}
@@ -140,6 +144,16 @@ export default function Header() {
 
       {/* RIGHT – Profile & Actions */}
       <div className="flex-1 flex justify-end items-center gap-3 relative">
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={toggleTheme}
+          className="inline-flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 p-2.5 text-slate-600 dark:text-slate-200 shadow-sm hover:shadow-md transition-all"
+          aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+        >
+          {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
+        </motion.button>
+
         {/* Desktop Add Button */}
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -161,7 +175,7 @@ export default function Header() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setOpen((s) => !s)}
-          className="rounded-full p-0.5 border-2 border-white/80 shadow-sm bg-white hover:shadow-md transition-shadow"
+          className="rounded-full p-0.5 border-2 border-white/80 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 hover:shadow-md transition-shadow"
         >
           <Avatar
             src={user?.photoURL}
@@ -178,7 +192,7 @@ export default function Header() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ duration: 0.2 }}
-              className="absolute right-0 top-14 w-64 p-2 bg-white/80 backdrop-blur-2xl border border-white/60 rounded-2xl shadow-xl overflow-hidden z-[60]"
+              className="absolute right-0 top-14 w-64 p-2 bg-white/80 dark:bg-slate-950/90 backdrop-blur-2xl border border-white/60 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden z-[60]"
             >
               <div className="p-3 mb-2 flex items-center gap-3">
                 <Avatar
@@ -188,23 +202,33 @@ export default function Header() {
                   className="shadow-sm"
                 />
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold text-slate-800 truncate text-[15px]">
+                  <div className="font-bold text-slate-800 dark:text-slate-100 truncate text-[15px]">
                     {user?.displayName || "Guest User"}
                   </div>
-                  <div className="text-xs text-slate-500 truncate">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
                     {user?.email}
                   </div>
                 </div>
               </div>
 
-              <div className="h-px bg-slate-200/50 mx-2 mb-2" />
+              <div className="h-px bg-slate-200/50 dark:bg-slate-800 mx-2 mb-2" />
 
               <div className="space-y-1">
                 <button
-                  onClick={() => navigate("/settings")}
-                  className="w-full flex items-center gap-3 p-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100/80 hover:text-blue-600 transition-colors"
+                  onClick={toggleTheme}
+                  className="w-full flex items-center gap-3 p-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-900 transition-colors"
                 >
-                  <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+                  <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-300">
+                    {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
+                  </span>
+                  {theme === "light" ? "Dark Mode" : "Light Mode"}
+                </button>
+
+                <button
+                  onClick={() => navigate("/settings")}
+                  className="w-full flex items-center gap-3 p-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-900 hover:text-blue-600 transition-colors"
+                >
+                  <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-300">
                     <Settings size={16} />
                   </span>
                   Settings

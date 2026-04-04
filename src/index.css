@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
   :root {
@@ -62,6 +63,7 @@
     -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
     font-feature-settings: "rlig" 1, "calt" 1;
+    transition: background-color 200ms ease, color 200ms ease;
   }
 }
 
@@ -177,5 +179,69 @@
   *:focus-visible {
     outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .dark .settings-page .bg-white\/80 {
+    background-color: rgb(15 23 42 / 0.8);
+  }
+
+  .dark .settings-page .border-white\/60 {
+    border-color: rgb(30 41 59 / 1);
+  }
+
+  .dark .settings-page .bg-slate-50\/70,
+  .dark .settings-page .bg-slate-50\/50 {
+    background-color: rgb(2 6 23 / 0.6);
+  }
+
+  .dark .settings-page .border-slate-100\/80,
+  .dark .settings-page .border-slate-100 {
+    border-color: rgb(30 41 59 / 1);
+  }
+
+  .dark .settings-page .bg-slate-50 {
+    background-color: rgb(2 6 23 / 0.7);
+  }
+
+  .dark .settings-page .border-slate-200 {
+    border-color: rgb(51 65 85 / 1);
+  }
+
+  .dark .settings-page .bg-white {
+    background-color: rgb(2 6 23 / 1);
+  }
+
+  .dark .settings-page .text-slate-800,
+  .dark .settings-page .text-slate-900 {
+    color: rgb(241 245 249 / 1);
+  }
+
+  .dark .settings-page .text-slate-700 {
+    color: rgb(226 232 240 / 1);
+  }
+
+  .dark .settings-page .text-slate-500,
+  .dark .settings-page .text-slate-400 {
+    color: rgb(148 163 184 / 1);
+  }
+
+  .dark .settings-page .from-white {
+    --tw-gradient-from: rgb(15 23 42 / 1) var(--tw-gradient-from-position);
+    --tw-gradient-to: rgb(15 23 42 / 0) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .dark .settings-page .to-slate-50\/80 {
+    --tw-gradient-to: rgb(2 6 23 / 0.92) var(--tw-gradient-to-position);
+  }
+
+  .dark .settings-page .bg-red-50\/50 {
+    background-color: rgb(69 10 10 / 0.22);
+  }
+
+  .dark .settings-page .border-red-100 {
+    border-color: rgb(127 29 29 / 0.45);
   }
 }

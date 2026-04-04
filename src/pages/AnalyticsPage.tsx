@@ -9,62 +9,63 @@ import MonthlyBar from "../components/charts/MonthlyBar";
 import TrendLine from "../components/charts/TrendLine";
 import DailyTrend from "../components/charts/DailyTrend";
 
-import MonthSelector from "../components/MonthSelector";
 import SmartSummary from "../components/analytics/SmartSummary";
 import CategoryBars from "../components/analytics/CategoryBars";
 import MonthlyComparison from "../components/analytics/MonthlyComparison";
 import WeeklySummary from "../components/analytics/WeeklySummary";
-import Collapsible from "../components/common/Collapsible";
 
 export default function AnalyticsPage() {
   const expenses = useExpenses();
 
   const months = useMemo(() => {
-    return Array.from(new Set(expenses.map(e => e.month)))
+    return Array.from(new Set(expenses.map((expense) => expense.month)))
       .sort()
       .reverse();
   }, [expenses]);
 
-  const [userSelectedMonth, setUserSelectedMonth] = useState<string | null>(null);
+  const [userSelectedMonth] = useState<string | null>(null);
   const selectedMonth = userSelectedMonth ?? months[0] ?? "";
 
   const filteredExpenses = useMemo(() => {
-    if (!selectedMonth) return [];
-    return expenses.filter(e => e.month === selectedMonth);
+    if (!selectedMonth) {
+      return [];
+    }
+
+    return expenses.filter((expense) => expense.month === selectedMonth);
   }, [expenses, selectedMonth]);
 
   return (
     <motion.main
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="max-w-4xl mx-auto pt-24 pb-20 px-4 md:px-6 min-h-screen"
+      className="mx-auto min-h-screen max-w-4xl px-4 pb-20 pt-24 md:px-6"
     >
-      {/* Month Selector with High Z-Index */}
-
       <div className="space-y-6">
-        {/* Summary Details */}
-        <section className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-sm">
-          <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">📈</span>
+        <section className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
+          <h2 className="mb-6 flex items-center gap-2 text-lg font-bold text-slate-800 dark:text-slate-100">
+            <span className="rounded-lg bg-indigo-50 p-1.5 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-300">
+              📈
+            </span>
             Performance Summary
           </h2>
           <div className="space-y-6">
             <SmartSummary expenses={filteredExpenses} />
-            <div className="h-px bg-slate-100" />
+            <div className="h-px bg-slate-100 dark:bg-slate-800" />
             <MonthlyComparison expenses={expenses} />
-            <div className="h-px bg-slate-100" />
+            <div className="h-px bg-slate-100 dark:bg-slate-800" />
             <WeeklySummary expenses={expenses} month={selectedMonth} />
           </div>
         </section>
 
-        {/* Category Breakdown */}
-        <section className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-sm">
-          <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">🍩</span>
+        <section className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
+          <h2 className="mb-6 flex items-center gap-2 text-lg font-bold text-slate-800 dark:text-slate-100">
+            <span className="rounded-lg bg-emerald-50 p-1.5 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-300">
+              🍩
+            </span>
             Spending Breakdown
           </h2>
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div className="h-64 flex items-center justify-center">
+          <div className="grid items-center gap-8 md:grid-cols-2">
+            <div className="flex h-64 items-center justify-center">
               <CategoryPie data={groupByCategory(filteredExpenses)} />
             </div>
             <div>
@@ -73,22 +74,26 @@ export default function AnalyticsPage() {
           </div>
         </section>
 
-        {/* Trends */}
-        <div className="grid md:grid-cols-2 gap-6">
-          <section className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-sm">
-            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Total Spending Trend</h3>
+        <div className="grid gap-6 md:grid-cols-2">
+          <section className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
+            <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Total Spending Trend
+            </h3>
             <MonthlyBar data={groupByMonth(expenses)} />
           </section>
 
-          <section className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-sm">
-            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Spending Velocity</h3>
+          <section className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
+            <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Spending Velocity
+            </h3>
             <TrendLine data={groupByMonth(expenses)} />
           </section>
         </div>
 
-        {/* Daily Trend */}
-        <section className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-sm">
-          <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Daily Activity</h3>
+        <section className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
+          <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            Daily Activity
+          </h3>
           <div className="h-64">
             <DailyTrend data={groupByDay(filteredExpenses)} />
           </div>

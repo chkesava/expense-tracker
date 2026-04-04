@@ -6,6 +6,9 @@ import { useExpenses } from "../hooks/useExpenses";
 import { useCategories } from "../hooks/useCategories";
 import { useAccountTypes } from "../hooks/useAccountTypes";
 import { useAccounts } from "../hooks/useAccounts";
+import { useCategoryBudgets } from "../hooks/useCategoryBudgets";
+import { useFinancialGoals } from "../hooks/useFinancialGoals";
+import { useCategorizationRules } from "../hooks/useCategorizationRules";
 import { exportExpensesToCSV } from "../utils/exportCsv";
 import { deleteDoc, collection, getDocs, doc, writeBatch, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
@@ -14,6 +17,8 @@ import Avatar from "../components/Avatar";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import { motion, type Variants } from "framer-motion";
 import { cn } from "../lib/utils";
+import { Link } from "react-router-dom";
+import { useTheme } from "../hooks/useTheme";
 
 const TIMEZONES = [
   "UTC",
@@ -54,6 +59,7 @@ const itemVariants: Variants = {
 export default function SettingsPage() {
   const { settings, setLockPastMonths, setDefaultCategory, setDefaultView, setExportYear, setMonthlyBudget, setTimezone, toggleDashboardWidget } = useSettings();
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const expenses = useExpenses();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -62,11 +68,23 @@ export default function SettingsPage() {
   const { categories, addCategory, deleteCategory } = useCategories();
   const { accountTypes, addAccountType, deleteAccountType } = useAccountTypes();
   const { accounts, addAccount, deleteAccount } = useAccounts();
+  const { budgets, addBudget, deleteBudget } = useCategoryBudgets();
+  const { goals, addGoal, updateGoalProgress, deleteGoal } = useFinancialGoals();
+  const { rules, addRule, deleteRule } = useCategorizationRules();
 
   const [newCategory, setNewCategory] = useState("");
   const [newAccountType, setNewAccountType] = useState("");
   const [newAccountName, setNewAccountName] = useState("");
   const [selectedAccountType, setSelectedAccountType] = useState("");
+  const [budgetCategory, setBudgetCategory] = useState("");
+  const [budgetAmount, setBudgetAmount] = useState("");
+  const [budgetMonth, setBudgetMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [goalName, setGoalName] = useState("");
+  const [goalTarget, setGoalTarget] = useState("");
+  const [goalCurrent, setGoalCurrent] = useState("");
+  const [goalDeadline, setGoalDeadline] = useState("");
+  const [ruleKeyword, setRuleKeyword] = useState("");
+  const [ruleCategory, setRuleCategory] = useState("");
 
   const getAccountTypePalette = (name: string) => {
     const normalized = name.trim().toLowerCase();
@@ -105,10 +123,12 @@ export default function SettingsPage() {
 
     return {
       ribbon: "bg-slate-700 text-white",
-      chip: "bg-slate-100 text-slate-700 border-slate-200",
+      chip: "border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200",
       dot: "bg-slate-500",
     };
   };
+
+  const allCategoryOptions = [...CATEGORIES, ...categories.map((item) => item.name)];
 
   // Fetch existing username on mount
   useEffect(() => {
@@ -213,10 +233,10 @@ export default function SettingsPage() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="max-w-3xl mx-auto px-4 pt-20 md:pt-24 pb-28 md:pb-20 space-y-4 md:space-y-6"
+        className="settings-page max-w-3xl mx-auto px-4 pt-20 md:pt-24 pb-28 md:pb-20 space-y-4 md:space-y-6"
       >
         {/* Profile Section */}
-        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col sm:flex-row items-center gap-4 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
+        <motion.div variants={itemVariants} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/60 dark:border-slate-800 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col sm:flex-row items-center gap-4 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
           <Avatar
             src={user?.photoURL}
             name={user?.displayName || "User"}
@@ -224,8 +244,8 @@ export default function SettingsPage() {
             className="shadow-md ring-4 ring-white"
           />
           <div className="text-center sm:text-left flex-1">
-            <div className="text-lg md:text-xl font-bold text-slate-900">{user?.displayName || "Guest User"}</div>
-            <div className="text-sm text-slate-500 font-medium break-all">{user?.email}</div>
+            <div className="text-lg md:text-xl font-bold text-slate-900 dark:text-slate-100">{user?.displayName || "Guest User"}</div>
+            <div className="text-sm text-slate-500 dark:text-slate-400 font-medium break-all">{user?.email}</div>
           </div>
           
           <div className="w-full sm:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -234,7 +254,7 @@ export default function SettingsPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Username"
-              className="min-h-11 flex-1 sm:w-32 md:w-48 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block px-3 py-2.5 outline-none"
+              className="min-h-11 flex-1 sm:w-32 md:w-48 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block px-3 py-2.5 outline-none"
             />
             <button
               onClick={handleSaveProfile}
@@ -247,7 +267,7 @@ export default function SettingsPage() {
         </motion.div>
 
         {/* Preferences Section */}
-        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-6">
+        <motion.div variants={itemVariants} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/60 dark:border-slate-800 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-6 transition-colors">
           <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
             <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600">🎨</span>
             Preferences
@@ -255,12 +275,12 @@ export default function SettingsPage() {
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700 ml-1">Default category</label>
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 ml-1">Default category</label>
               <div className="relative">
                 <select
                   value={settings.defaultCategory}
                   onChange={(e) => setDefaultCategory(e.target.value)}
-                  className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3 pr-10 hover:bg-slate-100 transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-offset-1"
+                  className="w-full appearance-none bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3 pr-10 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-offset-1"
                 >
                   {CATEGORIES.map(c => (
                     <option key={c} value={c}>{c}</option>
@@ -273,12 +293,12 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700 ml-1">Timezone</label>
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 ml-1">Timezone</label>
               <div className="relative">
                 <select
                   value={settings.timezone}
                   onChange={(e) => setTimezone(e.target.value)}
-                  className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3 pr-10 hover:bg-slate-100 transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-offset-1"
+                  className="w-full appearance-none bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3 pr-10 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-offset-1"
                 >
                   {TIMEZONES.map(tz => (
                     <option key={tz} value={tz}>{tz}</option>
@@ -294,12 +314,12 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700 ml-1">Default view</label>
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 ml-1">Default view</label>
               <div className="relative">
                 <select
                   value={settings.defaultView}
                   onChange={(e) => setDefaultView(e.target.value as "add" | "expenses" | "analytics" | "dashboard")}
-                  className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3 pr-10 hover:bg-slate-100 transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-offset-1"
+                  className="w-full appearance-none bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3 pr-10 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-offset-1"
                 >
                   <option value="add">Add expense</option>
                   <option value="expenses">Expenses</option>
@@ -313,15 +333,28 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700 ml-1">Monthly budget</label>
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 ml-1">Monthly budget</label>
               <input
                 type="number"
                 value={String(settings.monthlyBudget)}
                 min={0}
                 onChange={(e) => setMonthlyBudget(Number(e.target.value) || 0)}
-                className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3 hover:bg-slate-100 transition-colors outline-none focus:ring-2 focus:ring-offset-1 placeholder:text-slate-400"
+                className="w-full bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors outline-none focus:ring-2 focus:ring-offset-1 placeholder:text-slate-400"
                 placeholder="0 to disable"
               />
+            </div>
+
+            <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50/70 dark:bg-slate-950/60 border border-slate-100/80 dark:border-slate-800 px-4 py-3">
+              <div>
+                <div className="text-[15px] font-semibold text-slate-800 dark:text-slate-100">Theme mode</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Stored in this browser. Default is light.</div>
+              </div>
+              <button
+                onClick={toggleTheme}
+                className="min-h-11 rounded-xl bg-slate-900 dark:bg-slate-100 px-4 py-2 text-sm font-bold text-white dark:text-slate-900 transition-colors"
+              >
+                {theme === "light" ? "Dark" : "Light"}
+              </button>
             </div>
           </div>
         </motion.div>
@@ -409,6 +442,224 @@ export default function SettingsPage() {
             >
               Export CSV
             </button>
+          </div>
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/60 dark:border-slate-800 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
+          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600">CSV</span>
+            Import Tools
+          </h3>
+          <Link
+            to="/import"
+            className="flex items-center justify-between rounded-2xl border border-dashed border-blue-200 bg-blue-50/70 px-4 py-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-100/70"
+          >
+            <span>Import expenses from CSV</span>
+            <span className="text-xs uppercase tracking-[0.2em]">Open</span>
+          </Link>
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
+          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-rose-50 text-rose-600">B</span>
+            Category Budgets
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <select
+              value={budgetCategory}
+              onChange={(e) => setBudgetCategory(e.target.value)}
+              className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none cursor-pointer appearance-none"
+            >
+              <option value="">Select category</option>
+              {allCategoryOptions.map((item) => (
+                <option key={item} value={item}>{item}</option>
+              ))}
+            </select>
+            <input
+              type="month"
+              value={budgetMonth}
+              onChange={(e) => setBudgetMonth(e.target.value)}
+              className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none"
+            />
+            <input
+              type="number"
+              min={0}
+              value={budgetAmount}
+              onChange={(e) => setBudgetAmount(e.target.value)}
+              placeholder="Budget amount"
+              className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none"
+            />
+          </div>
+          <button
+            onClick={() => {
+              addBudget(budgetCategory, Number(budgetAmount), budgetMonth);
+              setBudgetCategory("");
+              setBudgetAmount("");
+            }}
+            disabled={!budgetCategory || !budgetAmount || !budgetMonth}
+            className="w-full min-h-11 bg-blue-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-50 transition-all shadow-md shadow-blue-500/10 active:scale-[0.98]"
+          >
+            Add Category Budget
+          </button>
+          <div className="space-y-2 max-h-56 overflow-y-auto pr-1 scrollbar-thin">
+            {budgets.map((budget) => (
+              <div key={budget.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+                <div>
+                  <div className="text-sm font-bold text-slate-800">{budget.category}</div>
+                  <div className="text-xs font-medium text-slate-500">{budget.month} • ₹{budget.amount.toLocaleString()}</div>
+                </div>
+                <button
+                  onClick={() => deleteBudget(budget.id)}
+                  className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-500 transition-colors hover:bg-red-100"
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
+            {budgets.length === 0 && <p className="py-4 text-center text-xs italic text-slate-400">No category budgets yet.</p>}
+          </div>
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
+          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">G</span>
+            Financial Goals
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <input
+              type="text"
+              value={goalName}
+              onChange={(e) => setGoalName(e.target.value)}
+              placeholder="Goal name"
+              className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none"
+            />
+            <input
+              type="date"
+              value={goalDeadline}
+              onChange={(e) => setGoalDeadline(e.target.value)}
+              className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none"
+            />
+            <input
+              type="number"
+              min={0}
+              value={goalTarget}
+              onChange={(e) => setGoalTarget(e.target.value)}
+              placeholder="Target amount"
+              className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none"
+            />
+            <input
+              type="number"
+              min={0}
+              value={goalCurrent}
+              onChange={(e) => setGoalCurrent(e.target.value)}
+              placeholder="Current progress"
+              className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none"
+            />
+          </div>
+          <button
+            onClick={() => {
+              addGoal(goalName, Number(goalTarget), Number(goalCurrent), goalDeadline);
+              setGoalName("");
+              setGoalTarget("");
+              setGoalCurrent("");
+              setGoalDeadline("");
+            }}
+            disabled={!goalName || !goalTarget}
+            className="w-full min-h-11 bg-blue-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-50 transition-all shadow-md shadow-blue-500/10 active:scale-[0.98]"
+          >
+            Add Goal
+          </button>
+          <div className="space-y-3 max-h-72 overflow-y-auto pr-1 scrollbar-thin">
+            {goals.map((goal) => {
+              const progress = goal.targetAmount > 0 ? Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100)) : 0;
+              return (
+                <div key={goal.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-bold text-slate-800">{goal.name}</div>
+                      <div className="text-xs font-medium text-slate-500">
+                        ₹{goal.currentAmount.toLocaleString()} of ₹{goal.targetAmount.toLocaleString()}
+                        {goal.deadline ? ` • ${goal.deadline}` : ""}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => deleteGoal(goal.id)}
+                      className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-500 transition-colors hover:bg-red-100"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
+                    <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" style={{ width: `${progress}%` }} />
+                  </div>
+                  <div className="mt-3 flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      defaultValue={goal.currentAmount}
+                      onBlur={(e) => updateGoalProgress(goal.id, Number(e.target.value))}
+                      className="min-h-10 flex-1 bg-white border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-2 outline-none"
+                    />
+                    <span className="text-xs font-bold text-emerald-600">{progress}%</span>
+                  </div>
+                </div>
+              );
+            })}
+            {goals.length === 0 && <p className="py-4 text-center text-xs italic text-slate-400">No financial goals yet.</p>}
+          </div>
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
+          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">R</span>
+            Auto-Categorization Rules
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-[1.1fr_1fr_auto] gap-3">
+            <input
+              type="text"
+              value={ruleKeyword}
+              onChange={(e) => setRuleKeyword(e.target.value)}
+              placeholder='Keyword in note, e.g. "netflix"'
+              className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none"
+            />
+            <select
+              value={ruleCategory}
+              onChange={(e) => setRuleCategory(e.target.value)}
+              className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none cursor-pointer appearance-none"
+            >
+              <option value="">Select category</option>
+              {allCategoryOptions.map((item) => (
+                <option key={item} value={item}>{item}</option>
+              ))}
+            </select>
+            <button
+              onClick={() => {
+                addRule(ruleKeyword, ruleCategory);
+                setRuleKeyword("");
+                setRuleCategory("");
+              }}
+              disabled={!ruleKeyword || !ruleCategory}
+              className="min-h-11 bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm active:scale-95 disabled:opacity-50"
+            >
+              Add
+            </button>
+          </div>
+          <div className="space-y-2 max-h-56 overflow-y-auto pr-1 scrollbar-thin">
+            {rules.map((rule) => (
+              <div key={rule.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+                <div>
+                  <div className="text-sm font-bold text-slate-800">{rule.keyword}</div>
+                  <div className="text-xs font-medium text-slate-500">Assigns to {rule.category}</div>
+                </div>
+                <button
+                  onClick={() => deleteRule(rule.id)}
+                  className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-500 transition-colors hover:bg-red-100"
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
+            {rules.length === 0 && <p className="py-4 text-center text-xs italic text-slate-400">No rules yet. Matching note keywords will auto-select a category.</p>}
           </div>
         </motion.div>
 
@@ -557,7 +808,7 @@ export default function SettingsPage() {
         </motion.div>
 
         {/* Danger Zone */}
-        <motion.div variants={itemVariants} className="bg-red-50/50 backdrop-blur-sm border border-red-100 p-4 md:p-6 rounded-3xl space-y-4">
+        <motion.div variants={itemVariants} className="bg-red-50/50 dark:bg-red-950/20 backdrop-blur-sm border border-red-100 dark:border-red-900/40 p-4 md:p-6 rounded-3xl space-y-4">
           <h3 className="text-lg font-bold text-red-600 flex items-center gap-2">
             <span className="p-1.5 rounded-lg bg-red-100/50 text-red-600">⚠️</span>
             Danger Zone
