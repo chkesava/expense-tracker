@@ -267,49 +267,55 @@ function ExpenseRow({ expense: e, currentMonth, settings, navigate, setDeleteTar
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       className={cn(
-        "group relative flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-100 shadow-sm transition-all hover:shadow-md hover:border-blue-100 cursor-pointer overflow-hidden",
-        isLocked && "opacity-60 grayscale-[0.5] cursor-not-allowed hover:shadow-sm hover:border-slate-100"
+        "group relative cursor-pointer overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-all hover:border-blue-100 hover:shadow-md",
+        isLocked && "cursor-not-allowed opacity-60 grayscale-[0.5] hover:border-slate-100 hover:shadow-sm"
       )}
       onClick={() => { if (!isLocked) navigate("/add", { state: e }); }}
       role={!isLocked ? "button" : undefined}
       tabIndex={!isLocked ? 0 : -1}
       onKeyDown={(ev) => { if (!isLocked && (ev.key === "Enter" || ev.key === " ")) navigate("/add", { state: e }); }}
     >
-      <div className="flex flex-col gap-1 z-10">
-        <div className="flex items-center gap-2">
-          <span className="font-bold text-slate-800">{e.category}</span>
+      <div className="z-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-bold text-slate-800">{e.category}</span>
+            {isLocked && (
+              <span className="rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">
+                Locked
+              </span>
+            )}
+          </div>
+
           {account && (
-            <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100 font-bold">
+            <span className="mt-2 inline-flex max-w-full items-center rounded-lg border border-blue-100 bg-blue-50 px-2 py-1 text-[10px] font-bold leading-tight text-blue-600">
               {account.name}
             </span>
           )}
-          {isLocked && <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">Locked</span>}
+
+          {e.note && <div className="mt-2 line-clamp-2 text-xs text-slate-500">{e.note}</div>}
+
+          <span className="mt-2 block text-[10px] font-semibold text-slate-400">
+            {e.date} {e.time && `• ${e.time}`}
+          </span>
         </div>
 
-        {e.note && <span className="text-xs text-slate-500 line-clamp-1">{e.note}</span>}
+        <div className="flex items-center justify-between gap-3 sm:w-auto sm:flex-col sm:items-end sm:justify-center">
+          <div className="whitespace-nowrap text-base font-bold text-slate-900">-₹{e.amount}</div>
 
-        <span className="text-[10px] font-semibold text-slate-400">
-          {e.date} {e.time && `• ${e.time}`}
-        </span>
-      </div>
-
-      <div className="flex items-center gap-4 z-10">
-        <div className="text-base font-bold text-slate-900">-₹{e.amount}</div>
-
-        {/* Actions - visible always */}
-        <div className={cn("flex items-center gap-2", isLocked && "hidden")}>
-          <button
-            className="small-btn"
-            onClick={(ev) => { ev.stopPropagation(); if (!isLocked) navigate("/add", { state: e }); }}
-          >
-            Edit
-          </button>
-          <button
-            className="small-btn danger-btn"
-            onClick={(ev) => { ev.stopPropagation(); if (!isLocked) setDeleteTarget(e.id ?? null); }}
-          >
-            Delete
-          </button>
+          <div className={cn("flex shrink-0 items-center gap-2", isLocked && "hidden")}>
+            <button
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+              onClick={(ev) => { ev.stopPropagation(); if (!isLocked) navigate("/add", { state: e }); }}
+            >
+              Edit
+            </button>
+            <button
+              className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-500 transition-colors hover:border-red-300 hover:bg-red-100"
+              onClick={(ev) => { ev.stopPropagation(); if (!isLocked) setDeleteTarget(e.id ?? null); }}
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </div>
     </motion.div>

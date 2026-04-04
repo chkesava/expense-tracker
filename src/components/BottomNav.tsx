@@ -6,9 +6,6 @@ import { BarChart3, Home, Plus, Settings, Shield, Wallet } from "lucide-react";
 
 export default function BottomNav() {
   const location = useLocation();
-
-
-
   const { isAdmin } = useUserRole();
 
   const links = [
@@ -21,8 +18,8 @@ export default function BottomNav() {
   ];
 
   return (
-    <div className="fixed bottom-6 left-0 w-full flex justify-center z-50 px-4 pointer-events-none md:hidden transition-all duration-300">
-      <nav className="bg-white/90 backdrop-blur-2xl border border-white/40 rounded-full px-2 py-2 shadow-xl shadow-indigo-500/20 pointer-events-auto flex items-center justify-between gap-1 max-w-sm w-full">
+    <div className="fixed bottom-4 left-0 w-full flex justify-center z-50 px-3 pointer-events-none md:hidden transition-all duration-300">
+      <nav className="bg-white/92 backdrop-blur-2xl border border-white/50 rounded-[2rem] px-2 py-2 shadow-xl shadow-slate-900/10 pointer-events-auto grid items-end gap-1 w-full max-w-md" style={{ gridTemplateColumns: `repeat(${links.length}, minmax(0, 1fr))` }}>
         {links.map((link) => {
           const isActive = location.pathname === link.path;
           const Icon = link.icon;
@@ -32,12 +29,12 @@ export default function BottomNav() {
               <NavLink
                 key={link.path}
                 to={link.path}
-                className="relative -top-6 mx-1"
+                className="relative -top-5 mx-1 flex justify-center"
               >
                 <motion.div
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center text-2xl shadow-lg shadow-blue-500/40 border-4 border-slate-50"
+                  className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center text-2xl shadow-lg shadow-blue-500/30 border-4 border-slate-50"
                 >
                   <Icon size={24} />
                 </motion.div>
@@ -49,12 +46,12 @@ export default function BottomNav() {
             <NavLink
               key={link.path}
               to={link.path}
-              className="relative px-3 py-2 rounded-full flex flex-col items-center justify-center min-w-[3.5rem] h-full"
+              className="relative px-1 py-2 rounded-2xl flex flex-col items-center justify-center min-w-0 h-full"
             >
               {isActive && (
                 <motion.div
                   layoutId="bottom-nav-pill"
-                  className="absolute inset-0 bg-blue-50 rounded-full border border-blue-100/50"
+                  className="absolute inset-0 bg-blue-50 rounded-2xl border border-blue-100/70"
                   transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
               )}
@@ -70,7 +67,7 @@ export default function BottomNav() {
                 <motion.span
                   initial={{ opacity: 0, scale: 0.5 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="relative z-10 text-[9px] font-bold text-blue-600"
+                  className="relative z-10 text-[9px] font-bold text-blue-600 leading-none"
                 >
                   {link.label}
                 </motion.span>
