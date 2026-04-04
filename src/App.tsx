@@ -24,6 +24,7 @@ import AdminDashboard from "./admin/pages/AdminDashboard";
 import AdminUsers from "./admin/pages/AdminUsers";
 import AdminUserDetail from "./admin/pages/AdminUserDetail";
 import AdminRouteGuard from "./guards/AdminRouteGuard";
+import AuthPage from "./pages/AuthPage";
 
 function AppContent() {
   const location = useLocation();
@@ -36,53 +37,9 @@ function AppContent() {
     processSubscriptions();
   }, [processSubscriptions]);
 
-  // -------- LOGIN SCREEN --------
+  // -------- AUTH SCREEN --------
   if (!user) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 transition-colors">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="w-full max-w-md bg-white/80 dark:bg-slate-900/85 backdrop-blur-xl border border-white/60 dark:border-slate-800 p-8 rounded-3xl shadow-[0_20px_40px_-5px_rgb(0,0,0,0.1)] text-center relative overflow-hidden transition-colors"
-        >
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-600" />
-
-          <div className="mb-8">
-            <motion.div
-              initial={{ y: 10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="w-16 h-16 bg-blue-50 dark:bg-blue-500/15 rounded-2xl flex items-center justify-center mx-auto mb-6 text-3xl shadow-sm rotate-3"
-            >
-              💸
-            </motion.div>
-            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mb-2">Expense Tracker</h1>
-            <p className="text-slate-500 dark:text-slate-400 text-lg">
-              Track your spending. <br /> Stay in control.
-            </p>
-          </div>
-
-          <motion.button
-            whileHover={{ scale: 1.02, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={login}
-            className="w-full bg-white dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md text-slate-700 dark:text-slate-100 font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-3 transition-all duration-300 group"
-          >
-            <img
-              className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300"
-              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-              alt="Google"
-            />
-            <span>Sign in with Google</span>
-          </motion.button>
-
-          <div className="mt-8 text-xs text-slate-400 dark:text-slate-500 font-medium">
-            Your data is private and secure
-          </div>
-        </motion.div>
-      </div>
-    );
+    return <AuthPage />;
   }
 
   // -------- APP ROUTES --------

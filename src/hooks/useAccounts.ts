@@ -18,14 +18,16 @@ export const useAccounts = () => {
     }
 
     const q = query(
-      collection(db, "users", user.uid, "accounts"),
-      orderBy("createdAt", "asc")
+      collection(db, "users", user.uid, "accounts")
     );
 
     return onSnapshot(q, (snap) => {
       setAccounts(
         snap.docs.map((d) => ({ id: d.id, ...d.data() } as Account))
       );
+      setLoading(false);
+    }, (err) => {
+      console.error("useAccounts snapshot error:", err);
       setLoading(false);
     });
   }, [user]);

@@ -18,14 +18,16 @@ export const useCategories = () => {
     }
 
     const q = query(
-      collection(db, "users", user.uid, "categories"),
-      orderBy("createdAt", "asc")
+      collection(db, "users", user.uid, "categories")
     );
 
     return onSnapshot(q, (snap) => {
       setCategories(
         snap.docs.map((d) => ({ id: d.id, ...d.data() } as Category))
       );
+      setLoading(false);
+    }, (err) => {
+      console.error("useCategories snapshot error:", err);
       setLoading(false);
     });
   }, [user]);

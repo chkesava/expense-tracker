@@ -25,6 +25,9 @@ export const useFinancialGoals = () => {
     return onSnapshot(q, (snap) => {
       setGoals(snap.docs.map((d) => ({ id: d.id, ...d.data() } as FinancialGoal)));
       setLoading(false);
+    }, (err) => {
+      console.error("useFinancialGoals snapshot error:", err);
+      setLoading(false);
     });
   }, [user]);
 

@@ -1,11 +1,23 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { GoogleAuthProvider, signInWithPopup, signOut, type User } from "firebase/auth";
+import { 
+    GoogleAuthProvider, 
+    signInWithPopup, 
+    signOut, 
+    type User, 
+    createUserWithEmailAndPassword, 
+    signInWithEmailAndPassword, 
+    sendPasswordResetEmail,
+    updateProfile
+} from "firebase/auth";
 import { auth } from "../firebase";
 
 interface AuthContextType {
     user: User | null;
     loading: boolean;
     login: () => Promise<void>;
+    loginWithEmail: (email: string, password: string) => Promise<void>;
+    signUpWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
+    resetPassword: (email: string) => Promise<void>;
     logout: () => Promise<void>;
 }
 
@@ -29,6 +41,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await signInWithPopup(auth, provider);
         } catch (error) {
             console.error("Login failed", error);
+            throw error;
+        }
+    };
+
+    const loginWithEmail = async (email: string, password: string) => {
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+            console.error("Email login failed", error);
+            throw error;
+        }
+    };
+
+    const signUpWithEmail = async (email: string, password: string, displayName: string) => {
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            await updateProfile(userCredential.user, { displayName });
+            setUser({ ...userCredential.user, displayName });
+        } catch (error) {
+            console.error("Email signup failed", error);
+            throw error;
+        }
+    };
+
+    const resetPassword = async (email: string) => {
+        try {
+            await sendPasswordResetEmail(auth, email);
+        } catch (error) {
+            console.error("Password reset failed", error);
+            throw error;
         }
     };
 
@@ -41,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout }}>
+        <AuthContext.Provider value={{ user, loading, login, loginWithEmail, signUpWithEmail, resetPassword, logout }}>
             {!loading && children}
         </AuthContext.Provider>
     );

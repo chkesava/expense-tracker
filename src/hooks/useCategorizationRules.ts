@@ -25,6 +25,9 @@ export const useCategorizationRules = () => {
     return onSnapshot(q, (snap) => {
       setRules(snap.docs.map((d) => ({ id: d.id, ...d.data() } as CategorizationRule)));
       setLoading(false);
+    }, (err) => {
+      console.error("useCategorizationRules snapshot error:", err);
+      setLoading(false);
     });
   }, [user]);
 

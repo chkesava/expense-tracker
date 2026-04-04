@@ -19,12 +19,14 @@ export const useCategoryBudgets = () => {
 
     const q = query(
       collection(db, "users", user.uid, "categoryBudgets"),
-      orderBy("month", "desc"),
-      orderBy("createdAt", "asc")
+      orderBy("month", "desc")
     );
 
     return onSnapshot(q, (snap) => {
       setBudgets(snap.docs.map((d) => ({ id: d.id, ...d.data() } as CategoryBudget)));
+      setLoading(false);
+    }, (err) => {
+      console.error("useCategoryBudgets snapshot error:", err);
       setLoading(false);
     });
   }, [user]);

@@ -18,14 +18,16 @@ export const useAccountTypes = () => {
     }
 
     const q = query(
-      collection(db, "users", user.uid, "accountTypes"),
-      orderBy("createdAt", "asc")
+      collection(db, "users", user.uid, "accountTypes")
     );
 
     return onSnapshot(q, (snap) => {
       setAccountTypes(
         snap.docs.map((d) => ({ id: d.id, ...d.data() } as AccountType))
       );
+      setLoading(false);
+    }, (err) => {
+      console.error("useAccountTypes snapshot error:", err);
       setLoading(false);
     });
   }, [user]);
