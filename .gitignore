@@ -34,7 +34,7 @@ package-lock.json
 
 # Playwright
 e2e/test-results/
-e2e/playwright-report/
+
 allure-results/
 allure-report/
 logs/
