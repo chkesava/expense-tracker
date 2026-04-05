@@ -1,75 +1,53 @@
-# React + TypeScript + Vite
+# End‑to‑End (E2E) Test Suite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Prerequisites
+- **Node.js** (v14+) and **npm** installed.
+- Install project dependencies:
+  ```bash
+  npm install
+  ```
+- Install Playwright browsers (if not already installed):
+  ```bash
+  npx playwright install
+  ```
 
-Currently, two official plugins are available:
+## Environment Configuration
+The suite uses environment-specific `.env` files located in the root directory:
+- `.env.dev`: Local development settings.
+- `.env.staging`: Staging environment settings.
+- `.env.production`: Production environment settings.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+These files contain:
+- `E2E_BASE_URL`: Browser entry point.
+- `E2E_TEST_USER_EMAIL` / `E2E_TEST_USER_PASSWORD`: Credentials.
+- `VITE_FIREBASE_*`: Firebase configuration for the application.
 
-## React Compiler
+## Running the tests
+The project uses `cross-env` for platform-independent environment variable injection.
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+| Script | Description |
+|--------|-------------|
+| `npm run test:e2e` | Run tests using default `.env` settings. |
+| `npm run test:e2e:dev` | Run tests using `.env.dev`. |
+| `npm run test:e2e:staging` | Run tests using `.env.staging`. |
+| `npm run test:e2e:smoke` | Run tests tagged with `@smoke`. |
+| `npm run test:e2e:ui` | Open Playwright UI mode. |
 
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Running Specific Tests
+To run a specific test file or case:
+```bash
+npx playwright test e2e/tests/auth/login.spec.ts
+npx playwright test -g "valid login"
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## GitHub Actions CI/CD
+A workflow is configured in `.github/workflows/playwright.yml` to run E2E tests on every push to the `main` branch.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Required GitHub Secrets
+To ensure the pipeline passes, add following secrets to your GitHub repository (**Settings > Secrets and variables > Actions**):
+- `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, etc. (from your `.env`)
+- `E2E_TEST_USER_EMAIL` / `E2E_TEST_USER_PASSWORD`
+- `E2E_BASE_URL_DEV`, `E2E_BASE_URL_STAGING`, `E2E_BASE_URL_PRODUCTION`
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
+*All tests are environment-driven; ensure your `.env` files are up to date!*

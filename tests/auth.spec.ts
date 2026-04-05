@@ -1,50 +1,56 @@
 import { test, expect } from '@playwright/test';
+import { LoginPage } from './pages/LoginPage';
+import { DashboardPage } from './pages/DashboardPage';
 
 test.describe('Authentication', () => {
+  let loginPage: LoginPage;
+  let dashboardPage: DashboardPage;
+
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    loginPage = new LoginPage(page);
+    dashboardPage = new DashboardPage(page);
+    await loginPage.goto();
   });
 
-  test('should show login page by default', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: 'Welcome Back' })).toBeVisible();
-    await expect(page.getByPlaceholder('name@example.com')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
+  test('should show login page by default', async () => {
+    await loginPage.expectHeading('Welcome Back');
+    await expect(loginPage.page.getByPlaceholder('name@example.com')).toBeVisible();
   });
 
-  test('should toggle between login and signup', async ({ page }) => {
-    await page.getByRole('button', { name: 'Sign up for free' }).click();
-    await expect(page.getByRole('heading', { name: 'Get Started' })).toBeVisible();
-    await expect(page.getByPlaceholder('John Doe')).toBeVisible();
+  test('should toggle between login and signup', async () => {
+    await loginPage.page.getByRole('button', { name: 'Sign up for free' }).click();
+    await loginPage.expectHeading('Get Started');
+    await expect(loginPage.page.getByPlaceholder('John Doe')).toBeVisible();
 
-    await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByText('Welcome Back')).toBeVisible();
+    await loginPage.switchToLogin();
+    await loginPage.expectHeading('Welcome Back');
   });
 
-  test('should show forgot password mode', async ({ page }) => {
-    await page.getByRole('button', { name: 'Forgot?' }).click();
-    await expect(page.getByRole('heading', { name: 'Reset Password' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Send Reset Email' })).toBeVisible();
+  test('should show forgot password mode', async () => {
+    await loginPage.page.getByRole('button', { name: 'Forgot?' }).click();
+    await loginPage.expectHeading('Reset Password');
+    await loginPage.takeScreenshot('forgot-password-screen');
+    await expect(loginPage.page.getByRole('button', { name: 'Send Reset Email' })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByText('Welcome Back')).toBeVisible();
+    await loginPage.switchToLogin();
+    await loginPage.expectHeading('Welcome Back');
   });
 
-  test('should login successfully with provided credentials', async ({ page }) => {
-    await page.getByPlaceholder('name@example.com').fill('sd5346548@gmail.com');
-    await page.getByPlaceholder('••••••••').fill('Kesava@123');
-    await page.getByRole('button', { name: 'Sign In' }).click();
-
-    // Since it's a real Firebase login, we wait for the navigation or the dashboard to appear
-    // We expect the dashboard to be visible after login
-    await expect(page.getByText('This Month')).toBeVisible({ timeout: 10000 });
+  test('should login successfully with provided credentials', async () => {
+    await loginPage.login('sd5346548@gmail.com', 'Kesava@123');
+    await dashboardPage.expectBalanceVisible();
+    await dashboardPage.takeScreenshot('logged-in-dashboard');
   });
 
-  test('should show error for incorrect password', async ({ page }) => {
-    await page.getByPlaceholder('name@example.com').fill('sd5346548@gmail.com');
-    await page.getByPlaceholder('••••••••').fill('wrongpassword');
-    await page.getByRole('button', { name: 'Sign In' }).click();
+  test('should show error for incorrect password', async () => {
+    await loginPage.login('sd5346548@gmail.com', 'wrongpassword');
+    await loginPage.waitForErrorToast();
+  });
 
-    // Look for the toast error. React-toastify usually has a specific class or we can look for the text.
-    await expect(page.locator('.Toastify__toast--error')).toBeVisible();
+  test('should logout successfully', async () => {
+    await loginPage.login('sd5346548@gmail.com', 'Kesava@123');
+    await dashboardPage.expectBalanceVisible();
+    await dashboardPage.logout();
+    await loginPage.expectHeading('Welcome Back');
   });
 });
