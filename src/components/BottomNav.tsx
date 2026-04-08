@@ -2,20 +2,31 @@ import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "../lib/utils";
 import { motion } from "framer-motion";
 import { useUserRole } from "../hooks/useUserRole";
-import { BarChart3, Home, Plus, Settings, Shield, Wallet } from "lucide-react";
+import useSettings from "../hooks/useSettings";
+import { BarChart3, Home, Plus, Settings, Shield, Wallet, Users, RefreshCw } from "lucide-react";
 
 export default function BottomNav() {
   const location = useLocation();
   const { isAdmin } = useUserRole();
+  const { settings } = useSettings();
 
   const links = [
-    { path: "/dashboard", label: "Home", icon: Home },
-    { path: "/expenses", label: "Expenses", icon: Wallet },
-    { path: "/add", label: "Add", icon: Plus },
-    { path: "/analytics", label: "Analytics", icon: BarChart3 },
-    { path: "/settings", label: "Settings", icon: Settings },
-    ...(isAdmin ? [{ path: "/admin", label: "Admin", icon: Shield }] : []),
-  ];
+    { id: "home", path: "/dashboard", label: "Home", icon: Home },
+    { id: "expenses", path: "/expenses", label: "Expenses", icon: Wallet },
+    { id: "split", path: "/split", label: "Split", icon: Users },
+    { id: "add", path: "/add", label: "Add", icon: Plus },
+    { id: "subscriptions", path: "/subscriptions", label: "Subs", icon: RefreshCw },
+    { id: "analytics", path: "/analytics", label: "Analytics", icon: BarChart3 },
+    { id: "settings", path: "/settings", label: "Settings", icon: Settings },
+    ...(isAdmin ? [{ id: "admin", path: "/admin", label: "Admin", icon: Shield }] : []),
+  ].filter(link => {
+    //@ts-ignore - dynamic key check
+    if (link.id && link.id in (settings.bottomNavTabs || {})) {
+      //@ts-ignore
+      return settings.bottomNavTabs[link.id];
+    }
+    return true;
+  });
 
   return (
     <div className="fixed bottom-4 left-0 w-full flex justify-center z-50 px-3 pointer-events-none md:hidden transition-all duration-300">

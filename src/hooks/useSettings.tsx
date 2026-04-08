@@ -12,6 +12,13 @@ type Settings = {
   exportYear: number;
   monthlyBudget: number;
   timezone: string;
+  upiId: string;
+  bottomNavTabs: {
+    home: boolean;
+    expenses: boolean;
+    split: boolean;
+    subscriptions: boolean;
+  };
   dashboardWidgets: {
     subscriptions: boolean;
     focus: boolean;
@@ -28,6 +35,13 @@ const DEFAULTS: Settings = {
   exportYear: new Date().getFullYear(),
   monthlyBudget: 0,
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  upiId: "",
+  bottomNavTabs: {
+    home: true,
+    expenses: true,
+    split: true,
+    subscriptions: true,
+  },
   dashboardWidgets: {
     subscriptions: true,
     focus: true,
@@ -46,6 +60,8 @@ type SettingsContextType = {
   setExportYear: (val: number) => void;
   setMonthlyBudget: (val: number) => void;
   setTimezone: (val: string) => void;
+  setUpiId: (val: string) => void;
+  toggleBottomNavTab: (key: keyof Settings["bottomNavTabs"]) => void;
   toggleDashboardWidget: (key: keyof Settings["dashboardWidgets"]) => void;
 };
 
@@ -111,6 +127,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const setExportYear = (val: number) => updateSettings({ exportYear: val });
   const setMonthlyBudget = (val: number) => updateSettings({ monthlyBudget: val });
   const setTimezone = (val: string) => updateSettings({ timezone: val });
+  const setUpiId = (val: string) => updateSettings({ upiId: val });
+  
+  const toggleBottomNavTab = (key: keyof Settings["bottomNavTabs"]) => {
+    const newTabs = { ...settings.bottomNavTabs, [key]: !settings.bottomNavTabs[key] };
+    updateSettings({ bottomNavTabs: newTabs });
+  };
 
   const toggleDashboardWidget = (key: keyof Settings["dashboardWidgets"]) => {
     const newWidgets = { ...settings.dashboardWidgets, [key]: !settings.dashboardWidgets[key] };
@@ -129,6 +151,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setExportYear,
         setMonthlyBudget,
         setTimezone,
+        setUpiId,
+        toggleBottomNavTab,
         toggleDashboardWidget,
       }}
     >

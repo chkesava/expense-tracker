@@ -15,3 +15,12 @@ export const groupByMonth = (expenses: Expense[]) => {
   });
   return Object.entries(map).map(([month, value]) => ({ month, value }));
 };
+
+export const groupByAccount = (expenses: Expense[]) => {
+  const map: Record<string, number> = {};
+  expenses.forEach(e => {
+    const key = e.accountId || "unknown";
+    map[key] = (map[key] || 0) + e.amount;
+  });
+  return Object.entries(map).map(([accountId, value]) => ({ accountId, value }));
+};

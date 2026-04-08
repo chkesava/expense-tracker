@@ -13,9 +13,12 @@ import SmartSummary from "../components/analytics/SmartSummary";
 import CategoryBars from "../components/analytics/CategoryBars";
 import MonthlyComparison from "../components/analytics/MonthlyComparison";
 import WeeklySummary from "../components/analytics/WeeklySummary";
+import AccountSpendingBars from "../components/analytics/AccountSpendingBars";
+import { useAccounts } from "../hooks/useAccounts";
 
 export default function AnalyticsPage() {
   const expenses = useExpenses();
+  const { accounts } = useAccounts();
 
   const months = useMemo(() => {
     return Array.from(new Set(expenses.map((expense) => expense.month)))
@@ -38,7 +41,7 @@ export default function AnalyticsPage() {
     <motion.main
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="mx-auto min-h-screen max-w-4xl px-4 pb-20 pt-24 md:px-6"
+      className="mx-auto min-h-screen max-w-6xl px-4 pb-20 pt-24 md:px-6"
     >
       <div className="space-y-6">
         <section className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
@@ -58,18 +61,34 @@ export default function AnalyticsPage() {
         </section>
 
         <section className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
-          <h2 className="mb-6 flex items-center gap-2 text-lg font-bold text-slate-800 dark:text-slate-100">
-            <span className="rounded-lg bg-emerald-50 p-1.5 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-300">
-              🍩
-            </span>
-            Spending Breakdown
-          </h2>
-          <div className="grid items-center gap-8 md:grid-cols-2">
-            <div className="flex h-64 items-center justify-center">
-              <CategoryPie data={groupByCategory(filteredExpenses)} />
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-12">
             <div>
-              <CategoryBars expenses={filteredExpenses} />
+              <h2 className="mb-6 flex items-center gap-2 text-lg font-bold text-slate-800 dark:text-slate-100">
+                <span className="rounded-lg bg-emerald-50 p-1.5 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-300">
+                  🍩
+                </span>
+                Spending Breakdown
+              </h2>
+              <div className="grid items-center gap-8">
+                <div className="flex h-64 items-center justify-center">
+                  <CategoryPie data={groupByCategory(filteredExpenses)} />
+                </div>
+                <div>
+                  <CategoryBars expenses={filteredExpenses} />
+                </div>
+              </div>
+            </div>
+
+            <div className="h-px md:h-auto md:w-px bg-slate-100 dark:bg-slate-800/50 hidden md:block" />
+
+            <div className="md:border-l md:border-slate-100 dark:md:border-slate-800 md:pl-12">
+              <h2 className="mb-6 flex items-center gap-2 text-lg font-bold text-slate-800 dark:text-slate-100">
+                <span className="rounded-lg bg-indigo-50 p-1.5 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-300">
+                  🏦
+                </span>
+                Account Spending
+              </h2>
+              <AccountSpendingBars expenses={filteredExpenses} accounts={accounts} />
             </div>
           </div>
         </section>

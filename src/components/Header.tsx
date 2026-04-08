@@ -12,6 +12,8 @@ import {
   Shield,
   Sun,
   Wallet,
+  Users,
+  RefreshCw,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import useOnline from "../hooks/useOnline";
@@ -34,6 +36,8 @@ export default function Header() {
   const desktopLinks = [
     { path: "/dashboard", label: "Home", icon: Home },
     { path: "/expenses", label: "Expenses", icon: Wallet },
+    { path: "/split", label: "Split", icon: Users },
+    { path: "/subscriptions", label: "Subs", icon: RefreshCw },
     { path: "/analytics", label: "Analytics", icon: BarChart3 },
     ...(isAdmin ? [{ path: "/admin", label: "Admin", icon: Shield }] : []),
   ];

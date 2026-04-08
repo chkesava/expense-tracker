@@ -16,6 +16,9 @@ import SettingsPage from "./pages/Settings";
 import SubscriptionsPage from "./pages/SubscriptionsPage";
 import ImportPage from "./pages/ImportPage";
 import useSettings, { SettingsProvider } from "./hooks/useSettings";
+import SplitPage from "./pages/SplitPage";
+import CreateSplitPage from "./pages/CreateSplitPage";
+import SplitDetailPage from "./pages/SplitDetailPage";
 import NotFound from "./pages/NotFound";
 import { useSubscriptions } from "./hooks/useSubscriptions";
 import { useTheme } from "./hooks/useTheme";
@@ -62,6 +65,9 @@ function AppContent() {
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/subscriptions" element={<SubscriptionsPage />} />
               <Route path="/import" element={<ImportPage />} />
+              <Route path="/split" element={<SplitPage />} />
+              <Route path="/split/create" element={<CreateSplitPage />} />
+              <Route path="/split/:id" element={<SplitDetailPage />} />
               {import.meta.env.DEV && (
                 <Route path="/seed" element={<SeedDataPage />} />
               )}

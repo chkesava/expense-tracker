@@ -10,7 +10,7 @@ import { useCategoryBudgets } from "../hooks/useCategoryBudgets";
 import { useFinancialGoals } from "../hooks/useFinancialGoals";
 import { useCategorizationRules } from "../hooks/useCategorizationRules";
 import { exportExpensesToCSV } from "../utils/exportCsv";
-import { deleteDoc, collection, getDocs, doc, writeBatch, getDoc, updateDoc } from "firebase/firestore";
+import { deleteDoc, collection, getDocs, doc, writeBatch, getDoc, updateDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { toast } from "react-toastify";
 import Avatar from "../components/Avatar";
@@ -57,7 +57,7 @@ const itemVariants: Variants = {
 };
 
 export default function SettingsPage() {
-  const { settings, setLockPastMonths, setDefaultCategory, setDefaultView, setExportYear, setMonthlyBudget, setTimezone, toggleDashboardWidget } = useSettings();
+  const { settings, setLockPastMonths, setDefaultCategory, setDefaultView, setExportYear, setMonthlyBudget, setTimezone, setUpiId, toggleBottomNavTab, toggleDashboardWidget } = useSettings();
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const expenses = useExpenses();
@@ -166,7 +166,6 @@ export default function SettingsPage() {
       console.error(err);
       // If doc doesn't exist (updateDoc fails), try setDoc with merge
       try {
-        const { setDoc } = await import("firebase/firestore");
         const docRef = doc(db, "users", user.uid);
         await setDoc(docRef, {
           username,
@@ -344,7 +343,20 @@ export default function SettingsPage() {
               />
             </div>
 
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 ml-1">UPI ID (for receiving payments)</label>
+              <input
+                type="text"
+                value={settings.upiId || ""}
+                onChange={(e) => setUpiId(e.target.value)}
+                placeholder="e.g. username@okaxis"
+                className="w-full bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors outline-none focus:ring-2 focus:ring-offset-1 placeholder:text-slate-400"
+              />
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 ml-1">Used to generate payment links for split expenses.</p>
+            </div>
+
             <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50/70 dark:bg-slate-950/60 border border-slate-100/80 dark:border-slate-800 px-4 py-3">
+
               <div>
                 <div className="text-[15px] font-semibold text-slate-800 dark:text-slate-100">Theme mode</div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Stored in this browser. Default is light.</div>
@@ -356,6 +368,39 @@ export default function SettingsPage() {
                 {theme === "light" ? "Dark" : "Light"}
               </button>
             </div>
+          </div>
+        </motion.div>
+
+        {/* Bottom Navigation Customization Section */}
+        <motion.div variants={itemVariants} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/60 dark:border-slate-800 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4 transition-colors">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600">📱</span>
+            Navigation Tabs
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium ml-1">Choose which tabs appear in the bottom navigation bar on mobile.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[
+              { id: 'home', label: 'Home', desc: 'Dashboard & Quick Add' },
+              { id: 'expenses', label: 'Expenses', desc: 'Full expense list' },
+              { id: 'split', label: 'Split', desc: 'Shared costs & groups' },
+              { id: 'subscriptions', label: 'Subscriptions', desc: 'Recurring payments' },
+            ].map((tab) => (
+              <div key={tab.id} className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-950/60 border border-slate-100/80 dark:border-slate-800 min-h-20">
+                <div>
+                  <div className="text-[14px] font-semibold text-slate-800 dark:text-slate-100">{tab.label}</div>
+                  <div className="mt-1 text-[11px] leading-4 text-slate-500 dark:text-slate-400 font-medium">{tab.desc}</div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.bottomNavTabs?.[tab.id as keyof typeof settings.bottomNavTabs] ?? true}
+                    onChange={() => toggleBottomNavTab(tab.id as any)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+            ))}
           </div>
         </motion.div>
 

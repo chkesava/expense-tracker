@@ -1,5 +1,7 @@
 import { useExpenses } from "../hooks/useExpenses";
 import { useAccounts } from "../hooks/useAccounts";
+import { useCategories } from "../hooks/useCategories";
+import { useAccountTypes } from "../hooks/useAccountTypes";
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
@@ -12,13 +14,18 @@ import { groupExpensesByDay } from "../utils/dayGrouping";
 import { toast } from "react-toastify";
 import { exportExpensesToCSV } from "../utils/exportCsv";
 import useSettings from "../hooks/useSettings";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../lib/utils";
+import { Filter, X, ChevronDown, ChevronUp, Search } from "lucide-react";
+import { CATEGORIES } from "../types/expense";
 
 export default function ExpenseListPage() {
   const { settings } = useSettings();
   const expenses = useExpenses();
   const { accounts } = useAccounts();
+
+  const { categories: userCategories } = useCategories();
+  const { accountTypes } = useAccountTypes();
 
   const months = useMemo(
     () => [...new Set(expenses.map((e) => e.month))].sort().reverse(),
@@ -29,15 +36,17 @@ export default function ExpenseListPage() {
   const selectedMonth = userSelectedMonth ?? months[0] ?? "";
   const currentMonth = new Date().toISOString().slice(0, 7);
 
+  // Filter states
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedAccountId, setSelectedAccountId] = useState<string>("");
+  const [selectedAccountTypeId, setSelectedAccountTypeId] = useState<string>("");
+  const [showFilters, setShowFilters] = useState(false);
+
   const filteredExpenses = useMemo(
     () => expenses.filter((e) => e.month === selectedMonth),
     [expenses, selectedMonth]
   );
 
-  const summary = useMemo(
-    () => getMonthlySummary(filteredExpenses),
-    [filteredExpenses]
-  );
 
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState(query);
@@ -51,22 +60,54 @@ export default function ExpenseListPage() {
 
   const searchedExpenses = useMemo(() => {
     const normalizedQuery = debouncedQuery.trim().toLowerCase();
-    if (!normalizedQuery) {
-      return filteredExpenses;
-    }
-
+    
     return filteredExpenses.filter((expense) => {
-      const note = (expense.note ?? "").toLowerCase();
-      const category = (expense.category ?? "").toLowerCase();
-      const amount = String(expense.amount);
+      // 1. Search Query Filter
+      if (normalizedQuery) {
+        const note = (expense.note ?? "").toLowerCase();
+        const category = (expense.category ?? "").toLowerCase();
+        const amount = String(expense.amount);
+        const matchesSearch = note.includes(normalizedQuery) ||
+                category.includes(normalizedQuery) ||
+                amount.includes(normalizedQuery);
+        if (!matchesSearch) return false;
+      }
 
-      return (
-        note.includes(normalizedQuery) ||
-        category.includes(normalizedQuery) ||
-        amount.includes(normalizedQuery)
-      );
+      // 2. Category Filter
+      if (selectedCategory && expense.category !== selectedCategory) {
+        return false;
+      }
+
+      // 3. Account Filter
+      if (selectedAccountId && expense.accountId !== selectedAccountId) {
+        return false;
+      }
+
+      // 4. Account Type Filter
+      if (selectedAccountTypeId) {
+        const account = accounts.find(a => a.id === expense.accountId);
+        if (!account || account.typeId !== selectedAccountTypeId) {
+          return false;
+        }
+      }
+
+      return true;
     });
-  }, [filteredExpenses, debouncedQuery]);
+  }, [filteredExpenses, debouncedQuery, selectedCategory, selectedAccountId, selectedAccountTypeId, accounts]);
+
+  const summary = useMemo(
+    () => getMonthlySummary(searchedExpenses),
+    [searchedExpenses]
+  );
+
+  const hasActiveFilters = selectedCategory || selectedAccountId || selectedAccountTypeId;
+
+  const clearFilters = () => {
+    setSelectedCategory("");
+    setSelectedAccountId("");
+    setSelectedAccountTypeId("");
+    setQuery("");
+  };
 
   const { today, yesterday, earlier } = useMemo(
     () => groupExpensesByDay(searchedExpenses, settings.timezone),
@@ -148,62 +189,138 @@ export default function ExpenseListPage() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
-          <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            Monthly Summary
-          </h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Monthly Summary
+            </h3>
+            {hasActiveFilters && (
+              <span className="text-[10px] bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full font-bold">
+                Filtered
+              </span>
+            )}
+          </div>
 
           <p className="mb-4 text-2xl font-extrabold text-slate-900 dark:text-slate-50">
             ₹{summary.total.toLocaleString()}
           </p>
 
-          {filteredExpenses.length === 0 ? (
-            <p className="text-xs text-slate-400 dark:text-slate-500">
-              No expenses for this month
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {Object.entries(summary.byCategory).map(([category, amount]) => (
-                <div key={category} className="flex justify-between text-sm">
-                  <span className="font-medium text-slate-600 dark:text-slate-300">
-                    {category}
-                  </span>
-                  <span className="font-bold text-slate-800 dark:text-slate-100">
-                    ₹{amount.toLocaleString()}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-4">
-          <div className="rounded-3xl border border-white/60 bg-white/80 p-4 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
-            <input
-              type="text"
-              placeholder="Search expenses..."
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 font-medium text-slate-800 transition-all placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100 dark:placeholder:text-slate-500"
-            />
-            {isSearching && (
-              <div className="ml-1 mt-2 text-xs text-slate-400 dark:text-slate-500">
-                Searching...
+          <div className="space-y-4">
+            {searchedExpenses.length === 0 ? (
+              <p className="text-xs text-slate-400 dark:text-slate-500 italic">
+                No data matching your selection
+              </p>
+            ) : (
+              <div className="space-y-2 max-h-[120px] overflow-y-auto pr-1">
+                {Object.entries(summary.byCategory).map(([category, amount]) => (
+                  <div key={category} className="flex justify-between text-sm">
+                    <span className="font-medium text-slate-600 dark:text-slate-300">
+                      {category}
+                    </span>
+                    <span className="font-bold text-slate-800 dark:text-slate-100">
+                      ₹{amount.toLocaleString()}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
+        </div>
 
-          <div className="flex items-center justify-between rounded-3xl border border-white/60 bg-white/80 p-4 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
+        <div className="space-y-4">
+          <div className="rounded-3xl border border-white/60 bg-white/80 p-3 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-9 pr-4 py-2.5 text-sm font-medium text-slate-800 transition-all placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100 dark:placeholder:text-slate-500"
+                />
+              </div>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={cn(
+                  "flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-bold transition-all active:scale-95",
+                  showFilters || hasActiveFilters
+                    ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20"
+                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-300"
+                )}
+              >
+                <Filter className="h-4 w-4" />
+                <span className="hidden sm:inline">Filters</span>
+                {hasActiveFilters && (
+                  <span className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] text-blue-600 dark:bg-blue-100">
+                    !
+                  </span>
+                )}
+              </button>
+            </div>
+
+            <AnimatePresence>
+              {showFilters && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="pt-4 grid grid-cols-1 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+                      >
+                        <option value="">All Categories</option>
+                        {userCategories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+
+                      <select
+                        value={selectedAccountTypeId}
+                        onChange={(e) => setSelectedAccountTypeId(e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+                      >
+                        <option value="">All Types</option>
+                        {accountTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                      </select>
+                    </div>
+
+                    <select
+                      value={selectedAccountId}
+                      onChange={(e) => setSelectedAccountId(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+                    >
+                      <option value="">All Accounts</option>
+                      {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                    </select>
+
+                    <button
+                      onClick={clearFilters}
+                      className="text-center text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors py-1"
+                    >
+                      Clear All Filters
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="flex items-center justify-between rounded-3xl border border-white/60 bg-white/80 p-3 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
             <span className="pl-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-              Actions
+              Data
             </span>
             <button
-              disabled={!filteredExpenses.length}
+              disabled={!searchedExpenses.length}
               onClick={() =>
-                exportExpensesToCSV(filteredExpenses, `expenses-${selectedMonth}.csv`)
+                exportExpensesToCSV(searchedExpenses, `expenses-filtered.csv`)
               }
-              className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white shadow-md shadow-slate-900/10 transition-all active:scale-95 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-500"
+              className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white transition-all active:scale-95 hover:bg-slate-800 disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-500"
             >
-              <span>Download CSV</span>
+              <span>Export Filtered</span>
               <span className="opacity-70">↓</span>
             </button>
           </div>
