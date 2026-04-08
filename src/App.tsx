@@ -19,6 +19,8 @@ import useSettings, { SettingsProvider } from "./hooks/useSettings";
 import SplitPage from "./pages/SplitPage";
 import CreateSplitPage from "./pages/CreateSplitPage";
 import SplitDetailPage from "./pages/SplitDetailPage";
+import CreateTripWizard from "./pages/CreateTripWizard";
+import TripDetailPage from "./pages/TripDetailPage";
 import NotFound from "./pages/NotFound";
 import { useSubscriptions } from "./hooks/useSubscriptions";
 import { useTheme } from "./hooks/useTheme";
@@ -68,6 +70,8 @@ function AppContent() {
               <Route path="/split" element={<SplitPage />} />
               <Route path="/split/create" element={<CreateSplitPage />} />
               <Route path="/split/:id" element={<SplitDetailPage />} />
+              <Route path="/travel/new" element={<CreateTripWizard />} />
+              <Route path="/travel/:tripId" element={<TripDetailPage />} />
               {import.meta.env.DEV && (
                 <Route path="/seed" element={<SeedDataPage />} />
               )}

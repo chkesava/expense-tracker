@@ -1,6 +1,6 @@
 import { addDoc, collection, serverTimestamp, updateDoc, doc } from "firebase/firestore";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { db } from "../firebase";
 import { useAuth } from "../hooks/useAuth";
 import { useAccounts } from "../hooks/useAccounts";
@@ -13,17 +13,20 @@ import { useGamification } from "../hooks/useGamification"; // Import
 import { cn } from "../lib/utils";
 import { motion } from "framer-motion";
 import { useCategorizationRules } from "../hooks/useCategorizationRules";
+import { useTrips } from "../hooks/useTrips";
 
 export default function ExpenseForm({ editingExpense }: { editingExpense?: Expense | null }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { settings } = useSettings();
-  const { addXP } = useGamification(); // Destructure
+  const { addXP } = useGamification(); 
 
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState("");
   const [category, setCategory] = useState<string>(settings.defaultCategory || "Food");
   const [accountId, setAccountId] = useState("");
+  const [tripId, setTripId] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categoryTouched, setCategoryTouched] = useState(false);
@@ -32,8 +35,8 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
   const { accounts } = useAccounts();
   const { categories: userCategories } = useCategories();
   const { rules } = useCategorizationRules();
+  const { trips, syncTripSpentAmount } = useTrips();
 
-  // Online status
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
 
   useEffect(() => {
@@ -46,7 +49,6 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
     };
   }, []);
 
-  // Initialize form
   useEffect(() => {
     if (editingExpense) {
       setAmount(editingExpense.amount.toString());
@@ -54,12 +56,15 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
       setNote(editingExpense.note ?? "");
       setDate(editingExpense.date);
       setAccountId(editingExpense.accountId ?? "");
+      setTripId(editingExpense.tripId ?? null);
       setCategoryTouched(true);
     } else {
       const last = localStorage.getItem("lastCategory");
       if (last) setCategory(last);
       setDate(new Date().toISOString().slice(0, 10));
       setCategoryTouched(false);
+      const state = location.state as any;
+      setTripId(state?.tripId ?? null);
     }
   }, [editingExpense]);
 
@@ -99,7 +104,10 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
         note,
         month,
         accountId,
+        tripId: tripId || null,
       };
+
+      const oldTripId = editingExpense?.tripId;
 
       if (editingExpense?.id) {
         await updateDoc(doc(db, "users", user.uid, "expenses", editingExpense.id), data);
@@ -111,9 +119,12 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
           createdAt: serverTimestamp(),
         });
         toast.success("Expense added");
-        // Gamification: Award XP for tracking an expense
         addXP(10);
       }
+
+      // Sync trip spending
+      if (tripId) await syncTripSpentAmount(tripId);
+      if (oldTripId && oldTripId !== tripId) await syncTripSpentAmount(oldTripId);
 
       navigate("/expenses");
     } catch (err) {
@@ -126,7 +137,6 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="space-y-4">
-      {/* Amount Input - Prominent */}
       <div className="relative">
         <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Amount</label>
         <div className="relative">
@@ -144,7 +154,6 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {/* Date Input */}
         <div>
           <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Date</label>
           <input
@@ -156,7 +165,6 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
           />
         </div>
 
-        {/* Category Select */}
         <div>
           <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Category</label>
           <div className="relative">
@@ -187,7 +195,6 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
         </div>
       </div>
 
-      {/* Account Select */}
       <div>
         <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Account (Optional)</label>
         <div className="relative">
@@ -205,7 +212,6 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
         </div>
       </div>
 
-      {/* Note Input */}
       <div>
         <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Note (Optional)</label>
         <input
@@ -221,7 +227,25 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
         )}
       </div>
 
-      {/* Submit Button */}
+      {(trips.filter(t => t.status === "active").length > 0 || !!tripId) && (
+        <div>
+          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Attach to Trip (Optional)</label>
+          <div className="relative">
+            <select
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 font-medium text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
+              value={tripId || ""}
+              onChange={e => setTripId(e.target.value || null)}
+            >
+              <option value="">No Trip</option>
+              {trips.filter(t => t.status === "active" || t.id === tripId).map(trip => (
+                <option key={trip.id} value={trip.id}>{trip.destination} {trip.tripName ? `(${trip.tripName})` : ''}</option>
+              ))}
+            </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">▼</div>
+          </div>
+        </div>
+      )}
+
       <motion.button
         type="submit"
         disabled={(isSubmitting) || (!!editingExpense && isLocked)}
@@ -242,7 +266,6 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
         }
       </motion.button>
 
-      {/* Status Indicators */}
       <div className="flex justify-between items-center px-1">
         <span className={cn("text-xs font-medium flex items-center gap-1.5", isOnline ? "text-emerald-600" : "text-amber-600")}>
           <span className={cn("w-2 h-2 rounded-full", isOnline ? "bg-emerald-500" : "bg-amber-500")} />

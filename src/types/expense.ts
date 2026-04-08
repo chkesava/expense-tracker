@@ -70,6 +70,7 @@ export interface Expense {
   accountId?: string;
   budgetGroupId?: string;
   splitId?: string; // ID of the split this expense belongs to
+  tripId?: string | null; // ID of the trip this expense belongs to
   isRecurring?: boolean;
   createdAt: unknown;
 }
