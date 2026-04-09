@@ -81,7 +81,8 @@ export function useSubscriptions() {
                     month: currentMonth,
                     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     createdAt: serverTimestamp(),
-                    fromSubscription: true
+                    fromSubscription: true,
+                    accountId: sub.accountId || ""
                 });
 
                 // 2. Mark as processed so the listener skips it
@@ -176,7 +177,8 @@ export function useSubscriptions() {
                         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                         createdAt: serverTimestamp(),
                         fromSubscription: true,
-                        subscriptionId: sub.id
+                        subscriptionId: sub.id,
+                        accountId: sub.accountId || ""
                     });
 
                     addXP(10);

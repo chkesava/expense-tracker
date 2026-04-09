@@ -13,8 +13,13 @@ import {
   Plus, 
   Calendar,
   ChevronRight,
-  Clock
+  Clock,
+  Edit2,
+  Trash2,
+  X
 } from "lucide-react";
+import { useAccounts } from "../hooks/useAccounts";
+import type { Subscription } from "../types/subscription";
 
 type ViewMode = "subscriptions" | "travel";
 
@@ -31,37 +36,70 @@ export default function SubscriptionsPage() {
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<string>("Subscriptions");
   const [day, setDay] = useState("1");
+  const [accountId, setAccountId] = useState("");
   const [isDisabled, setIsDisabled] = useState(false);
   const [countDown, setCountDown] = useState(0);
+  const [editingSub, setEditingSub] = useState<Subscription | null>(null);
+
+  const { accounts } = useAccounts();
+
+  const resetForm = () => {
+    setName("");
+    setAmount("");
+    setDay("1");
+    setCategory("Subscriptions");
+    setAccountId("");
+    setEditingSub(null);
+    setIsAddingSub(false);
+  };
+
+  const handleEdit = (sub: Subscription) => {
+    setEditingSub(sub);
+    setName(sub.name);
+    setAmount(sub.amount.toString());
+    setCategory(sub.category);
+    setDay(sub.dayOfMonth.toString());
+    setAccountId(sub.accountId || "");
+    setIsAddingSub(true);
+  };
 
   const handleSubSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !amount || isDisabled) return;
 
-    await addSubscription({
+    const subData = {
       name,
       amount: Number(amount),
       category,
       dayOfMonth: Number(day),
-      isActive: true,
-    });
+      accountId: accountId || "",
+      isActive: editingSub ? editingSub.isActive : true,
+    };
 
-    setName("");
-    setAmount("");
-    setDay("1");
-    setIsDisabled(true);
-    setCountDown(5);
+    if (editingSub?.id) {
+      await updateSubscription(editingSub.id, subData);
+      resetForm();
+    } else {
+      await addSubscription(subData);
+      
+      setName("");
+      setAmount("");
+      setDay("1");
+      setAccountId("");
+      setIsDisabled(true);
+      setCountDown(5);
 
-    const timer = setInterval(() => {
-      setCountDown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setIsDisabled(false);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+      const timer = setInterval(() => {
+        setCountDown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            setIsDisabled(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
   };
 
   return (
@@ -132,7 +170,20 @@ export default function SubscriptionsPage() {
                   className="mb-8 overflow-hidden"
                   onSubmit={handleSubSubmit}
                 >
-                  <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl shadow-sm space-y-4">
+                  <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl shadow-sm space-y-4 relative">
+                    <div className="flex justify-between items-center">
+                      <h2 className="font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                        {editingSub ? "Edit Subscription" : "New Subscription"}
+                      </h2>
+                      <button 
+                        type="button"
+                        onClick={resetForm}
+                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                      >
+                        <X size={18} className="text-slate-400" />
+                      </button>
+                    </div>
+
                     <div>
                       <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Service Name</label>
                       <input
@@ -163,7 +214,7 @@ export default function SubscriptionsPage() {
                       <div>
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Day of Month</label>
                         <select
-                          className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 mt-1 font-semibold text-slate-800 dark:text-white outline-none"
+                          className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 mt-1 font-semibold text-slate-800 dark:text-white outline-none cursor-pointer"
                           value={day}
                           onChange={e => setDay(e.target.value)}
                         >
@@ -174,16 +225,46 @@ export default function SubscriptionsPage() {
                       </div>
                     </div>
 
-                    <button
-                      type="submit"
-                      disabled={isDisabled}
-                      className={cn(
-                        "w-full font-bold py-3 rounded-xl mt-2 transition-all",
-                        isDisabled ? "bg-slate-100 dark:bg-slate-800 text-slate-400" : "bg-slate-900 dark:bg-blue-600 text-white"
+                    <div>
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Deduct from Account</label>
+                      <select
+                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 mt-1 font-semibold text-slate-800 dark:text-white outline-none cursor-pointer"
+                        value={accountId}
+                        onChange={e => setAccountId(e.target.value)}
+                      >
+                        <option value="">No Account (Manual)</option>
+                        {accounts.map(acc => (
+                          <option key={acc.id} value={acc.id}>{acc.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex gap-3">
+                      {editingSub && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm("Are you sure you want to delete this subscription?")) {
+                              deleteSubscription(editingSub.id!);
+                              resetForm();
+                            }
+                          }}
+                          className="flex-1 font-bold py-3 rounded-xl mt-2 border border-red-100 text-red-500 hover:bg-red-50 transition-all flex items-center justify-center gap-2"
+                        >
+                          <Trash2 size={18} /> Delete
+                        </button>
                       )}
-                    >
-                      {isDisabled ? `Added! Wait ${countDown}s...` : "Save Subscription"}
-                    </button>
+                      <button
+                        type="submit"
+                        disabled={isDisabled}
+                        className={cn(
+                          "flex-[2] font-bold py-3 rounded-xl mt-2 transition-all",
+                          isDisabled ? "bg-slate-100 dark:bg-slate-800 text-slate-400" : "bg-slate-900 dark:bg-blue-600 text-white"
+                        )}
+                      >
+                        {isDisabled ? `Added! Wait ${countDown}s...` : (editingSub ? "Update Subscription" : "Save Subscription")}
+                      </button>
+                    </div>
                   </div>
                 </motion.form>
               )}
@@ -206,25 +287,63 @@ export default function SubscriptionsPage() {
                       sub.isActive ? "border-slate-100 dark:border-slate-800" : "opacity-60 grayscale"
                     )}
                   >
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center font-black text-lg">
-                          {sub.name[0].toUpperCase()}
+                    <div className="flex flex-col">
+                      <div className="flex justify-between items-center mb-4">
+                        <div className="flex items-center gap-4">
+                          <div className={cn(
+                            "w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg transition-colors",
+                            sub.isActive ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600" : "bg-slate-100 dark:bg-slate-800 text-slate-400"
+                          )}>
+                            {sub.name[0].toUpperCase()}
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-slate-900 dark:text-white">{sub.name}</h3>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                              Day {sub.dayOfMonth} • {sub.category}
+                              {sub.accountId && ` • ${accounts.find(a => a.id === sub.accountId)?.name || 'Account'}`}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-bold text-slate-900 dark:text-white">{sub.name}</h3>
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                            Day {sub.dayOfMonth} • {sub.category}
-                          </p>
+                        <div className="text-right">
+                          <div className="font-black text-slate-900 dark:text-white text-xl">₹{sub.amount}</div>
+                          <div className={cn(
+                            "text-[9px] font-black mt-1 px-2 py-0.5 rounded-full inline-block border",
+                            sub.isActive ? "text-emerald-500 border-emerald-100 bg-emerald-50/50 dark:bg-emerald-500/10" : "text-slate-400 border-slate-200 bg-slate-50 dark:bg-slate-800/50"
+                          )}>
+                            {sub.isActive ? "ACTIVE" : "PAUSED"}
+                          </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-black text-slate-900 dark:text-white">₹{sub.amount}</div>
+
+                      <div className="grid grid-cols-3 gap-2 pt-4 border-t border-slate-50 dark:border-slate-800/50">
                         <button
                           onClick={() => updateSubscription(sub.id!, { isActive: !sub.isActive })}
-                          className={cn("text-[9px] font-black mt-1 px-2 py-0.5 rounded-full border", sub.isActive ? "text-emerald-500 border-emerald-100" : "text-slate-400 border-slate-200")}
+                          className={cn(
+                            "flex items-center justify-center gap-2 py-2 px-3 rounded-xl font-bold text-xs transition-all active:scale-95",
+                            sub.isActive 
+                              ? "bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400" 
+                              : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400"
+                          )}
                         >
-                          {sub.isActive ? "ACTIVE" : "PAUSED"}
+                          {sub.isActive ? "Pause" : "Resume"}
+                        </button>
+                        
+                        <button 
+                          onClick={() => handleEdit(sub)}
+                          className="flex items-center justify-center gap-2 py-2 px-3 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 rounded-xl font-bold text-xs transition-all active:scale-95"
+                        >
+                          <Edit2 size={12} /> Edit
+                        </button>
+
+                        <button 
+                          onClick={() => {
+                            if (window.confirm("Delete this subscription?")) {
+                              deleteSubscription(sub.id!);
+                            }
+                          }}
+                          className="flex items-center justify-center gap-2 py-2 px-3 bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 rounded-xl font-bold text-xs transition-all active:scale-95"
+                        >
+                          <Trash2 size={12} /> Delete
                         </button>
                       </div>
                     </div>

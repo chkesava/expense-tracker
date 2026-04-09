@@ -6,5 +6,6 @@ export interface Subscription {
     dayOfMonth: number; // 1-31
     isActive: boolean;
     lastProcessed: string; // "YYYY-MM"
+    accountId?: string;
     createdAt?: any;
 }
