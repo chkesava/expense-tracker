@@ -5,6 +5,7 @@ import { useAuth } from './useAuth';
 import type { UserStats } from '../types/stats';
 import { LEVEL_THRESHOLDS } from '../types/stats';
 import { toast } from 'react-toastify';
+import { useCelebration } from './useCelebration';
 
 const DEFAULT_STATS: UserStats = {
     currentStreak: 0,
@@ -24,6 +25,7 @@ export function useGamification() {
     const { user } = useAuth();
     const [stats, setStats] = useState<UserStats>(DEFAULT_STATS);
     const [loading, setLoading] = useState(true);
+    const { triggerCelebration } = useCelebration();
 
     // 1. Real-time Listener
     useEffect(() => {
@@ -78,6 +80,7 @@ export function useGamification() {
 
             if (newLevel > currentStats.level) {
                 toast.success(`🎉 Level Up! You are now Level ${newLevel}!`);
+                triggerCelebration('level-up');
             } else if (amount > 0) {
                 // Feedback for XP gain (optional, maybe distinct sound or small toast)
                 // toast.info(`+${amount} XP`); 
@@ -163,6 +166,7 @@ export function useGamification() {
                                 newFocusStreak += 1;
                                 newFocusWins += 1;
                                 xpToAdd += 50; // Bonus for keeping focus!
+                                triggerCelebration('focus-win');
                                 console.log("🎯 Focus Goal Met!", dailyFocusSpend, "/", focusData.dailyLimit);
                             } else {
                                 newFocusStreak = 0;
@@ -178,11 +182,13 @@ export function useGamification() {
                         newFires += 1;
                         newShields = 0; // Reset shield
                         xpToAdd += 10; // Small XP for tracking
+                        triggerCelebration('streak-fire');
                         console.log("🔥 Fire Streak Increased!");
                     } else {
                         newShields += 1;
                         newFires = 0; // Reset fire
                         xpToAdd += 50; // Big XP for saving!
+                        triggerCelebration('streak-shield');
                         console.log("🛡️ Shield Streak Increased!");
                     }
                 } else {

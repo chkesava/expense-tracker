@@ -52,7 +52,7 @@ function parseCsvLine(line: string) {
 
 export default function ImportPage() {
   const { user } = useAuth();
-  const expenses = useExpenses();
+  const { expenses } = useExpenses();
   const { accounts } = useAccounts();
   const { rules } = useCategorizationRules();
   const [rows, setRows] = useState<ParsedRow[]>([]);

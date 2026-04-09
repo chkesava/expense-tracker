@@ -26,9 +26,11 @@ import NotFound from "./pages/NotFound";
 import { useSubscriptions } from "./hooks/useSubscriptions";
 import { useTheme } from "./hooks/useTheme";
 import { ModalProvider, useModals } from "./hooks/useModals";
+import { CelebrationProvider } from "./hooks/useCelebration";
 import Modal from "./components/common/Modal";
 import ExpenseForm from "./components/ExpenseForm";
 import MonthDrawer from "./components/MonthDrawer";
+import CelebrationOverlay from "./components/CelebrationOverlay";
 
 import AdminDashboard from "./admin/pages/AdminDashboard";
 import AdminUsers from "./admin/pages/AdminUsers";
@@ -74,6 +76,7 @@ function AppRoutes() {
       </Modal>
 
       <MonthDrawer />
+      <CelebrationOverlay />
 
       {/* Global animated background */}
       <div className="fixed inset-0 z-[-1] bg-gradient-to-br from-slate-50 to-blue-50/50 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 pointer-events-none transition-colors" />
@@ -121,7 +124,9 @@ export default function App() {
       <AuthProvider>
         <SettingsProvider>
           <ModalProvider>
-            <AppContent />
+            <CelebrationProvider>
+              <AppContent />
+            </CelebrationProvider>
           </ModalProvider>
         </SettingsProvider>
       </AuthProvider>

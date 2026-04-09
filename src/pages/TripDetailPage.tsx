@@ -22,12 +22,13 @@ import {
   PieChart
 } from "lucide-react";
 import { toast } from "react-toastify";
+import { Skeleton } from "../components/common/Skeleton";
 
 export default function TripDetailPage() {
   const { tripId } = useParams();
   const navigate = useNavigate();
   const { trips, updateTrip, deleteTrip } = useTrips();
-  const expenses = useExpenses();
+  const { expenses, loading } = useExpenses();
   
   const trip = trips.find(t => t.id === tripId);
   const tripExpenses = useMemo(() => 
@@ -143,36 +144,54 @@ export default function TripDetailPage() {
 
       {/* Budget Card */}
       <section className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 p-8 shadow-sm mb-6">
-        <div className="flex justify-between items-end mb-6">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Total Spending</p>
-            <h2 className="text-4xl font-black text-slate-900 dark:text-white">
-              ₹{trip.spentAmount.toLocaleString()}
-            </h2>
+        {loading ? (
+          <div className="space-y-6">
+            <div className="flex justify-between items-end">
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-10 w-32" />
+              </div>
+              <div className="space-y-2 text-right">
+                <Skeleton className="h-3 w-12 ml-auto" />
+                <Skeleton className="h-5 w-24 ml-auto" />
+              </div>
+            </div>
+            <Skeleton className="h-4 w-full rounded-full" />
           </div>
-          <div className="text-right">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Budget</p>
-            <p className="text-lg font-bold text-slate-600 dark:text-slate-400">
-              ₹{trip.totalBudget.toLocaleString()}
-            </p>
-          </div>
-        </div>
+        ) : (
+          <>
+            <div className="flex justify-between items-end mb-6">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Total Spending</p>
+                <h2 className="text-4xl font-black text-slate-900 dark:text-white">
+                  ₹{trip.spentAmount.toLocaleString()}
+                </h2>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Budget</p>
+                <p className="text-lg font-bold text-slate-600 dark:text-slate-400">
+                  ₹{trip.totalBudget.toLocaleString()}
+                </p>
+              </div>
+            </div>
 
-        <div className="relative w-full h-4 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-2">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${Math.min(budgetUsedPercent, 100)}%` }}
-            className={cn(
-              "h-full rounded-full transition-all duration-1000",
-              isOverBudget ? "bg-red-500" : budgetUsedPercent > 80 ? "bg-amber-500" : "bg-blue-600"
-            )}
-          />
-        </div>
-        <div className="flex justify-between text-[10px] font-bold text-slate-400 px-1">
-          <span>0%</span>
-          <span className={isOverBudget ? "text-red-500" : ""}>{budgetUsedPercent.toFixed(1)}% USED</span>
-          <span>100%</span>
-        </div>
+            <div className="relative w-full h-4 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-2">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.min(budgetUsedPercent, 100)}%` }}
+                className={cn(
+                  "h-full rounded-full transition-all duration-1000",
+                  isOverBudget ? "bg-red-500" : budgetUsedPercent > 80 ? "bg-amber-500" : "bg-blue-600"
+                )}
+              />
+            </div>
+            <div className="flex justify-between text-[10px] font-bold text-slate-400 px-1">
+              <span>0%</span>
+              <span className={isOverBudget ? "text-red-500" : ""}>{budgetUsedPercent.toFixed(1)}% USED</span>
+              <span>100%</span>
+            </div>
+          </>
+        )}
       </section>
 
       {/* Smart Insights */}

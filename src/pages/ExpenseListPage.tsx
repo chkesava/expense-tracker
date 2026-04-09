@@ -20,10 +20,11 @@ import { cn } from "../lib/utils";
 import { useModals } from "../hooks/useModals";
 import { Filter, X, ChevronDown, ChevronUp, Search } from "lucide-react";
 import { CATEGORIES } from "../types/expense";
+import { Skeleton } from "../components/common/Skeleton";
 
 export default function ExpenseListPage() {
   const { settings } = useSettings();
-  const expenses = useExpenses();
+  const { expenses, loading } = useExpenses();
   const { accounts } = useAccounts();
   const { globalMonth } = useModals();
 
@@ -198,12 +199,17 @@ export default function ExpenseListPage() {
             )}
           </div>
 
-          <p className="mb-4 text-2xl font-extrabold text-slate-900 dark:text-slate-50">
-            ₹{summary.total.toLocaleString()}
-          </p>
+          <div className="mb-4 text-2xl font-extrabold text-slate-900 dark:text-slate-50">
+            {loading ? <Skeleton className="h-8 w-24" /> : `₹${summary.total.toLocaleString()}`}
+          </div>
 
           <div className="space-y-4">
-            {searchedExpenses.length === 0 ? (
+            {loading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            ) : searchedExpenses.length === 0 ? (
               <p className="text-xs text-slate-400 dark:text-slate-500 italic">
                 No data matching your selection
               </p>
@@ -326,7 +332,25 @@ export default function ExpenseListPage() {
       </div>
 
       <div className="min-h-[400px] overflow-hidden rounded-3xl border border-white/40 bg-white/60 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/80">
-        {searchedExpenses.length === 0 ? (
+        {loading ? (
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="p-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 flex-1">
+                  <Skeleton className="h-12 w-12 rounded-2xl" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                </div>
+                <div className="space-y-2 text-right">
+                  <Skeleton className="h-5 w-16 ml-auto" />
+                  <Skeleton className="h-3 w-12 ml-auto" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : searchedExpenses.length === 0 ? (
           <div className="flex h-64 flex-col items-center justify-center text-slate-400 dark:text-slate-500">
             <div className="mb-2 text-4xl">🔍</div>
             <p className="text-sm font-medium">No expenses found</p>

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { motion, type Variants } from "framer-motion";
 import { toast } from "react-toastify";
@@ -7,12 +7,14 @@ import GamificationCard from "../components/GamificationCard";
 import FocusWidget from "../components/focus/FocusWidget";
 import FocusConfigModal from "../components/focus/FocusConfigModal";
 import StoryViewer from "../components/story/StoryViewer";
+import { Skeleton } from "../components/common/Skeleton";
 import { useStoryGenerator } from "../hooks/useStoryGenerator";
 import { useExpenses } from "../hooks/useExpenses";
 import { useSubscriptions } from "../hooks/useSubscriptions";
 import { useCategoryBudgets } from "../hooks/useCategoryBudgets";
 import { useFinancialGoals } from "../hooks/useFinancialGoals";
 import { useAuth } from "../hooks/useAuth";
+import { useAccounts } from "../hooks/useAccounts";
 import useSettings from "../hooks/useSettings";
 import { useModals } from "../hooks/useModals";
 import { db } from "../firebase";
@@ -35,12 +37,14 @@ const surfaceClass = "bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border b
 const softSurfaceClass = "bg-slate-50/70 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800 transition-colors";
 
 export default function Dashboard() {
-  const expenses = useExpenses();
+  const { expenses, loading } = useExpenses();
+  const { accounts } = useAccounts();
   const { subscriptions } = useSubscriptions();
   const { budgets } = useCategoryBudgets();
   const { goals } = useFinancialGoals();
   const { user } = useAuth();
   const { settings } = useSettings();
+  const navigate = useNavigate();
 
   const months = useMemo(() => Array.from(new Set(expenses.map((e) => e.month))).sort().reverse(), [expenses]);
   const { globalMonth } = useModals();
@@ -96,6 +100,11 @@ export default function Dashboard() {
     const change = prev === 0 ? 0 : Math.round(((current - prev) / prev) * 100);
     return { current, prev, change };
   }, [expenses, selectedMonth]);
+
+  const summary = useMemo(() => ({
+    total: monthlyComparison.current,
+    byCategory: Object.fromEntries(topCategories.map(c => [c.category, c.value]))
+  }), [monthlyComparison.current, topCategories]);
 
   const smartInsight = useMemo(() => getSmartInsight(filteredExpenses, settings.monthlyBudget, selectedMonth), [filteredExpenses, settings.monthlyBudget, selectedMonth]);
   const budgetUsagePercent = settings.monthlyBudget > 0 ? Math.min(100, Math.round((monthlyComparison.current / settings.monthlyBudget) * 100)) : 0;
@@ -208,32 +217,53 @@ export default function Dashboard() {
           )}
 
           <div className="space-y-6">
-            <motion.section variants={itemVariants} className={`${surfaceClass} p-6`}>
-              <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">This Month</h3>
-              <div className="text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">₹{monthlyComparison.current.toLocaleString()}</div>
-              <div className="flex justify-between items-center mt-2 gap-3">
-                <div className={cn("text-sm font-semibold flex items-center gap-1", monthlyComparison.change >= 0 ? "text-red-500" : "text-emerald-600")}>
-                  {monthlyComparison.change === 0 ? "No change vs last month" : `${Math.abs(monthlyComparison.change)}% vs last month`}
-                </div>
-                {filteredExpenses.length > 0 && (
-                  <button onClick={() => setShowStory(true)} className="flex items-center gap-1 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md hover:scale-105 transition-transform">
-                    Recap
-                  </button>
-                )}
-              </div>
-              {settings.monthlyBudget > 0 && (
-                <div className="mt-6">
-                  <div className="flex justify-between text-xs font-semibold mb-2">
-                    <span className="text-slate-500 dark:text-slate-400">Budget Usage</span>
-                    <span className="text-slate-700 dark:text-slate-200">₹{settings.monthlyBudget.toLocaleString()}</span>
+            {/* Summary Widget */}
+            <motion.div variants={itemVariants} className="md:col-span-2 rounded-3xl border border-white/60 bg-white/80 p-8 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
+              {loading ? (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-16" />
                   </div>
-                  <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200/50 dark:border-slate-700">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${budgetUsagePercent}%` }} transition={{ duration: 1, ease: "easeOut" }} className={cn("h-full rounded-full transition-colors duration-500", budgetColorClass)} />
+                  <Skeleton className="h-10 w-32" />
+                  <div className="space-y-3">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
                   </div>
-                  <div className="mt-2 text-right text-xs font-bold text-slate-600 dark:text-slate-300">{budgetUsagePercent}% used</div>
                 </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Overview</h3>
+                    <span className="text-[10px] font-black bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full">
+                      {selectedMonth}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-2 mb-8">
+                    <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">₹{summary.total.toLocaleString()}</span>
+                    <span className="text-sm font-bold text-slate-400">total spent</span>
+                  </div>
+
+                  <div className="space-y-4">
+                    {Object.entries(summary.byCategory).slice(0, 3).map(([cat, amt]) => (
+                      <div key={cat} className="space-y-2">
+                        <div className="flex justify-between text-xs font-bold">
+                          <span className="text-slate-600 dark:text-slate-300 uppercase tracking-widest">{cat}</span>
+                          <span className="text-slate-900 dark:text-white">₹{amt.toLocaleString()}</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <motion.div 
+                            initial={{ width: 0 }} 
+                            animate={{ width: `${summary.total > 0 ? (amt / summary.total) * 100 : 0}%` }} 
+                            className="h-full bg-blue-600 rounded-full" 
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
-            </motion.section>
+            </motion.div>
 
             <motion.section variants={itemVariants} className={`${surfaceClass} p-6`}>
               <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
@@ -320,42 +350,57 @@ export default function Dashboard() {
           </div>
 
           <div className="space-y-6">
-            <motion.section variants={itemVariants} className={`${surfaceClass} p-6 h-full`}>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4">
-                <span className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-300">R</span>
-                Recent
-              </h3>
-              <div className="space-y-0.5">
-                {filteredExpenses.slice(0, visibleCount).length === 0 ? (
-                  <p className="text-sm text-slate-400 text-center py-10 italic">No recent transactions</p>
+            {/* Recent Expenses */}
+            <motion.div variants={itemVariants} className="md:col-span-3 rounded-3xl border border-white/40 bg-white/60 p-8 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/80">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Recent Activity</h3>
+                <button onClick={() => navigate("/expenses")} className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest hover:underline px-2 py-1">View All</button>
+              </div>
+
+              <div className="space-y-3">
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-4 p-4">
+                      <Skeleton className="h-10 w-10" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-3 w-16" />
+                      </div>
+                      <Skeleton className="h-4 w-12" />
+                    </div>
+                  ))
+                ) : filteredExpenses.length === 0 ? (
+                  <div className="py-12 text-center opacity-40 italic text-sm">No expenses this month</div>
                 ) : (
                   filteredExpenses.slice(0, visibleCount).map((expense) => (
-                    <div key={expense.id} className="group flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-950/60 transition-colors cursor-default">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-lg text-slate-700 dark:text-slate-200 shadow-sm group-hover:scale-110 transition-transform">
+                    <motion.div 
+                      layout
+                      key={expense.id} 
+                      className="flex items-center justify-between p-4 rounded-2xl bg-white/50 dark:bg-slate-800/50 border border-white/40 dark:border-slate-700/50 group hover:shadow-lg transition-all"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold group-hover:scale-110 transition-transform">
                           {expense.category[0]}
                         </div>
                         <div>
-                          <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{expense.category}</div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">{expense.note || expense.time || "No note"}</div>
+                          <div className="font-bold text-slate-900 dark:text-white mb-0.5">{expense.category}</div>
+                          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{expense.date}</div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-bold text-slate-900 dark:text-slate-100">-₹{expense.amount.toLocaleString()}</div>
-                        <div className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">{expense.date}</div>
+                        <div className="font-black text-slate-900 dark:text-white">-₹{expense.amount}</div>
+                        {accounts.find(a => a.id === expense.accountId) && (
+                          <div className="text-[9px] font-bold text-blue-500 dark:text-blue-400 uppercase">{accounts.find(a => a.id === expense.accountId)?.name}</div>
+                        )}
                       </div>
-                    </div>
+                    </motion.div>
                   ))
                 )}
+                {filteredExpenses.length > visibleCount && !loading && (
+                  <button onClick={() => setVisibleCount(v => v + 5)} className="w-full py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors">Load More</button>
+                )}
               </div>
-              {filteredExpenses.length > visibleCount && (
-                <div className="mt-4 text-center">
-                  <button onClick={() => setVisibleCount((prev) => prev + 5)} className="text-xs font-bold text-blue-600 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 hover:underline cursor-pointer p-2">
-                    View More ({filteredExpenses.length - visibleCount} remaining)
-                  </button>
-                </div>
-              )}
-            </motion.section>
+            </motion.div>
           </div>
         </div>
       </motion.div>

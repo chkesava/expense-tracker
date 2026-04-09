@@ -7,21 +7,32 @@ import { useAuth } from "./useAuth";
 export const useExpenses = () => {
   const { user } = useAuth();
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setExpenses([]);
+      setLoading(false);
+      return;
+    }
 
     const q = query(
       collection(db, "users", user.uid, "expenses"),
       orderBy("createdAt", "desc")
     );
 
-    return onSnapshot(q, snap => {
+    const unsubscribe = onSnapshot(q, snap => {
       setExpenses(
         snap.docs.map(d => ({ id: d.id, ...d.data() } as Expense))
       );
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching expenses:", error);
+      setLoading(false);
     });
+
+    return unsubscribe;
   }, [user]);
 
-  return expenses;
+  return { expenses, loading };
 };

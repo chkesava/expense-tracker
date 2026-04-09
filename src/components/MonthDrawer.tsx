@@ -7,7 +7,7 @@ import { cn } from "../lib/utils";
 
 export default function MonthDrawer() {
   const { isMonthDrawerOpen, setIsMonthDrawerOpen, globalMonth, setGlobalMonth } = useModals();
-  const expenses = useExpenses();
+  const { expenses } = useExpenses();
 
   const months = useMemo(() => {
     const allMonths = [...new Set(expenses.map((e) => e.month))].sort().reverse();

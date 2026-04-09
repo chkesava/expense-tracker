@@ -2,32 +2,28 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSubscriptions } from "../hooks/useSubscriptions";
 import { useTrips } from "../hooks/useTrips";
-import { CATEGORIES } from "../types/expense";
 import { cn } from "../lib/utils";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { 
   Plane, 
   CreditCard, 
-  MapPin, 
-  TrendingUp, 
   Plus, 
   Calendar,
   ChevronRight,
   Clock,
   Edit2,
-  Trash2,
-  X
+  Trash2
 } from "lucide-react";
 import { useAccounts } from "../hooks/useAccounts";
 import type { Subscription } from "../types/subscription";
 import Modal from "../components/common/Modal";
-import { CATEGORIES as EXPENSE_CATEGORIES } from "../types/expense";
+import { Skeleton } from "../components/common/Skeleton";
 
 type ViewMode = "subscriptions" | "travel";
 
 export default function SubscriptionsPage() {
   const navigate = useNavigate();
-  const { subscriptions, addSubscription, updateSubscription, deleteSubscription } = useSubscriptions();
+  const { subscriptions, loading, addSubscription, updateSubscription, deleteSubscription } = useSubscriptions();
   const { trips, loading: tripsLoading } = useTrips();
   
   const [view, setView] = useState<ViewMode>("subscriptions");
@@ -242,7 +238,25 @@ export default function SubscriptionsPage() {
             </Modal>
 
             <div className="space-y-4">
-              {subscriptions.length === 0 && !isAddingSub ? (
+              {loading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] p-5 shadow-sm">
+                    <div className="flex justify-between items-center mb-4">
+                      <div className="flex items-center gap-4">
+                        <Skeleton className="w-12 h-12 rounded-2xl" />
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-3 w-32" />
+                        </div>
+                      </div>
+                      <div className="text-right space-y-2">
+                        <Skeleton className="h-6 w-16 ml-auto" />
+                        <Skeleton className="h-4 w-12 ml-auto" />
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (subscriptions.length === 0 && !isAddingSub) ? (
                 <div className="text-center py-12 opacity-50">
                   <CreditCard className="mx-auto mb-4 text-slate-300" size={48} />
                   <p className="font-bold">No subscriptions yet.</p>
@@ -331,7 +345,23 @@ export default function SubscriptionsPage() {
             exit={{ opacity: 0, x: -10 }}
             className="space-y-4"
           >
-            {trips.length === 0 ? (
+            {tripsLoading ? (
+              Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] p-6 shadow-sm">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="space-y-2">
+                      <Skeleton className="h-6 w-32" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                    <div className="text-right space-y-2">
+                      <Skeleton className="h-5 w-20 ml-auto" />
+                      <Skeleton className="h-3 w-12 ml-auto" />
+                    </div>
+                  </div>
+                  <Skeleton className="w-full h-2 rounded-full" />
+                </div>
+              ))
+            ) : trips.length === 0 ? (
               <div className="text-center py-12 opacity-50">
                 <Plane className="mx-auto mb-4 text-slate-300" size={48} />
                 <p className="font-bold">No travel plans yet.</p>

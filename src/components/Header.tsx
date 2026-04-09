@@ -181,7 +181,7 @@ export default function Header() {
           <span>Add</span>
         </motion.button>
         {stats.currentStreak > 0 && (
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-100/50 rounded-full text-xs font-bold text-orange-600 shadow-sm" title="Current Login Streak">
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 border border-orange-100/50 dark:border-orange-500/20 rounded-full text-xs font-bold text-orange-600 dark:text-orange-400 shadow-sm" title="Current Login Streak">
             <span className="text-sm">🔥</span>
             <span>{stats.currentStreak}</span>
           </div>
@@ -260,7 +260,7 @@ export default function Header() {
                       console.error(err);
                     }
                   }}
-                  className="w-full flex items-center gap-3 p-2 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
+                  className="w-full flex items-center gap-3 p-2 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                 >
                   <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500">
                     <LogOut size={16} />

@@ -60,7 +60,7 @@ export default function SettingsPage() {
   const { settings, setLockPastMonths, setDefaultCategory, setDefaultView, setExportYear, setMonthlyBudget, setTimezone, setUpiId, toggleBottomNavTab, toggleDashboardWidget } = useSettings();
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const expenses = useExpenses();
+  const { expenses } = useExpenses();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [username, setUsername] = useState("");

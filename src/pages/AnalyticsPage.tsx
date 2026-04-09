@@ -15,9 +15,10 @@ import MonthlyComparison from "../components/analytics/MonthlyComparison";
 import WeeklySummary from "../components/analytics/WeeklySummary";
 import AccountSpendingBars from "../components/analytics/AccountSpendingBars";
 import { useAccounts } from "../hooks/useAccounts";
+import { Skeleton } from "../components/common/Skeleton";
 
 export default function AnalyticsPage() {
-  const expenses = useExpenses();
+  const { expenses, loading } = useExpenses();
   const { accounts } = useAccounts();
 
   const months = useMemo(() => {
@@ -52,11 +53,20 @@ export default function AnalyticsPage() {
             Performance Summary
           </h2>
           <div className="space-y-6">
-            <SmartSummary expenses={filteredExpenses} />
-            <div className="h-px bg-slate-100 dark:bg-slate-800" />
-            <MonthlyComparison expenses={expenses} />
-            <div className="h-px bg-slate-100 dark:bg-slate-800" />
-            <WeeklySummary expenses={expenses} month={selectedMonth} />
+            {loading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-32 w-full" />
+              </div>
+            ) : (
+              <>
+                <SmartSummary expenses={filteredExpenses} />
+                <div className="h-px bg-slate-100 dark:bg-slate-800" />
+                <MonthlyComparison expenses={expenses} />
+                <div className="h-px bg-slate-100 dark:bg-slate-800" />
+                <WeeklySummary expenses={expenses} month={selectedMonth} />
+              </>
+            )}
           </div>
         </section>
 
@@ -114,7 +124,7 @@ export default function AnalyticsPage() {
             Daily Activity
           </h3>
           <div className="h-64">
-            <DailyTrend data={groupByDay(filteredExpenses)} />
+            {loading ? <Skeleton className="w-full h-full" /> : <DailyTrend data={groupByDay(filteredExpenses)} />}
           </div>
         </section>
       </div>
