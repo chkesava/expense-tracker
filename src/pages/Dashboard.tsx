@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { motion, type Variants } from "framer-motion";
 import { toast } from "react-toastify";
-import MonthSelector from "../components/MonthSelector";
 import GamificationCard from "../components/GamificationCard";
 import FocusWidget from "../components/focus/FocusWidget";
 import FocusConfigModal from "../components/focus/FocusConfigModal";
@@ -15,6 +14,7 @@ import { useCategoryBudgets } from "../hooks/useCategoryBudgets";
 import { useFinancialGoals } from "../hooks/useFinancialGoals";
 import { useAuth } from "../hooks/useAuth";
 import useSettings from "../hooks/useSettings";
+import { useModals } from "../hooks/useModals";
 import { db } from "../firebase";
 import { groupByCategory, groupByMonth } from "../utils/analytics";
 import { getUsageColor, getSmartInsight } from "../utils/insights";
@@ -43,8 +43,8 @@ export default function Dashboard() {
   const { settings } = useSettings();
 
   const months = useMemo(() => Array.from(new Set(expenses.map((e) => e.month))).sort().reverse(), [expenses]);
-  const [userSelectedMonth, setUserSelectedMonth] = useState<string | null>(null);
-  const selectedMonth = userSelectedMonth ?? months[0] ?? "";
+  const { globalMonth } = useModals();
+  const selectedMonth = globalMonth ?? months[0] ?? "";
   const filteredExpenses = useMemo(() => (!selectedMonth ? [] : expenses.filter((e) => e.month === selectedMonth)), [expenses, selectedMonth]);
   const [visibleCount, setVisibleCount] = useState(7);
   const [isAdding, setIsAdding] = useState(false);
@@ -135,7 +135,6 @@ export default function Dashboard() {
   return (
     <>
       <StoryViewer isOpen={showStory} onClose={() => setShowStory(false)} slides={storySlides} />
-      <MonthSelector months={months} value={selectedMonth} onChange={setUserSelectedMonth} />
       <FocusConfigModal isOpen={showFocusConfig} onClose={() => setShowFocusConfig(false)} />
 
       <motion.div variants={containerVariants} initial="hidden" animate="visible" className="min-h-screen max-w-7xl mx-auto px-4 md:px-8 pt-20 md:pt-24 pb-32">

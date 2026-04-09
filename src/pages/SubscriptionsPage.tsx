@@ -108,7 +108,7 @@ export default function SubscriptionsPage() {
     <motion.main
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="max-w-xl mx-auto pt-24 pb-24 px-4 min-h-screen relative"
+      className="max-w-xl mx-auto pt-24 pb-32 px-4 min-h-screen relative"
     >
       {/* Header & View Toggle */}
       <header className="mb-8">

@@ -10,8 +10,9 @@ import ExpenseListPage from "./pages/ExpenseListPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import Dashboard from "./pages/Dashboard";
 import SeedDataPage from "./pages/SeedData";
-import BottomNav from "./components/BottomNav";
 import Header from "./components/Header";
+import MobileActionDock from "./components/MobileActionDock";
+
 import SettingsPage from "./pages/Settings";
 import SubscriptionsPage from "./pages/SubscriptionsPage";
 import ImportPage from "./pages/ImportPage";
@@ -24,6 +25,10 @@ import TripDetailPage from "./pages/TripDetailPage";
 import NotFound from "./pages/NotFound";
 import { useSubscriptions } from "./hooks/useSubscriptions";
 import { useTheme } from "./hooks/useTheme";
+import { ModalProvider, useModals } from "./hooks/useModals";
+import Modal from "./components/common/Modal";
+import ExpenseForm from "./components/ExpenseForm";
+import MonthDrawer from "./components/MonthDrawer";
 
 import AdminDashboard from "./admin/pages/AdminDashboard";
 import AdminUsers from "./admin/pages/AdminUsers";
@@ -49,7 +54,27 @@ function AppContent() {
 
   // -------- APP ROUTES --------
   return (
+    <AppRoutes />
+  );
+}
+
+function AppRoutes() {
+  const location = useLocation();
+  const { settings } = useSettings();
+  const { isAddExpenseOpen, setIsAddExpenseOpen } = useModals();
+
+  return (
     <>
+      <Modal
+        isOpen={isAddExpenseOpen}
+        onClose={() => setIsAddExpenseOpen(false)}
+        title="Add Expense"
+      >
+        <ExpenseForm onSuccess={() => setIsAddExpenseOpen(false)} />
+      </Modal>
+
+      <MonthDrawer />
+
       {/* Global animated background */}
       <div className="fixed inset-0 z-[-1] bg-gradient-to-br from-slate-50 to-blue-50/50 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 pointer-events-none transition-colors" />
 
@@ -83,7 +108,7 @@ function AppContent() {
           </AnimatePresence>
         </div>
 
-        <BottomNav />
+        <MobileActionDock />
       </div>
     </>
   );
@@ -95,7 +120,9 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <SettingsProvider>
-          <AppContent />
+          <ModalProvider>
+            <AppContent />
+          </ModalProvider>
         </SettingsProvider>
       </AuthProvider>
       <ToastContainer position="top-center" theme={theme === "dark" ? "dark" : "light"} autoClose={2000} hideProgressBar newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />

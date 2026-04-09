@@ -5,9 +5,8 @@ import { useAccountTypes } from "../hooks/useAccountTypes";
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../firebase";
-import MonthSelector from "../components/MonthSelector";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import Modal from "../components/common/Modal";
 import ExpenseForm from "../components/ExpenseForm";
@@ -18,6 +17,7 @@ import { exportExpensesToCSV } from "../utils/exportCsv";
 import useSettings from "../hooks/useSettings";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../lib/utils";
+import { useModals } from "../hooks/useModals";
 import { Filter, X, ChevronDown, ChevronUp, Search } from "lucide-react";
 import { CATEGORIES } from "../types/expense";
 
@@ -25,6 +25,7 @@ export default function ExpenseListPage() {
   const { settings } = useSettings();
   const expenses = useExpenses();
   const { accounts } = useAccounts();
+  const { globalMonth } = useModals();
 
   const { categories: userCategories } = useCategories();
   const { accountTypes } = useAccountTypes();
@@ -34,8 +35,7 @@ export default function ExpenseListPage() {
     [expenses]
   );
 
-  const [userSelectedMonth, setUserSelectedMonth] = useState<string | null>(null);
-  const selectedMonth = userSelectedMonth ?? months[0] ?? "";
+  const selectedMonth = globalMonth ?? months[0] ?? "";
   const currentMonth = new Date().toISOString().slice(0, 7);
 
   // Filter states
@@ -182,13 +182,8 @@ export default function ExpenseListPage() {
     <motion.main
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="mx-auto max-w-3xl space-y-6 px-4 pb-20 pt-24"
+      className="mx-auto max-w-3xl space-y-6 px-4 pb-32 pt-24"
     >
-      <MonthSelector
-        months={months}
-        value={selectedMonth}
-        onChange={setUserSelectedMonth}
-      />
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">

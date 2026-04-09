@@ -5,6 +5,7 @@ import {
   Activity,
   BarChart3,
   Home,
+  Calendar,
   LogOut,
   Moon,
   Plus,
@@ -23,6 +24,7 @@ import { cn } from "../lib/utils";
 import { useTheme } from "../hooks/useTheme";
 
 import { useUserRole } from "../hooks/useUserRole";
+import { useModals } from "../hooks/useModals";
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -32,6 +34,7 @@ export default function Header() {
   const { stats } = useGamification();
   const { isAdmin } = useUserRole();
   const { theme, toggleTheme } = useTheme();
+  const { setIsMonthDrawerOpen, setIsAddExpenseOpen } = useModals();
 
   const desktopLinks = [
     { path: "/dashboard", label: "Home", icon: Home },
@@ -151,17 +154,27 @@ export default function Header() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={toggleTheme}
-          className="inline-flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 p-2.5 text-slate-600 dark:text-slate-200 shadow-sm hover:shadow-md transition-all"
+          className="hidden md:inline-flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 p-2.5 text-slate-600 dark:text-slate-200 shadow-sm hover:shadow-md transition-all"
           aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
         >
           {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
+        </motion.button>
+
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setIsMonthDrawerOpen(true)}
+          className="inline-flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 p-2.5 text-slate-600 dark:text-slate-200 shadow-sm hover:shadow-md transition-all"
+          aria-label="Filter by Month"
+        >
+          <Calendar size={16} />
         </motion.button>
 
         {/* Desktop Add Button */}
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => navigate("/add")}
+          onClick={() => setIsAddExpenseOpen(true)}
           className="hidden md:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full font-bold text-sm shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-shadow"
         >
           <Plus size={16} />
@@ -178,7 +191,7 @@ export default function Header() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setOpen((s) => !s)}
-          className="rounded-full p-0.5 border-2 border-white/80 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 hover:shadow-md transition-shadow"
+          className="hidden md:block rounded-full p-0.5 border-2 border-white/80 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 hover:shadow-md transition-shadow"
           aria-label="User menu"
         >
           <Avatar
