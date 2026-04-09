@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { motion, type Variants } from "framer-motion";
+import { motion, type Variants, Reorder, useDragControls } from "framer-motion";
+import { GripVertical, LayoutPanelLeft, Check } from "lucide-react";
 import { toast } from "react-toastify";
 import GamificationCard from "../components/GamificationCard";
 import FocusWidget from "../components/focus/FocusWidget";
@@ -15,7 +16,7 @@ import { useCategoryBudgets } from "../hooks/useCategoryBudgets";
 import { useFinancialGoals } from "../hooks/useFinancialGoals";
 import { useAuth } from "../hooks/useAuth";
 import { useAccounts } from "../hooks/useAccounts";
-import useSettings from "../hooks/useSettings";
+import useSettings, { DEFAULTS } from "../hooks/useSettings";
 import { useModals } from "../hooks/useModals";
 import { db } from "../firebase";
 import { groupByCategory, groupByMonth } from "../utils/analytics";
@@ -54,6 +55,8 @@ export default function Dashboard() {
   const [isAdding, setIsAdding] = useState(false);
   const [showFocusConfig, setShowFocusConfig] = useState(false);
   const [showStory, setShowStory] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
+  const { setDashboardOrder } = useSettings();
 
   const widgets = settings.dashboardWidgets;
   const showFocus = widgets?.focus !== false;
@@ -141,268 +144,322 @@ export default function Dashboard() {
     neutral: "from-slate-600 to-slate-700 shadow-slate-500/20",
   };
 
+  const widgetMap: Record<string, React.ReactNode> = {
+    focus: showFocus && <FocusWidget onOpenConfig={() => setShowFocusConfig(true)} />,
+    gamification: showGamification && <GamificationCard />,
+    subscriptions: showSubscriptions && (
+      <Link to="/subscriptions" className="block relative group">
+        <section className={`${surfaceClass} p-4 cursor-pointer flex items-center justify-between relative overflow-hidden h-full`}>
+          <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-500/15 flex items-center justify-center text-indigo-600 dark:text-indigo-300">S</div>
+            <div>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Subscriptions</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{subscriptions.filter((s) => s.isActive).length} active</p>
+            </div>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-950/70 flex items-center justify-center text-slate-400 dark:text-slate-300 relative z-10">Go</div>
+        </section>
+      </Link>
+    ),
+    topCategories: showTopCategories && (
+      <section className={`${surfaceClass} p-6 h-full`}>
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4">
+          <span className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-300">T</span>
+          Top Categories
+        </h3>
+        <div className="space-y-3">
+          {topCategories.length === 0 ? (
+            <p className="text-sm text-slate-400 text-center py-8 italic">No expense data yet</p>
+          ) : (
+            topCategories.map((item, index) => (
+              <div key={item.category} className={`p-3 rounded-xl ${softSurfaceClass}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-slate-900 text-xs font-bold text-slate-500 dark:text-slate-300 shadow-sm border border-slate-100 dark:border-slate-800">
+                      {index + 1}
+                    </span>
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{item.category}</span>
+                  </div>
+                  <div className="text-sm font-bold text-slate-900 dark:text-white">₹{item.value.toLocaleString()}</div>
+                </div>
+                {settings.monthlyBudget > 0 && (
+                  <div className="h-1.5 w-full bg-slate-200/50 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className={cn("h-full rounded-full opacity-80", getUsageColor((item.value / settings.monthlyBudget) * 100).split(" ")[0])}
+                      style={{ width: `${Math.min(100, (item.value / settings.monthlyBudget) * 100)}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+    ),
+    overview: (
+      <div className="rounded-3xl border border-white/60 bg-white/80 p-8 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85 h-full">
+        {loading ? (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+            <Skeleton className="h-10 w-32" />
+            <div className="space-y-3">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Overview</h3>
+              <span className="text-[10px] font-black bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full">
+                {selectedMonth}
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2 mb-8">
+              <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">₹{summary.total.toLocaleString()}</span>
+              <span className="text-sm font-bold text-slate-400">total spent</span>
+            </div>
+            <div className="space-y-4">
+              {Object.entries(summary.byCategory).slice(0, 3).map(([cat, amt]) => (
+                <div key={cat} className="space-y-2">
+                  <div className="flex justify-between text-xs font-bold">
+                    <span className="text-slate-600 dark:text-slate-300 uppercase tracking-widest">{cat}</span>
+                    <span className="text-slate-900 dark:text-white">₹{amt.toLocaleString()}</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }} 
+                      animate={{ width: `${summary.total > 0 ? (amt / summary.total) * 100 : 0}%` }} 
+                      className="h-full bg-blue-600 rounded-full" 
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    ),
+    quickAdd: (
+      <section className={`${surfaceClass} p-6 h-full`}>
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+          <span className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300">Q</span>
+          Quick Add
+        </h3>
+        <div className="mt-2 text-xs text-slate-500 dark:text-slate-400 font-medium ml-1">Tap a preset to add instantly</div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {CATEGORIES.slice(0, 6).map((category) => (
+            <button
+              key={category}
+              className="px-3 py-2 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-200 transition-all active:scale-95 disabled:opacity-50 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-300 hover:border-blue-200 dark:hover:border-blue-500/20"
+              onClick={() => quickAddDirect(category, 100)}
+              disabled={isAdding}
+            >
+              {category} • ₹100
+            </button>
+          ))}
+        </div>
+        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex gap-2">
+          <button className="flex-1 py-2 bg-slate-50 dark:bg-slate-950/70 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 transition-colors" onClick={() => quickAddDirect("Food", 50)} disabled={isAdding}>₹50</button>
+          <button className="flex-1 py-2 bg-slate-50 dark:bg-slate-950/70 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 transition-colors" onClick={() => quickAddDirect("Transport", 100)} disabled={isAdding}>₹100</button>
+          <button className="flex-1 py-2 bg-slate-50 dark:bg-slate-950/70 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 transition-colors" onClick={() => quickAddDirect("Other", 200)} disabled={isAdding}>₹200</button>
+        </div>
+      </section>
+    ),
+    insight: (
+      <section className={cn("text-white p-6 rounded-3xl shadow-lg bg-gradient-to-br transition-colors duration-500 h-full", insightColors[smartInsight.type])}>
+        <h3 className="text-sm font-bold opacity-90 uppercase tracking-wider mb-2">Insight</h3>
+        <div className="text-sm font-medium leading-relaxed opacity-95">{smartInsight.message}</div>
+      </section>
+    ),
+    budgetAlerts: (
+      <section className={`${surfaceClass} p-6 h-full`}>
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4">
+          <span className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-300">B</span>
+          Budget Alerts
+        </h3>
+        <div className="space-y-3">
+          {categoryBudgetAlerts.length === 0 ? (
+            <p className="text-sm text-slate-400 italic">No category budget alerts for this month.</p>
+          ) : (
+            categoryBudgetAlerts.map((budget) => (
+              <div key={budget.id} className={cn("rounded-2xl border p-4", budget.level === "danger" ? "border-red-200 bg-red-50/80 dark:border-red-500/20 dark:bg-red-500/10" : "border-amber-200 bg-amber-50/80 dark:border-amber-500/20 dark:bg-amber-500/10")}>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{budget.category}</div>
+                    <div className="text-xs font-medium text-slate-500 dark:text-slate-400">₹{budget.spent.toLocaleString()} of ₹{budget.amount.toLocaleString()}</div>
+                  </div>
+                  <div className={cn("text-xs font-extrabold uppercase tracking-[0.2em]", budget.level === "danger" ? "text-red-600 dark:text-red-300" : "text-amber-600 dark:text-amber-300")}>
+                    {budget.percent}%
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+    ),
+    financialGoals: (
+      <section className={`${surfaceClass} p-6 h-full`}>
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4">
+          <span className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-300">G</span>
+          Financial Goals
+        </h3>
+        <div className="space-y-3">
+          {goalProgress.length === 0 ? (
+            <p className="text-sm text-slate-400 italic">No active financial goals yet.</p>
+          ) : (
+            goalProgress.slice(0, 3).map((goal) => (
+              <div key={goal.id} className={`rounded-2xl p-4 ${softSurfaceClass}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{goal.name}</div>
+                    <div className="text-xs font-medium text-slate-500 dark:text-slate-400">₹{goal.currentAmount.toLocaleString()} of ₹{goal.targetAmount.toLocaleString()}</div>
+                  </div>
+                  <div className="text-xs font-extrabold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-300">{goal.progress}%</div>
+                </div>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                  <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" style={{ width: `${goal.progress}%` }} />
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+    ),
+    recentActivity: (
+      <div className="rounded-3xl border border-white/40 bg-white/60 p-8 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/80 h-full">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Recent Activity</h3>
+          <button onClick={() => navigate("/expenses")} className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest hover:underline px-2 py-1">View All</button>
+        </div>
+
+        <div className="space-y-3">
+          {loading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 p-4">
+                <Skeleton className="h-10 w-10" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+                <Skeleton className="h-4 w-12" />
+              </div>
+            ))
+          ) : filteredExpenses.length === 0 ? (
+            <div className="py-12 text-center opacity-40 italic text-sm">No expenses this month</div>
+          ) : (
+            filteredExpenses.slice(0, visibleCount).map((expense) => (
+              <div 
+                key={expense.id} 
+                className="flex items-center justify-between p-4 rounded-2xl bg-white/50 dark:bg-slate-800/50 border border-white/40 dark:border-slate-700/50 group hover:shadow-lg transition-all"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold group-hover:scale-110 transition-transform">
+                    {expense.category[0]}
+                  </div>
+                  <div>
+                    <div className="font-bold text-slate-900 dark:text-white mb-0.5">{expense.category}</div>
+                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{expense.date}</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="font-black text-slate-900 dark:text-white">-₹{expense.amount}</div>
+                  {accounts.find(a => a.id === expense.accountId) && (
+                    <div className="text-[9px] font-bold text-blue-500 dark:text-blue-400 uppercase">{accounts.find(a => a.id === expense.accountId)?.name}</div>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+          {filteredExpenses.length > visibleCount && !loading && (
+            <button onClick={() => setVisibleCount(v => v + 5)} className="w-full py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors">Load More</button>
+          )}
+        </div>
+      </div>
+    ),
+  };
+
+  const currentOrder = settings.dashboardOrder || DEFAULTS.dashboardOrder;
+
   return (
     <>
       <StoryViewer isOpen={showStory} onClose={() => setShowStory(false)} slides={storySlides} />
       <FocusConfigModal isOpen={showFocusConfig} onClose={() => setShowFocusConfig(false)} />
 
       <motion.div variants={containerVariants} initial="hidden" animate="visible" className="min-h-screen max-w-7xl mx-auto px-4 md:px-8 pt-20 md:pt-24 pb-32">
-        <div className={cn("grid gap-6", showLeftColumn ? "md:grid-cols-3" : "md:grid-cols-2 max-w-5xl mx-auto")}>
-          {showLeftColumn && (
-            <div className="space-y-6">
-              {showFocus && (
-                <motion.div variants={itemVariants}>
-                  <FocusWidget onOpenConfig={() => setShowFocusConfig(true)} />
-                </motion.div>
-              )}
-
-              {showGamification && (
-                <motion.div variants={itemVariants}>
-                  <GamificationCard />
-                </motion.div>
-              )}
-
-              {showSubscriptions && (
-                <Link to="/subscriptions" className="block relative group">
-                  <motion.section variants={itemVariants} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className={`${surfaceClass} p-4 cursor-pointer flex items-center justify-between relative overflow-hidden`}>
-                    <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <div className="flex items-center gap-3 relative z-10">
-                      <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-500/15 flex items-center justify-center text-indigo-600 dark:text-indigo-300">S</div>
-                      <div>
-                        <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Subscriptions</h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{subscriptions.filter((s) => s.isActive).length} active</p>
-                      </div>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-950/70 flex items-center justify-center text-slate-400 dark:text-slate-300 relative z-10">Go</div>
-                  </motion.section>
-                </Link>
-              )}
-
-              {showTopCategories && (
-                <motion.section variants={itemVariants} className={`${surfaceClass} p-6`}>
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4">
-                    <span className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-300">T</span>
-                    Top Categories
-                  </h3>
-                  <div className="space-y-3">
-                    {topCategories.length === 0 ? (
-                      <p className="text-sm text-slate-400 text-center py-8 italic">No expense data yet</p>
-                    ) : (
-                      topCategories.map((item, index) => (
-                        <div key={item.category} className={`p-3 rounded-xl ${softSurfaceClass}`}>
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-3">
-                              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-slate-900 text-xs font-bold text-slate-500 dark:text-slate-300 shadow-sm border border-slate-100 dark:border-slate-800">
-                                {index + 1}
-                              </span>
-                              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{item.category}</span>
-                            </div>
-                            <div className="text-sm font-bold text-slate-900 dark:text-slate-100">₹{item.value.toLocaleString()}</div>
-                          </div>
-                          {settings.monthlyBudget > 0 && (
-                            <div className="h-1.5 w-full bg-slate-200/50 dark:bg-slate-800 rounded-full overflow-hidden">
-                              <div
-                                className={cn("h-full rounded-full opacity-80", getUsageColor((item.value / settings.monthlyBudget) * 100).split(" ")[0])}
-                                style={{ width: `${Math.min(100, (item.value / settings.monthlyBudget) * 100)}%` }}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </motion.section>
-              )}
+        <div className="flex items-center justify-between mb-8 overflow-hidden">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-500/20">
+              <LayoutPanelLeft size={20} />
             </div>
-          )}
-
-          <div className="space-y-6">
-            {/* Summary Widget */}
-            <motion.div variants={itemVariants} className="md:col-span-2 rounded-3xl border border-white/60 bg-white/80 p-8 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
-              {loading ? (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-4 w-16" />
-                  </div>
-                  <Skeleton className="h-10 w-32" />
-                  <div className="space-y-3">
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Overview</h3>
-                    <span className="text-[10px] font-black bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full">
-                      {selectedMonth}
-                    </span>
-                  </div>
-                  <div className="flex items-baseline gap-2 mb-8">
-                    <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">₹{summary.total.toLocaleString()}</span>
-                    <span className="text-sm font-bold text-slate-400">total spent</span>
-                  </div>
-
-                  <div className="space-y-4">
-                    {Object.entries(summary.byCategory).slice(0, 3).map(([cat, amt]) => (
-                      <div key={cat} className="space-y-2">
-                        <div className="flex justify-between text-xs font-bold">
-                          <span className="text-slate-600 dark:text-slate-300 uppercase tracking-widest">{cat}</span>
-                          <span className="text-slate-900 dark:text-white">₹{amt.toLocaleString()}</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                          <motion.div 
-                            initial={{ width: 0 }} 
-                            animate={{ width: `${summary.total > 0 ? (amt / summary.total) * 100 : 0}%` }} 
-                            className="h-full bg-blue-600 rounded-full" 
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </motion.div>
-
-            <motion.section variants={itemVariants} className={`${surfaceClass} p-6`}>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <span className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300">Q</span>
-                Quick Add
-              </h3>
-              <div className="mt-2 text-xs text-slate-500 dark:text-slate-400 font-medium ml-1">Tap a preset to add instantly</div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {CATEGORIES.slice(0, 6).map((category) => (
-                  <button
-                    key={category}
-                    className="px-3 py-2 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-200 transition-all active:scale-95 disabled:opacity-50 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-300 hover:border-blue-200 dark:hover:border-blue-500/20"
-                    onClick={() => quickAddDirect(category, 100)}
-                    disabled={isAdding}
-                  >
-                    {category} • ₹100
-                  </button>
-                ))}
-              </div>
-              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex gap-2">
-                <button className="flex-1 py-2 bg-slate-50 dark:bg-slate-950/70 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 transition-colors" onClick={() => quickAddDirect("Food", 50)} disabled={isAdding}>₹50</button>
-                <button className="flex-1 py-2 bg-slate-50 dark:bg-slate-950/70 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 transition-colors" onClick={() => quickAddDirect("Transport", 100)} disabled={isAdding}>₹100</button>
-                <button className="flex-1 py-2 bg-slate-50 dark:bg-slate-950/70 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 transition-colors" onClick={() => quickAddDirect("Other", 200)} disabled={isAdding}>₹200</button>
-              </div>
-            </motion.section>
-
-            <motion.section variants={itemVariants} className={cn("text-white p-6 rounded-3xl shadow-lg bg-gradient-to-br transition-colors duration-500", insightColors[smartInsight.type])}>
-              <h3 className="text-sm font-bold opacity-90 uppercase tracking-wider mb-2">Insight</h3>
-              <div className="text-sm font-medium leading-relaxed opacity-95">{smartInsight.message}</div>
-            </motion.section>
-
-            <motion.section variants={itemVariants} className={`${surfaceClass} p-6`}>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4">
-                <span className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-300">B</span>
-                Budget Alerts
-              </h3>
-              <div className="space-y-3">
-                {categoryBudgetAlerts.length === 0 ? (
-                  <p className="text-sm text-slate-400 italic">No category budget alerts for this month.</p>
-                ) : (
-                  categoryBudgetAlerts.map((budget) => (
-                    <div key={budget.id} className={cn("rounded-2xl border p-4", budget.level === "danger" ? "border-red-200 bg-red-50/80 dark:border-red-500/20 dark:bg-red-500/10" : "border-amber-200 bg-amber-50/80 dark:border-amber-500/20 dark:bg-amber-500/10")}>
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{budget.category}</div>
-                          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">₹{budget.spent.toLocaleString()} of ₹{budget.amount.toLocaleString()}</div>
-                        </div>
-                        <div className={cn("text-xs font-extrabold uppercase tracking-[0.2em]", budget.level === "danger" ? "text-red-600 dark:text-red-300" : "text-amber-600 dark:text-amber-300")}>
-                          {budget.percent}%
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </motion.section>
-
-            <motion.section variants={itemVariants} className={`${surfaceClass} p-6`}>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4">
-                <span className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-300">G</span>
-                Financial Goals
-              </h3>
-              <div className="space-y-3">
-                {goalProgress.length === 0 ? (
-                  <p className="text-sm text-slate-400 italic">No active financial goals yet.</p>
-                ) : (
-                  goalProgress.slice(0, 3).map((goal) => (
-                    <div key={goal.id} className={`rounded-2xl p-4 ${softSurfaceClass}`}>
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{goal.name}</div>
-                          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">₹{goal.currentAmount.toLocaleString()} of ₹{goal.targetAmount.toLocaleString()}</div>
-                        </div>
-                        <div className="text-xs font-extrabold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-300">{goal.progress}%</div>
-                      </div>
-                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-                        <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" style={{ width: `${goal.progress}%` }} />
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </motion.section>
+            <div>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Manage your personal finances</p>
+            </div>
           </div>
-
-          <div className="space-y-6">
-            {/* Recent Expenses */}
-            <motion.div variants={itemVariants} className="md:col-span-3 rounded-3xl border border-white/40 bg-white/60 p-8 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/80">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Recent Activity</h3>
-                <button onClick={() => navigate("/expenses")} className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest hover:underline px-2 py-1">View All</button>
-              </div>
-
-              <div className="space-y-3">
-                {loading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-4 p-4">
-                      <Skeleton className="h-10 w-10" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-3 w-16" />
-                      </div>
-                      <Skeleton className="h-4 w-12" />
-                    </div>
-                  ))
-                ) : filteredExpenses.length === 0 ? (
-                  <div className="py-12 text-center opacity-40 italic text-sm">No expenses this month</div>
-                ) : (
-                  filteredExpenses.slice(0, visibleCount).map((expense) => (
-                    <motion.div 
-                      layout
-                      key={expense.id} 
-                      className="flex items-center justify-between p-4 rounded-2xl bg-white/50 dark:bg-slate-800/50 border border-white/40 dark:border-slate-700/50 group hover:shadow-lg transition-all"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold group-hover:scale-110 transition-transform">
-                          {expense.category[0]}
-                        </div>
-                        <div>
-                          <div className="font-bold text-slate-900 dark:text-white mb-0.5">{expense.category}</div>
-                          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{expense.date}</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-black text-slate-900 dark:text-white">-₹{expense.amount}</div>
-                        {accounts.find(a => a.id === expense.accountId) && (
-                          <div className="text-[9px] font-bold text-blue-500 dark:text-blue-400 uppercase">{accounts.find(a => a.id === expense.accountId)?.name}</div>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))
-                )}
-                {filteredExpenses.length > visibleCount && !loading && (
-                  <button onClick={() => setVisibleCount(v => v + 5)} className="w-full py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors">Load More</button>
-                )}
-              </div>
-            </motion.div>
-          </div>
+          <button
+            onClick={() => setIsReordering(!isReordering)}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all active:scale-95",
+              isReordering 
+                ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" 
+                : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800"
+            )}
+          >
+            {isReordering ? (
+              <>
+                <Check size={16} />
+                <span>Done</span>
+              </>
+            ) : (
+              <span>Rearrange</span>
+            )}
+          </button>
         </div>
+
+        <Reorder.Group
+          axis="y"
+          values={currentOrder}
+          onReorder={setDashboardOrder}
+          className={cn(
+            "grid gap-6 transition-all duration-300",
+            isReordering ? "grid-cols-1 max-w-2xl mx-auto" : "md:grid-cols-2 lg:grid-cols-3"
+          )}
+        >
+          {currentOrder.map((id) => {
+            const component = widgetMap[id];
+            if (!component) return null;
+
+            return (
+              <Reorder.Item
+                key={id}
+                value={id}
+                dragListener={isReordering}
+                className={cn(
+                  "relative group",
+                  !isReordering && (id === "overview" || id === "recentActivity") && "md:col-span-2"
+                )}
+              >
+                {isReordering && (
+                  <div className="absolute -left-2 top-1/2 -translate-y-1/2 z-30 p-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 cursor-grab active:cursor-grabbing text-slate-400 hover:text-blue-600 transition-colors">
+                    <GripVertical size={16} />
+                  </div>
+                )}
+                <div className={cn(
+                  "h-full transition-transform duration-300",
+                  isReordering && "scale-[0.98] group-hover:scale-[1.0] group-active:scale-[0.95]"
+                )}>
+                  {component}
+                </div>
+              </Reorder.Item>
+            );
+          })}
+        </Reorder.Group>
       </motion.div>
     </>
   );

@@ -25,9 +25,10 @@ type Settings = {
     gamification: boolean;
     topCategories: boolean;
   };
+  dashboardOrder: string[];
 };
 
-const DEFAULTS: Settings = {
+export const DEFAULTS: Settings = {
   lockPastMonths: true,
   compactListMode: false,
   defaultCategory: "Food",
@@ -48,6 +49,7 @@ const DEFAULTS: Settings = {
     gamification: true,
     topCategories: true,
   },
+  dashboardOrder: ["focus", "gamification", "subscriptions", "topCategories", "overview", "quickAdd", "insight", "budgetAlerts", "financialGoals", "recentActivity"],
 };
 
 type SettingsContextType = {
@@ -63,6 +65,7 @@ type SettingsContextType = {
   setUpiId: (val: string) => void;
   toggleBottomNavTab: (key: keyof Settings["bottomNavTabs"]) => void;
   toggleDashboardWidget: (key: keyof Settings["dashboardWidgets"]) => void;
+  setDashboardOrder: (order: string[]) => void;
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -93,6 +96,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             ...DEFAULTS.dashboardWidgets,
             ...(data.dashboardWidgets || {}),
           },
+          dashboardOrder: data.dashboardOrder || DEFAULTS.dashboardOrder,
         } as Settings);
       } else {
         // Init defaults if document doesn't exist
@@ -139,6 +143,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     updateSettings({ dashboardWidgets: newWidgets });
   };
 
+  const setDashboardOrder = (order: string[]) => updateSettings({ dashboardOrder: order });
+
   return (
     <SettingsContext.Provider
       value={{
@@ -154,6 +160,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setUpiId,
         toggleBottomNavTab,
         toggleDashboardWidget,
+        setDashboardOrder,
       }}
     >
       {!loading && children}

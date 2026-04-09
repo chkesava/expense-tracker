@@ -5,7 +5,8 @@ import { useAccountTypes } from "../hooks/useAccountTypes";
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, deleteDoc, writeBatch } from "firebase/firestore";
+import BulkActionBar from "../components/BulkActionBar";
 import { db } from "../firebase";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import Modal from "../components/common/Modal";
@@ -18,7 +19,7 @@ import useSettings from "../hooks/useSettings";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../lib/utils";
 import { useModals } from "../hooks/useModals";
-import { Filter, X, ChevronDown, ChevronUp, Search } from "lucide-react";
+import { Filter, X, ChevronDown, ChevronUp, Search, CheckCircle2 } from "lucide-react";
 import { CATEGORIES } from "../types/expense";
 import { Skeleton } from "../components/common/Skeleton";
 
@@ -121,6 +122,59 @@ export default function ExpenseListPage() {
   const { user } = useAuth();
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [editingExpense, setEditingExpense] = useState<any | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      
+      if (next.size === 0) setIsSelectionMode(false);
+      return next;
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    setIsSelectionMode(false);
+  };
+
+  const handleBulkDelete = async () => {
+    if (!user || selectedIds.size === 0) return;
+    if (!window.confirm(`Are you sure you want to delete ${selectedIds.size} items?`)) return;
+
+    try {
+      const batch = writeBatch(db);
+      selectedIds.forEach(id => {
+        batch.delete(doc(db, "users", user.uid, "expenses", id));
+      });
+      await batch.commit();
+      toast.success(`Deleted ${selectedIds.size} expenses`);
+      clearSelection();
+    } catch (err) {
+      console.error(err);
+      toast.error("Bulk delete failed");
+    }
+  };
+
+  const handleBulkCategorize = async (category: string) => {
+    if (!user || selectedIds.size === 0) return;
+
+    try {
+      const batch = writeBatch(db);
+      selectedIds.forEach(id => {
+        batch.update(doc(db, "users", user.uid, "expenses", id), { category });
+      });
+      await batch.commit();
+      toast.success(`Updated ${selectedIds.size} items to ${category}`);
+      clearSelection();
+    } catch (err) {
+      console.error(err);
+      toast.error("Bulk update failed");
+    }
+  };
 
   const doDelete = async (id?: string) => {
     if (!user || !id) {
@@ -373,6 +427,15 @@ export default function ExpenseListPage() {
                       setDeleteTarget={setDeleteTarget}
                       setEditingExpense={setEditingExpense}
                       accounts={accounts}
+                      isSelected={expense.id ? selectedIds.has(expense.id) : false}
+                      isSelectionMode={isSelectionMode}
+                      onSelect={() => expense.id && toggleSelection(expense.id)}
+                      onLongPress={() => {
+                        if (expense.id) {
+                          setIsSelectionMode(true);
+                          toggleSelection(expense.id);
+                        }
+                      }}
                     />
                   ))}
                 </div>
@@ -395,6 +458,15 @@ export default function ExpenseListPage() {
                       setDeleteTarget={setDeleteTarget}
                       setEditingExpense={setEditingExpense}
                       accounts={accounts}
+                      isSelected={expense.id ? selectedIds.has(expense.id) : false}
+                      isSelectionMode={isSelectionMode}
+                      onSelect={() => expense.id && toggleSelection(expense.id)}
+                      onLongPress={() => {
+                        if (expense.id) {
+                          setIsSelectionMode(true);
+                          toggleSelection(expense.id);
+                        }
+                      }}
                     />
                   ))}
                 </div>
@@ -417,6 +489,15 @@ export default function ExpenseListPage() {
                       setDeleteTarget={setDeleteTarget}
                       setEditingExpense={setEditingExpense}
                       accounts={accounts}
+                      isSelected={expense.id ? selectedIds.has(expense.id) : false}
+                      isSelectionMode={isSelectionMode}
+                      onSelect={() => expense.id && toggleSelection(expense.id)}
+                      onLongPress={() => {
+                        if (expense.id) {
+                          setIsSelectionMode(true);
+                          toggleSelection(expense.id);
+                        }
+                      }}
                     />
                   ))}
                 </div>
@@ -446,11 +527,35 @@ export default function ExpenseListPage() {
           onSuccess={() => setEditingExpense(null)} 
         />
       </Modal>
+
+      <AnimatePresence>
+        {isSelectionMode && (
+          <BulkActionBar 
+            selectedCount={selectedIds.size}
+            onClear={clearSelection}
+            onDelete={handleBulkDelete}
+            onCategorize={handleBulkCategorize}
+            userCategories={userCategories}
+          />
+        )}
+      </AnimatePresence>
     </motion.main>
   );
 }
 
-function ExpenseRow({ expense, currentMonth, settings, navigate, setDeleteTarget, setEditingExpense, accounts }: any) {
+function ExpenseRow({ 
+  expense, 
+  currentMonth, 
+  settings, 
+  navigate, 
+  setDeleteTarget, 
+  setEditingExpense, 
+  accounts,
+  isSelected,
+  isSelectionMode,
+  onSelect,
+  onLongPress
+}: any) {
   const isLocked = settings.lockPastMonths && expense.month !== currentMonth;
   const account = accounts.find((item: any) => item.id === expense.accountId);
 
@@ -458,26 +563,47 @@ function ExpenseRow({ expense, currentMonth, settings, navigate, setDeleteTarget
     <motion.div
       layout
       initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
+      animate={{ opacity: 1, x: 0, scale: isSelected ? 0.98 : 1 }}
       className={cn(
         "group relative cursor-pointer overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-all hover:border-blue-100 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/95 dark:hover:border-blue-900/70",
-        isLocked && "cursor-not-allowed opacity-60 grayscale-[0.5] hover:border-slate-100 hover:shadow-sm dark:hover:border-slate-800"
+        isLocked && "cursor-not-allowed opacity-60 grayscale-[0.5] hover:border-slate-100 hover:shadow-sm dark:hover:border-slate-800",
+        isSelected && "border-blue-500 bg-blue-50/50 dark:border-blue-500 dark:bg-blue-500/10 shadow-lg shadow-blue-500/10"
       )}
       onClick={() => {
-        if (!isLocked) {
+        if (isSelectionMode) {
+          onSelect();
+        } else if (!isLocked) {
           setEditingExpense(expense);
         }
+      }}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        onLongPress();
       }}
       role={!isLocked ? "button" : undefined}
       tabIndex={!isLocked ? 0 : -1}
       onKeyDown={(event) => {
         if (!isLocked && (event.key === "Enter" || event.key === " ")) {
-          setEditingExpense(expense);
+          if (isSelectionMode) onSelect();
+          else setEditingExpense(expense);
         }
       }}
     >
-      <div className="z-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 flex-1">
+      <div className="z-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between relative">
+        {/* Selection Indicator */}
+        <div className={cn(
+          "absolute -left-6 top-1/2 -translate-y-1/2 transition-all duration-300",
+          isSelectionMode ? "left-0 opacity-100" : "-left-6 opacity-0"
+        )}>
+          <div className={cn(
+            "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
+            isSelected ? "bg-blue-600 border-blue-600 text-white" : "border-slate-300 dark:border-slate-600"
+          )}>
+            {isSelected && <CheckCircle2 size={12} />}
+          </div>
+        </div>
+
+        <div className={cn("min-w-0 flex-1 transition-all duration-300", isSelectionMode && "pl-8")}>
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-bold text-slate-800 dark:text-slate-100">
               {expense.category}
@@ -512,7 +638,7 @@ function ExpenseRow({ expense, currentMonth, settings, navigate, setDeleteTarget
             -₹{expense.amount}
           </div>
 
-          <div className={cn("flex shrink-0 items-center gap-2", isLocked && "hidden")}>
+          <div className={cn("flex shrink-0 items-center gap-2", (isLocked || isSelectionMode) && "hidden")}>
             <button
               className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-900"
               onClick={(event) => {
