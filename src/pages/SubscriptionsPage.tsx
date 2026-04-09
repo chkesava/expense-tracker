@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { useAccounts } from "../hooks/useAccounts";
 import type { Subscription } from "../types/subscription";
+import Modal from "../components/common/Modal";
+import { CATEGORIES as EXPENSE_CATEGORIES } from "../types/expense";
 
 type ViewMode = "subscriptions" | "travel";
 
@@ -160,115 +162,84 @@ export default function SubscriptionsPage() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 10 }}
           >
-            {/* Add Subscription Form */}
-            <AnimatePresence>
-              {isAddingSub && (
-                <motion.form
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="mb-8 overflow-hidden"
-                  onSubmit={handleSubSubmit}
-                >
-                  <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl shadow-sm space-y-4 relative">
-                    <div className="flex justify-between items-center">
-                      <h2 className="font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                        {editingSub ? "Edit Subscription" : "New Subscription"}
-                      </h2>
-                      <button 
-                        type="button"
-                        onClick={resetForm}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-                      >
-                        <X size={18} className="text-slate-400" />
-                      </button>
-                    </div>
+            {/* Subscription Modal */}
+            <Modal
+              isOpen={isAddingSub}
+              onClose={resetForm}
+              title={editingSub ? "Edit Subscription" : "New Subscription"}
+            >
+              <form className="space-y-4" onSubmit={handleSubSubmit}>
+                <div>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Service Name</label>
+                  <input
+                    autoFocus
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 mt-1 font-semibold text-slate-800 dark:text-white outline-none"
+                    placeholder="e.g. Netflix, Rent"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    required
+                  />
+                </div>
 
-                    <div>
-                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Service Name</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Amount</label>
+                    <div className="relative mt-1">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
                       <input
-                        autoFocus
-                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 mt-1 font-semibold text-slate-800 dark:text-white outline-none"
-                        placeholder="e.g. Netflix, Rent"
-                        value={name}
-                        onChange={e => setName(e.target.value)}
+                        type="number"
+                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-8 pr-4 py-2.5 font-semibold text-slate-800 dark:text-white outline-none"
+                        placeholder="0"
+                        value={amount}
+                        onChange={e => setAmount(e.target.value)}
                         required
                       />
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Amount</label>
-                        <div className="relative mt-1">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
-                          <input
-                            type="number"
-                            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-8 pr-4 py-2.5 font-semibold text-slate-800 dark:text-white outline-none"
-                            placeholder="0"
-                            value={amount}
-                            onChange={e => setAmount(e.target.value)}
-                            required
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Day of Month</label>
-                        <select
-                          className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 mt-1 font-semibold text-slate-800 dark:text-white outline-none cursor-pointer"
-                          value={day}
-                          onChange={e => setDay(e.target.value)}
-                        >
-                          {[...Array(31)].map((_, i) => (
-                            <option key={i + 1} value={i + 1}>{i + 1}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Deduct from Account</label>
-                      <select
-                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 mt-1 font-semibold text-slate-800 dark:text-white outline-none cursor-pointer"
-                        value={accountId}
-                        onChange={e => setAccountId(e.target.value)}
-                      >
-                        <option value="">No Account (Manual)</option>
-                        {accounts.map(acc => (
-                          <option key={acc.id} value={acc.id}>{acc.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="flex gap-3">
-                      {editingSub && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (window.confirm("Are you sure you want to delete this subscription?")) {
-                              deleteSubscription(editingSub.id!);
-                              resetForm();
-                            }
-                          }}
-                          className="flex-1 font-bold py-3 rounded-xl mt-2 border border-red-100 text-red-500 hover:bg-red-50 transition-all flex items-center justify-center gap-2"
-                        >
-                          <Trash2 size={18} /> Delete
-                        </button>
-                      )}
-                      <button
-                        type="submit"
-                        disabled={isDisabled}
-                        className={cn(
-                          "flex-[2] font-bold py-3 rounded-xl mt-2 transition-all",
-                          isDisabled ? "bg-slate-100 dark:bg-slate-800 text-slate-400" : "bg-slate-900 dark:bg-blue-600 text-white"
-                        )}
-                      >
-                        {isDisabled ? `Added! Wait ${countDown}s...` : (editingSub ? "Update Subscription" : "Save Subscription")}
-                      </button>
-                    </div>
                   </div>
-                </motion.form>
-              )}
-            </AnimatePresence>
+                  <div>
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Day of Month</label>
+                    <select
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 mt-1 font-semibold text-slate-800 dark:text-white outline-none cursor-pointer"
+                      value={day}
+                      onChange={e => setDay(e.target.value)}
+                    >
+                      {[...Array(31)].map((_, i) => (
+                        <option key={i + 1} value={i + 1}>{i + 1}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Deduct from Account</label>
+                  <select
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 mt-1 font-semibold text-slate-800 dark:text-white outline-none cursor-pointer"
+                    value={accountId}
+                    onChange={e => setAccountId(e.target.value)}
+                  >
+                    <option value="">No Account (Manual)</option>
+                    {accounts.map(acc => (
+                      <option key={acc.id} value={acc.id}>{acc.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="pt-4 border-t border-slate-50 dark:border-slate-800/50">
+                  <button
+                    type="submit"
+                    disabled={isDisabled}
+                    className={cn(
+                      "w-full font-bold py-3 rounded-2xl transition-all shadow-lg",
+                      isDisabled 
+                        ? "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed" 
+                        : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-500/25"
+                    )}
+                  >
+                    {isDisabled ? `Added! Wait ${countDown}s...` : (editingSub ? "Update Subscription" : "Save Subscription")}
+                  </button>
+                </div>
+              </form>
+            </Modal>
 
             <div className="space-y-4">
               {subscriptions.length === 0 && !isAddingSub ? (

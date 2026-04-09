@@ -9,6 +9,8 @@ import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import MonthSelector from "../components/MonthSelector";
 import ConfirmDialog from "../components/common/ConfirmDialog";
+import Modal from "../components/common/Modal";
+import ExpenseForm from "../components/ExpenseForm";
 import { getMonthlySummary } from "../utils/monthSummary";
 import { groupExpensesByDay } from "../utils/dayGrouping";
 import { toast } from "react-toastify";
@@ -117,6 +119,7 @@ export default function ExpenseListPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [editingExpense, setEditingExpense] = useState<any | null>(null);
 
   const doDelete = async (id?: string) => {
     if (!user || !id) {
@@ -349,6 +352,7 @@ export default function ExpenseListPage() {
                       settings={settings}
                       navigate={navigate}
                       setDeleteTarget={setDeleteTarget}
+                      setEditingExpense={setEditingExpense}
                       accounts={accounts}
                     />
                   ))}
@@ -370,6 +374,7 @@ export default function ExpenseListPage() {
                       settings={settings}
                       navigate={navigate}
                       setDeleteTarget={setDeleteTarget}
+                      setEditingExpense={setEditingExpense}
                       accounts={accounts}
                     />
                   ))}
@@ -391,6 +396,7 @@ export default function ExpenseListPage() {
                       settings={settings}
                       navigate={navigate}
                       setDeleteTarget={setDeleteTarget}
+                      setEditingExpense={setEditingExpense}
                       accounts={accounts}
                     />
                   ))}
@@ -410,11 +416,22 @@ export default function ExpenseListPage() {
         onCancel={() => setDeleteTarget(null)}
         onConfirm={() => doDelete(deleteTarget ?? undefined)}
       />
+
+      <Modal
+        isOpen={!!editingExpense}
+        onClose={() => setEditingExpense(null)}
+        title="Edit Expense"
+      >
+        <ExpenseForm 
+          editingExpense={editingExpense} 
+          onSuccess={() => setEditingExpense(null)} 
+        />
+      </Modal>
     </motion.main>
   );
 }
 
-function ExpenseRow({ expense, currentMonth, settings, navigate, setDeleteTarget, accounts }: any) {
+function ExpenseRow({ expense, currentMonth, settings, navigate, setDeleteTarget, setEditingExpense, accounts }: any) {
   const isLocked = settings.lockPastMonths && expense.month !== currentMonth;
   const account = accounts.find((item: any) => item.id === expense.accountId);
 
@@ -429,14 +446,14 @@ function ExpenseRow({ expense, currentMonth, settings, navigate, setDeleteTarget
       )}
       onClick={() => {
         if (!isLocked) {
-          navigate("/add", { state: expense });
+          setEditingExpense(expense);
         }
       }}
       role={!isLocked ? "button" : undefined}
       tabIndex={!isLocked ? 0 : -1}
       onKeyDown={(event) => {
         if (!isLocked && (event.key === "Enter" || event.key === " ")) {
-          navigate("/add", { state: expense });
+          setEditingExpense(expense);
         }
       }}
     >
@@ -482,7 +499,7 @@ function ExpenseRow({ expense, currentMonth, settings, navigate, setDeleteTarget
               onClick={(event) => {
                 event.stopPropagation();
                 if (!isLocked) {
-                  navigate("/add", { state: expense });
+                  setEditingExpense(expense);
                 }
               }}
             >

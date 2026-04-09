@@ -15,7 +15,13 @@ import { motion } from "framer-motion";
 import { useCategorizationRules } from "../hooks/useCategorizationRules";
 import { useTrips } from "../hooks/useTrips";
 
-export default function ExpenseForm({ editingExpense }: { editingExpense?: Expense | null }) {
+export default function ExpenseForm({ 
+  editingExpense, 
+  onSuccess 
+}: { 
+  editingExpense?: Expense | null;
+  onSuccess?: () => void;
+}) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -126,7 +132,11 @@ export default function ExpenseForm({ editingExpense }: { editingExpense?: Expen
       if (tripId) await syncTripSpentAmount(tripId);
       if (oldTripId && oldTripId !== tripId) await syncTripSpentAmount(oldTripId);
 
-      navigate("/expenses");
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        navigate("/expenses");
+      }
     } catch (err) {
       console.error(err);
       toast.error("Failed to save expense");
