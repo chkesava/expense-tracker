@@ -62,14 +62,23 @@ export function useSubscriptions() {
         if (!user) return;
 
         const currentMonth = getLocalMonth();
+        const currentYear = new Date().getFullYear();
+        const currentMonthInt = new Date().getMonth() + 1;
         const currentDay = getLocalDay();
         let initialLastProcessed = "";
+        let isCompleted = false;
 
         try {
+            // Tenure Logic: Check if EMI is already completed
+            if (sub.type === "emi" && sub.endYear && sub.endMonth) {
+                if (currentYear > sub.endYear || (currentYear === sub.endYear && currentMonthInt > sub.endMonth)) {
+                    isCompleted = true;
+                }
+            }
+
             // Logic: If the subscription is active AND due (today or past), 
-            // we process it IMMEDIATELY and mark it as processed.
-            // This prevents the background listener from "seeing" it as unprocessed later.
-            if (sub.isActive && currentDay >= sub.dayOfMonth) {
+            // and NOT completed (for EMIs)
+            if (sub.isActive && !isCompleted && currentDay >= sub.dayOfMonth) {
                 console.log(`[AddSub] Subscription ${sub.name} is due immediately. Creating expense...`);
 
                 // 1. Create the Expense
@@ -94,9 +103,16 @@ export function useSubscriptions() {
             }
 
             // 3. Save the Subscription
+            // Filter out undefined values (e.g. endMonth/endYear for non-EMIs)
+            const cleanSub = Object.fromEntries(
+                Object.entries(sub).filter(([_, v]) => v !== undefined)
+            );
+
             await addDoc(collection(db, "users", user.uid, "subscriptions"), {
-                ...sub,
+                ...cleanSub,
                 lastProcessed: initialLastProcessed,
+                isCompleted,
+                isActive: isCompleted ? false : sub.isActive,
                 createdAt: serverTimestamp(),
             });
 
@@ -109,7 +125,11 @@ export function useSubscriptions() {
     const updateSubscription = async (id: string, updates: Partial<Subscription>) => {
         if (!user) return;
         try {
-            await updateDoc(doc(db, "users", user.uid, "subscriptions", id), updates);
+            // Filter out undefined values to prevent Firebase crashes
+            const cleanUpdates = Object.fromEntries(
+                Object.entries(updates).filter(([_, v]) => v !== undefined)
+            );
+            await updateDoc(doc(db, "users", user.uid, "subscriptions", id), cleanUpdates);
             toast.success("Subscription updated");
         } catch (error) {
             console.error("Error updating subscription:", error);
@@ -140,7 +160,24 @@ export function useSubscriptions() {
 
         for (const sub of subscriptions) {
             // 1. Basic checks
-            if (!sub.isActive) continue;
+            if (!sub.isActive || sub.isCompleted) continue;
+
+            // Tenure Check: Has the EMI expired?
+            if (sub.type === "emi" && sub.endYear && sub.endMonth) {
+                const now = new Date();
+                const currentY = now.getFullYear();
+                const currentM = now.getMonth() + 1;
+                
+                if (currentY > sub.endYear || (currentY === sub.endYear && currentM > sub.endMonth)) {
+                    await updateDoc(doc(db, "users", user.uid, "subscriptions", sub.id!), {
+                        isCompleted: true,
+                        isActive: false
+                    });
+                    console.log(`[Tenure] EMI ${sub.name} completed.`);
+                    continue;
+                }
+            }
+
             if (sub.lastProcessed === currentMonth) continue; // Already handled (by addSub or prev run)
 
             // 2. Check due date

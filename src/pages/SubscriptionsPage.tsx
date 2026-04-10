@@ -39,6 +39,11 @@ export default function SubscriptionsPage() {
   const [countDown, setCountDown] = useState(0);
   const [editingSub, setEditingSub] = useState<Subscription | null>(null);
 
+  // New Recurring Fields
+  const [type, setType] = useState<"subscription" | "emi">("subscription");
+  const [endMonth, setEndMonth] = useState<string>(new Date().getMonth() + 1 + "");
+  const [endYear, setEndYear] = useState<string>(new Date().getFullYear() + "");
+
   const { accounts } = useAccounts();
 
   const resetForm = () => {
@@ -49,6 +54,9 @@ export default function SubscriptionsPage() {
     setAccountId("");
     setEditingSub(null);
     setIsAddingSub(false);
+    setType("subscription");
+    setEndMonth(new Date().getMonth() + 1 + "");
+    setEndYear(new Date().getFullYear() + "");
   };
 
   const handleEdit = (sub: Subscription) => {
@@ -58,6 +66,9 @@ export default function SubscriptionsPage() {
     setCategory(sub.category);
     setDay(sub.dayOfMonth.toString());
     setAccountId(sub.accountId || "");
+    setType(sub.type || "subscription");
+    setEndMonth((sub.endMonth || new Date().getMonth() + 1).toString());
+    setEndYear((sub.endYear || new Date().getFullYear()).toString());
     setIsAddingSub(true);
   };
 
@@ -72,6 +83,9 @@ export default function SubscriptionsPage() {
       dayOfMonth: Number(day),
       accountId: accountId || "",
       isActive: editingSub ? editingSub.isActive : true,
+      type,
+      endMonth: type === "emi" ? Number(endMonth) : undefined,
+      endYear: type === "emi" ? Number(endYear) : undefined,
     };
 
     if (editingSub?.id) {
@@ -110,7 +124,7 @@ export default function SubscriptionsPage() {
       <header className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            Plans
+            Recurring Bills
           </h1>
           <button
             onClick={() => view === "subscriptions" ? setIsAddingSub(!isAddingSub) : navigate("/travel/new")}
@@ -162,7 +176,7 @@ export default function SubscriptionsPage() {
             <Modal
               isOpen={isAddingSub}
               onClose={resetForm}
-              title={editingSub ? "Edit Subscription" : "New Subscription"}
+              title={editingSub ? "Edit Recurring Expense" : "New Recurring Expense"}
             >
               <form className="space-y-4" onSubmit={handleSubSubmit}>
                 <div>
@@ -220,6 +234,63 @@ export default function SubscriptionsPage() {
                   </select>
                 </div>
 
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800/50 space-y-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Recurring Type</label>
+                    <div className="bg-slate-100 dark:bg-slate-900/50 p-1 rounded-xl flex relative h-10 mt-1">
+                      <button
+                        type="button"
+                        onClick={() => setType("subscription")}
+                        className={cn(
+                          "flex-1 z-10 font-bold text-xs transition-colors rounded-lg",
+                          type === "subscription" ? "bg-white dark:bg-slate-800 text-blue-600 shadow-sm" : "text-slate-400"
+                        )}
+                      >
+                        Subscription
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setType("emi")}
+                        className={cn(
+                          "flex-1 z-10 font-bold text-xs transition-colors rounded-lg",
+                          type === "emi" ? "bg-white dark:bg-slate-800 text-blue-600 shadow-sm" : "text-slate-400"
+                        )}
+                      >
+                        EMI
+                      </button>
+                    </div>
+                  </div>
+
+                  {type === "emi" && (
+                    <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div>
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">End Month</label>
+                        <select
+                          className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 mt-1 font-semibold text-slate-800 dark:text-white outline-none cursor-pointer"
+                          value={endMonth}
+                          onChange={e => setEndMonth(e.target.value)}
+                        >
+                          {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map((m, i) => (
+                            <option key={m} value={i + 1}>{m}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">End Year</label>
+                        <select
+                          className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 mt-1 font-semibold text-slate-800 dark:text-white outline-none cursor-pointer"
+                          value={endYear}
+                          onChange={e => setEndYear(e.target.value)}
+                        >
+                          {Array.from({ length: 10 }).map((_, i) => (
+                            <option key={i} value={new Date().getFullYear() + i}>{new Date().getFullYear() + i}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div className="pt-4 border-t border-slate-50 dark:border-slate-800/50">
                   <button
                     type="submit"
@@ -231,7 +302,7 @@ export default function SubscriptionsPage() {
                         : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-500/25"
                     )}
                   >
-                    {isDisabled ? `Added! Wait ${countDown}s...` : (editingSub ? "Update Subscription" : "Save Subscription")}
+                    {isDisabled ? `Added! Wait ${countDown}s...` : (editingSub ? "Update Expense" : "Save Expense")}
                   </button>
                 </div>
               </form>
@@ -269,7 +340,11 @@ export default function SubscriptionsPage() {
                     key={sub.id}
                     className={cn(
                       "bg-white dark:bg-slate-900 border rounded-[2rem] p-5 shadow-sm transition-all",
-                      sub.isActive ? "border-slate-100 dark:border-slate-800" : "opacity-60 grayscale"
+                      sub.isCompleted 
+                        ? "border-slate-100 dark:border-slate-800 opacity-50 grayscale bg-slate-50 dark:bg-slate-950/40"
+                        : sub.isActive 
+                          ? "border-slate-100 dark:border-slate-800" 
+                          : "opacity-60 grayscale"
                     )}
                   >
                     <div className="flex flex-col">
@@ -282,7 +357,12 @@ export default function SubscriptionsPage() {
                             {sub.name[0].toUpperCase()}
                           </div>
                           <div>
-                            <h3 className="font-bold text-slate-900 dark:text-white">{sub.name}</h3>
+                            <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                              {sub.name}
+                              <span className="text-[8px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-black tracking-widest">
+                                {sub.type?.toUpperCase() || "SUB"}
+                              </span>
+                            </h3>
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                               Day {sub.dayOfMonth} • {sub.category}
                               {sub.accountId && ` • ${accounts.find(a => a.id === sub.accountId)?.name || 'Account'}`}
@@ -290,27 +370,48 @@ export default function SubscriptionsPage() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="font-black text-slate-900 dark:text-white text-xl">₹{sub.amount}</div>
+                          <div className={cn(
+                            "font-black text-slate-900 dark:text-white text-xl",
+                            sub.isCompleted && "line-through opacity-50"
+                          )}>₹{sub.amount}</div>
                           <div className={cn(
                             "text-[9px] font-black mt-1 px-2 py-0.5 rounded-full inline-block border",
-                            sub.isActive ? "text-emerald-500 border-emerald-100 bg-emerald-50/50 dark:bg-emerald-500/10" : "text-slate-400 border-slate-200 bg-slate-50 dark:bg-slate-800/50"
+                            sub.isCompleted
+                              ? "text-slate-500 border-slate-200 bg-slate-100 dark:bg-slate-800/80"
+                              : sub.isActive 
+                                ? "text-emerald-500 border-emerald-100 bg-emerald-50/50 dark:bg-emerald-500/10" 
+                                : "text-slate-400 border-slate-200 bg-slate-50 dark:bg-slate-800/50"
                           )}>
-                            {sub.isActive ? "ACTIVE" : "PAUSED"}
+                            {sub.isCompleted ? "COMPLETED" : sub.isActive ? "ACTIVE" : "PAUSED"}
                           </div>
                         </div>
                       </div>
 
+                      {sub.type === "emi" && (
+                        <div className="mb-4 px-4 py-2 bg-slate-50 dark:bg-slate-950/40 rounded-xl flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                            <Clock size={10} /> EMI Tenure
+                          </span>
+                          <span className="text-[10px] font-black text-slate-600 dark:text-slate-300 uppercase">
+                            Ends {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][sub.endMonth! - 1]} {sub.endYear}
+                          </span>
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-3 gap-2 pt-4 border-t border-slate-50 dark:border-slate-800/50">
                         <button
+                          disabled={sub.isCompleted}
                           onClick={() => updateSubscription(sub.id!, { isActive: !sub.isActive })}
                           className={cn(
                             "flex items-center justify-center gap-2 py-2 px-3 rounded-xl font-bold text-xs transition-all active:scale-95",
-                            sub.isActive 
-                              ? "bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400" 
-                              : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400"
+                            sub.isCompleted
+                              ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                              : sub.isActive 
+                                ? "bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400" 
+                                : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400"
                           )}
                         >
-                          {sub.isActive ? "Pause" : "Resume"}
+                          {sub.isCompleted ? "Finished" : sub.isActive ? "Pause" : "Resume"}
                         </button>
                         
                         <button 
