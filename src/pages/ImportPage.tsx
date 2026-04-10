@@ -1,5 +1,5 @@
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import { db } from "../firebase";
@@ -57,6 +57,14 @@ export default function ImportPage() {
   const { rules } = useCategorizationRules();
   const [rows, setRows] = useState<ParsedRow[]>([]);
   const [isImporting, setIsImporting] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState<string>("");
+
+  useEffect(() => {
+    if (accounts.length > 0 && !selectedAccountId) {
+      const cashAccount = accounts.find(a => a.name.toLowerCase().includes("cash"));
+      setSelectedAccountId(cashAccount?.id || accounts[0].id);
+    }
+  }, [accounts, selectedAccountId]);
 
   const existingKeys = useMemo(() => new Set(expenses.map((expense) => `${expense.date}|${expense.amount}|${expense.category}|${expense.note ?? ""}`)), [expenses]);
 
@@ -90,7 +98,8 @@ export default function ImportPage() {
         : undefined;
       const category = explicitCategory || matchedRule?.category || "Other";
       const accountName = accountIndex >= 0 ? values[accountIndex] ?? "" : "";
-      const accountId = accounts.find((account) => account.name.toLowerCase() === accountName.toLowerCase())?.id;
+      const matchedAccount = accounts.find((account) => account.name.toLowerCase() === accountName.toLowerCase());
+      const accountId = matchedAccount?.id || selectedAccountId || accounts[0]?.id;
       const date = values[dateIndex];
 
       return {
@@ -123,11 +132,18 @@ export default function ImportPage() {
           continue;
         }
 
-        await addDoc(collection(db, "users", user.uid, "expenses"), {
+        const expenseData = {
           ...row,
           time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           createdAt: serverTimestamp(),
-        });
+        };
+
+        // Ensure accountId is not undefined for Firebase
+        if (!expenseData.accountId) {
+          expenseData.accountId = selectedAccountId || accounts[0]?.id || "";
+        }
+
+        await addDoc(collection(db, "users", user.uid, "expenses"), expenseData);
         imported += 1;
       }
 
@@ -164,8 +180,27 @@ export default function ImportPage() {
           />
         </label>
 
+        {accounts.length > 0 && (
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">
+              Default Account for Import
+            </label>
+            <select
+              value={selectedAccountId}
+              onChange={(e) => setSelectedAccountId(e.target.value)}
+              className="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
+            >
+              {accounts.map((acc) => (
+                <option key={acc.id} value={acc.id}>
+                  {acc.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div className="rounded-2xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800 p-4 text-xs text-slate-500 dark:text-slate-400">
-          Matching note rules are applied if a row has no category. Duplicate rows are skipped based on date, amount, category, and note.
+          Matching note rules are applied if a row has no category. Rows are mapped to the selected account if no match is found in the CSV. Duplicate rows are skipped based on date, amount, category, and note.
         </div>
       </section>
 
@@ -190,7 +225,7 @@ export default function ImportPage() {
                  <div className="flex items-center justify-between gap-3">
                    <div>
                      <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{row.category}</div>
-                     <div className="text-xs font-medium text-slate-500 dark:text-slate-400">{row.note || "No note"}</div>
+                     <div className="text-xs font-medium text-slate-500 dark:text-slate-400">{row.note || "No note"} • {accounts.find(a => a.id === row.accountId)?.name || "Default Account"}</div>
                    </div>
                    <div className="text-right">
                      <div className="text-sm font-bold text-slate-900 dark:text-slate-100">₹{row.amount.toLocaleString()}</div>
