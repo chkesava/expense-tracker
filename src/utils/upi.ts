@@ -25,5 +25,7 @@ export const generateUpiLink = (
  * Checks if the current device is likely to support UPI deep links
  */
 export const isMobile = (): boolean => {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  return isMobileUA && isTouch;
 };

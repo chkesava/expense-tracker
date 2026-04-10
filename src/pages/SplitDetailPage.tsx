@@ -22,6 +22,9 @@ import {
 import { cn } from "../lib/utils";
 import { generateUpiLink, isMobile } from "../utils/upi";
 import { toast } from "react-toastify";
+import { QRCodeSVG } from "qrcode.react";
+import Modal from "../components/common/Modal";
+import { QrCode as QrCodeIcon } from "lucide-react";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -42,6 +45,8 @@ export default function SplitDetailPage() {
   const { splits, updateParticipantStatus, deleteSplit } = useSplits();
   const { user } = useAuth();
   const { settings } = useSettings();
+  
+  const [qrData, setQrData] = useState<{ name: string, amount: number, upiLink: string } | null>(null);
   
   const split = useMemo(() => splits.find(s => s.id === id), [splits, id]);
   const isCreator = split?.createdBy === user?.uid;
@@ -77,6 +82,18 @@ export default function SplitDetailPage() {
     if (isMobile()) {
       window.location.href = upiLink;
     }
+  };
+
+  const handleShowQr = (name: string, amount: number, upiId?: string) => {
+    const targetUpi = upiId || (isCreator ? settings.upiId : ""); 
+    const upiLink = generateUpiLink(targetUpi || "", name, amount, `Split: ${split.title}`);
+
+    if (!upiLink) {
+      toast.error("Set your UPI ID in Settings to generate QR codes");
+      return;
+    }
+
+    setQrData({ name, amount, upiLink });
   };
 
   const handleShare = () => {
@@ -217,13 +234,24 @@ export default function SplitDetailPage() {
                   {!p.paid && !p.isCurrentUser && (
                     <button
                       onClick={() => handlePay(p.name, p.amount, p.upiId)}
-                      className="p-3 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all flex items-center gap-2"
-                      title={isMobile() ? "Pay via UPI" : "Copy UPI Link"}
+                      className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl active:scale-95 transition-all flex items-center gap-2"
+                      title={isMobile() ? "Open UPI App" : "Copy UPI Payment Link"}
                     >
                       {isMobile() ? <Smartphone size={18} /> : <Copy size={18} />}
-                      {!isMobile() && <span className="text-xs font-bold px-1 text-white">Copy UPI</span>}
                     </button>
                   )}
+
+                  {!p.paid && !p.isCurrentUser && (
+                    <button
+                      onClick={() => handleShowQr(p.name, p.amount, p.upiId)}
+                      className="p-3 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all flex items-center gap-2"
+                      title="Show Payment QR Code"
+                    >
+                      <QrCodeIcon size={18} />
+                      <span className="text-xs font-bold px-1 text-white">QR</span>
+                    </button>
+                  )}
+                  
                   
                   {isCreator && (
                     <button
@@ -265,6 +293,47 @@ export default function SplitDetailPage() {
           </p>
         </div>
       )}
+
+      {/* UPI QR Modal */}
+      <Modal
+        isOpen={!!qrData}
+        onClose={() => setQrData(null)}
+        title="Payment QR Code"
+      >
+        {qrData && (
+          <div className="flex flex-col items-center justify-center p-4 space-y-6 text-center">
+            <div className="p-6 bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50">
+              <QRCodeSVG 
+                value={qrData.upiLink} 
+                size={220}
+                level="H"
+                includeMargin={true}
+              />
+            </div>
+            
+            <div className="space-y-1">
+              <div className="text-xs font-black text-slate-400 uppercase tracking-widest">Paying To</div>
+              <div className="text-xl font-black text-slate-900 dark:text-white uppercase">{qrData.name}</div>
+              <div className="text-3xl font-black text-blue-600">₹{qrData.amount.toLocaleString()}</div>
+            </div>
+
+            <div className="w-full pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+                Scan with GPay, PhonePe, Paytm or any UPI app
+              </p>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(qrData.upiLink);
+                  toast.success("UPI Link copied!");
+                }}
+                className="w-full py-3 px-4 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
+              >
+                <Copy size={16} /> Copy UPI Link
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </motion.main>
   );
 }
