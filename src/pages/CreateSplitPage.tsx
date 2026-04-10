@@ -18,6 +18,10 @@ import {
 import { cn } from "../lib/utils";
 import { CATEGORIES } from "../types/expense";
 import type { Participant } from "../types/split";
+import { useUsers } from "../hooks/useUsers";
+import type { UserProfile } from "../hooks/useUsers";
+import Avatar from "../components/Avatar";
+import { Search, Loader2 } from "lucide-react";
 
 const containerVariants = {
   hidden: { opacity: 0, x: -20 },
@@ -43,6 +47,10 @@ export default function CreateSplitPage() {
   const [splitType, setSplitType] = useState<"equal" | "custom">("equal");
   const [category, setCategory] = useState("Other");
   const [participants, setParticipants] = useState<Participant[]>([]);
+  
+  const { searchUsers, loading: searchLoading } = useUsers();
+  const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
+  const [activeSearchIndex, setActiveSearchIndex] = useState<number | null>(null);
 
   // Initialize with current user
   useEffect(() => {
@@ -79,12 +87,46 @@ export default function CreateSplitPage() {
     setParticipants(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleParticipantChange = (index: number, field: keyof Participant, value: any) => {
+  const handleParticipantChange = async (index: number, field: keyof Participant, value: any) => {
     setParticipants(prev => {
       const next = [...prev];
-      next[index] = { ...next[index], [field]: value };
+      const updates: any = { [field]: value };
+      
+      // If the user manually edits the name, unlink the registered userId
+      if (field === "name" && next[index].userId && value !== next[index].name) {
+        updates.userId = undefined;
+        updates.photoURL = undefined;
+        updates.upiId = ""; // Optional: keep or clear UPI? Clearing is safer for manual tracking.
+      }
+      
+      next[index] = { ...next[index], ...updates };
       return next;
     });
+
+    if (field === "name" && value.length >= 2) {
+      setActiveSearchIndex(index);
+      const results = await searchUsers(value);
+      setSearchResults(results);
+    } else if (field === "name") {
+      setSearchResults([]);
+      setActiveSearchIndex(null);
+    }
+  };
+
+  const handleSelectUser = (index: number, profile: UserProfile) => {
+    setParticipants(prev => {
+      const next = [...prev];
+      next[index] = {
+        ...next[index],
+        name: profile.displayName,
+        userId: profile.uid,
+        upiId: profile.upiId || next[index].upiId,
+        photoURL: profile.photoURL
+      };
+      return next;
+    });
+    setSearchResults([]);
+    setActiveSearchIndex(null);
   };
 
   const validate = () => {
@@ -119,7 +161,8 @@ export default function CreateSplitPage() {
         participants: participants.map(p => ({
           ...p,
           amount: Number(p.amount)
-        }))
+        })),
+        participantIds: participants.map(p => p.userId).filter((id): id is string => !!id)
       });
       navigate("/split");
     } catch (err) {
@@ -247,15 +290,62 @@ export default function CreateSplitPage() {
                   className="p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl shadow-sm space-y-3 relative group"
                 >
                   <div className="flex gap-3">
-                    <div className="flex-1 space-y-1">
-                      <input
-                        type="text"
-                        value={p.name}
-                        onChange={(e) => handleParticipantChange(index, "name", e.target.value)}
-                        placeholder={p.isCurrentUser ? "You" : "Friend's Name"}
-                        disabled={p.isCurrentUser}
-                        className="w-full bg-transparent border-none p-0 text-sm font-bold text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-0 outline-none"
-                      />
+                    <div className="flex-1 space-y-1 relative">
+                      <div className="flex items-center gap-2">
+                        {p.photoURL && (
+                          <Avatar src={p.photoURL} name={p.name} size={20} className="shadow-none" />
+                        )}
+                        <input
+                          type="text"
+                          value={p.name}
+                          onChange={(e) => handleParticipantChange(index, "name", e.target.value)}
+                          onFocus={() => p.name.length >= 2 && setActiveSearchIndex(index)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Escape") {
+                              setSearchResults([]);
+                              setActiveSearchIndex(null);
+                            }
+                          }}
+                          placeholder={p.isCurrentUser ? "You" : "Search or type name..."}
+                          disabled={p.isCurrentUser}
+                          className="w-full bg-transparent border-none p-0 text-sm font-bold text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-0 outline-none"
+                        />
+                        {searchLoading && activeSearchIndex === index && (
+                          <Loader2 className="animate-spin text-blue-500" size={14} />
+                        )}
+                      </div>
+                      
+                      {/* Search Results Dropdown */}
+                      <AnimatePresence>
+                        {activeSearchIndex === index && searchResults.length > 0 && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="absolute left-0 right-0 top-full mt-2 z-50 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl max-h-48 overflow-y-auto"
+                          >
+                            {searchResults.map((result) => (
+                              <button
+                                key={result.uid}
+                                type="button"
+                                onClick={() => handleSelectUser(index, result)}
+                                className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
+                              >
+                                <Avatar src={result.photoURL} name={result.displayName} size={32} />
+                                <div className="min-w-0">
+                                  <div className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                                    {result.displayName}
+                                  </div>
+                                  <div className="text-[10px] text-slate-500 truncate">
+                                    {result.email || result.username}
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
                       <input
                         type="text"
                         value={p.upiId || ""}

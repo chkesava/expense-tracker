@@ -49,10 +49,10 @@ export default function SplitPage() {
         
         if (split.createdBy === user.uid) {
           // I created it, others owe me
-          if (!p.isCurrentUser) {
+          if (p.userId !== user.uid) {
             acc.toReceive += p.amount;
           }
-        } else if (p.isCurrentUser) {
+        } else if (p.userId === user.uid) {
           // Someone else created it, I owe them
           acc.toPay += p.amount;
         }
@@ -168,7 +168,10 @@ export default function SplitPage() {
                         <div className="font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
                           {split.title}
                         </div>
-                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
+                        <div className="text-[10px] font-medium text-slate-400 mt-0.5">
+                          Created by {split.createdBy === user?.uid ? "You" : (split.createdByName || "Others")}
+                        </div>
+                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-1">
                           <span>{split.participants.length} people</span>
                           <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
                           <span>₹{split.totalAmount.toLocaleString()}</span>
@@ -188,7 +191,7 @@ export default function SplitPage() {
                           </div>
                         )}
                         <div className="font-black text-slate-900 dark:text-white">
-                          ₹{split.participants.reduce((sum, p) => p.isCurrentUser ? p.amount : sum, 0).toLocaleString()}
+                          ₹{split.participants.reduce((sum, p) => p.userId === user?.uid ? p.amount : sum, 0).toLocaleString()}
                         </div>
                       </div>
                       <ChevronRight className="text-slate-300 group-hover:text-blue-500 transition-colors" size={20} />

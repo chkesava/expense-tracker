@@ -6,7 +6,8 @@ export interface Participant {
   paid: boolean;
   upiId?: string;
   isCurrentUser: boolean;
-  userId?: string; // Optional, if they have an account
+  userId?: string;
+  photoURL?: string;
 }
 
 export interface Split {
@@ -15,9 +16,11 @@ export interface Split {
   totalAmount: number;
   splitType: SplitType;
   participants: Participant[];
-  createdBy: string; // userId
+  createdBy: string;
   createdAt: number;
   settled: boolean;
   notes?: string;
-  category?: string; // e.g. "Food", "Travel"
+  category?: string;
+  participantIds: string[]; // Always sync with participants
+  createdByName?: string; // Cache for UI
 }

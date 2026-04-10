@@ -177,9 +177,14 @@ export default function SplitDetailPage() {
               {split.category}
             </div>
             <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none">{split.title}</h2>
-            <div className="flex items-center gap-2 text-slate-500 font-medium text-sm mt-3">
-              <Calendar size={14} />
-              {new Date(split.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}
+            <div className="flex flex-wrap items-center gap-3 mt-3">
+              <div className="flex items-center gap-2 text-slate-500 font-medium text-sm">
+                <Calendar size={14} />
+                {new Date(split.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}
+              </div>
+              <div className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-500 uppercase">
+                By {split.createdBy === user?.uid ? "You" : (split.createdByName || "Others")}
+              </div>
             </div>
           </div>
 
@@ -212,17 +217,21 @@ export default function SplitDetailPage() {
               <div className="flex items-center justify-between gap-4 relative z-10">
                 <div className="flex items-center gap-4">
                   <div className={cn(
-                    "w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black",
+                    "w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black overflow-hidden bg-slate-100 dark:bg-slate-800",
                     p.paid 
-                      ? "bg-emerald-50 text-emerald-600" 
-                      : "bg-blue-50 text-blue-600"
+                      ? "text-emerald-600 ring-4 ring-emerald-50 dark:ring-emerald-500/10" 
+                      : "text-blue-600 ring-4 ring-blue-50 dark:ring-blue-500/10"
                   )}>
-                    {p.name.charAt(0)}
+                    {p.photoURL ? (
+                      <img src={p.photoURL} alt={p.name} className="w-full h-full object-cover" />
+                    ) : (
+                      p.name.charAt(0)
+                    )}
                   </div>
                   <div>
                     <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
                       {p.name}
-                      {p.isCurrentUser && (
+                      {p.userId === user?.uid && (
                         <span className="px-2 py-0.5 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-[9px] text-blue-600 font-black uppercase">You</span>
                       )}
                     </div>
@@ -231,7 +240,7 @@ export default function SplitDetailPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {!p.paid && !p.isCurrentUser && (
+                  {!p.paid && p.userId !== user?.uid && (
                     <button
                       onClick={() => handlePay(p.name, p.amount, p.upiId)}
                       className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl active:scale-95 transition-all flex items-center gap-2"
@@ -241,7 +250,7 @@ export default function SplitDetailPage() {
                     </button>
                   )}
 
-                  {!p.paid && !p.isCurrentUser && (
+                  {!p.paid && p.userId !== user?.uid && (
                     <button
                       onClick={() => handleShowQr(p.name, p.amount, p.upiId)}
                       className="p-3 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all flex items-center gap-2"

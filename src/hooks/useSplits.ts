@@ -71,18 +71,32 @@ export const useSplits = () => {
         participantIds.push(user.uid);
       }
 
-      const newSplit: any = {
+      const sanitizedParticipants = splitData.participants.map(p => {
+        // Remove undefined from participant objects
+        return Object.fromEntries(
+          Object.entries(p).filter(([_, v]) => v !== undefined)
+        ) as any;
+      });
+
+      const newSplit = {
         ...splitData,
+        participants: sanitizedParticipants,
         createdBy: user.uid,
+        createdByName: user.displayName || "Unknown",
         createdAt: Date.now(),
         settled: false,
-        participantIds // Used for Firestore filtering
+        participantIds
       };
 
-      const docRef = await addDoc(collection(db, "splits"), newSplit);
+      // Remove undefined from the main split object
+      const cleanSplit = Object.fromEntries(
+        Object.entries(newSplit).filter(([_, v]) => v !== undefined)
+      );
+
+      const docRef = await addDoc(collection(db, "splits"), cleanSplit);
       
       // Auto-create personal expense for the current user
-      const currentUserParticipant = splitData.participants.find(p => p.isCurrentUser);
+      const currentUserParticipant = splitData.participants.find(p => p.userId === user.uid);
       if (currentUserParticipant) {
         await addDoc(collection(db, "users", user.uid, "expenses"), {
           amount: currentUserParticipant.amount,
