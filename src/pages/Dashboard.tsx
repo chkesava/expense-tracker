@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { motion, type Variants, Reorder } from "framer-motion";
@@ -21,6 +21,7 @@ import { groupByCategory, groupByMonth } from "../utils/analytics";
 import { getUsageColor, getSmartInsight } from "../utils/insights";
 import { CATEGORIES } from "../types/expense";
 import { cn } from "../lib/utils";
+import MagicChatEntry from "../components/MagicChatEntry";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -423,6 +424,12 @@ export default function Dashboard() {
             )}
           </button>
         </div>
+
+        {!isReordering && (
+          <div className="mb-10">
+            <MagicChatEntry />
+          </div>
+        )}
 
         <Reorder.Group
           axis="y"

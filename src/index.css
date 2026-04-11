@@ -69,68 +69,25 @@
 
 /* Smooth scrollbar styling */
 @layer utilities {
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground) / 0.3);
-    border-radius: 3px;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.5);
-  }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.3); border-radius: 3px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.5); }
+  
+  .animate-delay-100 { animation-delay: 100ms; }
+  .animate-delay-200 { animation-delay: 200ms; }
+  .animate-delay-300 { animation-delay: 300ms; }
+  .animate-spin-slow { animation: spin-slow 8s linear infinite; }
 }
 
-@layer utilities {
-  .animate-delay-100 {
-    animation-delay: 100ms;
-  }
-
-  .animate-delay-200 {
-    animation-delay: 200ms;
-  }
-
-  .animate-delay-300 {
-    animation-delay: 300ms;
-  }
-
-  .animate-delay-400 {
-    animation-delay: 400ms;
-  }
-}
-
-/* Animated background - theme-aware gradient using primary */
-@layer components {
-  .bg-animated-gradient {
-    background: linear-gradient(145deg,
-        hsl(var(--primary) / 0.06) 0%,
-        hsl(var(--primary) / 0.12) 20%,
-        hsl(var(--primary) / 0.2) 40%,
-        hsl(var(--primary) / 0.35) 60%,
-        hsl(var(--primary) / 0.5) 80%,
-        hsl(var(--primary)) 100%);
-    background-size: 400% 400%;
-    animation: gradient-flow 18s ease infinite;
-  }
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes gradient-flow {
-
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
-  }
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 /* Form card - subtle animated background */
@@ -161,17 +118,8 @@
 }
 
 @keyframes card-shimmer {
-
-  0%,
-  100% {
-    background-position: 0% 50%;
-    opacity: 1;
-  }
-
-  50% {
-    background-position: 100% 50%;
-    opacity: 0.9;
-  }
+  0%, 100% { background-position: 0% 50%; opacity: 1; }
+  50% { background-position: 100% 50%; opacity: 0.9; }
 }
 
 /* Focus visible for accessibility - ring only on keyboard focus */
@@ -183,67 +131,28 @@
 }
 
 @layer components {
-  .dark .settings-page .bg-white\/80 {
-    background-color: rgb(15 23 42 / 0.8);
-  }
-
-  .dark .settings-page .border-white\/60 {
-    border-color: rgb(30 41 59 / 1);
-  }
-
+  .dark .settings-page .bg-white\/80 { background-color: rgb(15 23 42 / 0.8); }
+  .dark .settings-page .border-white\/60 { border-color: rgb(30 41 59 / 1); }
   .dark .settings-page .bg-slate-50\/70,
-  .dark .settings-page .bg-slate-50\/50 {
-    background-color: rgb(2 6 23 / 0.6);
-  }
-
+  .dark .settings-page .bg-slate-50\/50 { background-color: rgb(2 6 23 / 0.6); }
   .dark .settings-page .border-slate-100\/80,
-  .dark .settings-page .border-slate-100 {
-    border-color: rgb(30 41 59 / 1);
-  }
-
-  .dark .settings-page .bg-slate-50 {
-    background-color: rgb(2 6 23 / 0.7);
-  }
-
-  .dark .settings-page .border-slate-200 {
-    border-color: rgb(51 65 85 / 1);
-  }
-
-  .dark .settings-page .bg-white {
-    background-color: rgb(2 6 23 / 1);
-  }
-
+  .dark .settings-page .border-slate-100 { border-color: rgb(30 41 59 / 1); }
+  .dark .settings-page .bg-slate-50 { background-color: rgb(2 6 23 / 0.7); }
+  .dark .settings-page .border-slate-200 { border-color: rgb(51 65 85 / 1); }
+  .dark .settings-page .bg-white { background-color: rgb(2 6 23 / 1); }
   .dark .settings-page .text-slate-800,
-  .dark .settings-page .text-slate-900 {
-    color: rgb(241 245 249 / 1);
-  }
-
-  .dark .settings-page .text-slate-700 {
-    color: rgb(226 232 240 / 1);
-  }
-
+  .dark .settings-page .text-slate-900 { color: rgb(241 245 249 / 1); }
+  .dark .settings-page .text-slate-700 { color: rgb(226 232 240 / 1); }
   .dark .settings-page .text-slate-500,
-  .dark .settings-page .text-slate-400 {
-    color: rgb(148 163 184 / 1);
-  }
-
+  .dark .settings-page .text-slate-400 { color: rgb(148 163 184 / 1); }
   .dark .settings-page .from-white {
     --tw-gradient-from: rgb(15 23 42 / 1) var(--tw-gradient-from-position);
     --tw-gradient-to: rgb(15 23 42 / 0) var(--tw-gradient-to-position);
     --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
   }
-
-  .dark .settings-page .to-slate-50\/80 {
-    --tw-gradient-to: rgb(2 6 23 / 0.92) var(--tw-gradient-to-position);
-  }
-
-  .dark .settings-page .bg-red-50\/50 {
-    background-color: rgb(69 10 10 / 0.22);
-  }
-
-  .dark .settings-page .border-red-100 {
-    border-color: rgb(127 29 29 / 0.45);
-  }
+  .dark .settings-page .to-slate-50\/80 { --tw-gradient-to: rgb(2 6 23 / 0.92) var(--tw-gradient-to-position); }
+  .dark .settings-page .bg-red-50\/50 { background-color: rgb(69 10 10 / 0.22); }
+  .dark .settings-page .border-red-100 { border-color: rgb(127 29 29 / 0.45); }
 
   body.story-overlay-open .mobile-action-dock {
     opacity: 0;
