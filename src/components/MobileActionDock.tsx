@@ -11,7 +11,7 @@ export default function MobileActionDock() {
 
   return (
     <>
-      <div className="fixed bottom-8 left-0 right-0 z-[100] flex justify-center items-center gap-6 px-6 md:hidden pointer-events-none">
+      <div className="mobile-action-dock fixed bottom-8 left-0 right-0 z-[100] flex justify-center items-center gap-6 px-6 md:hidden pointer-events-none transition-all duration-300">
         {/* Quick Add Button - Center */}
         <motion.button
           initial={{ scale: 0, opacity: 0 }}

@@ -244,4 +244,10 @@
   .dark .settings-page .border-red-100 {
     border-color: rgb(127 29 29 / 0.45);
   }
+
+  body.story-overlay-open .mobile-action-dock {
+    opacity: 0;
+    transform: translateY(1.5rem);
+    pointer-events: none;
+  }
 }

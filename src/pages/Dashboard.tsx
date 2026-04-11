@@ -1,15 +1,13 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { motion, type Variants, Reorder, useDragControls } from "framer-motion";
+import { motion, type Variants, Reorder } from "framer-motion";
 import { GripVertical, LayoutPanelLeft, Check } from "lucide-react";
 import { toast } from "react-toastify";
 import GamificationCard from "../components/GamificationCard";
 import FocusWidget from "../components/focus/FocusWidget";
 import FocusConfigModal from "../components/focus/FocusConfigModal";
-import StoryViewer from "../components/story/StoryViewer";
 import { Skeleton } from "../components/common/Skeleton";
-import { useStoryGenerator } from "../hooks/useStoryGenerator";
 import { useExpenses } from "../hooks/useExpenses";
 import { useSubscriptions } from "../hooks/useSubscriptions";
 import { useCategoryBudgets } from "../hooks/useCategoryBudgets";
@@ -54,7 +52,6 @@ export default function Dashboard() {
   const [visibleCount, setVisibleCount] = useState(7);
   const [isAdding, setIsAdding] = useState(false);
   const [showFocusConfig, setShowFocusConfig] = useState(false);
-  const [showStory, setShowStory] = useState(false);
   const [isReordering, setIsReordering] = useState(false);
   const { setDashboardOrder } = useSettings();
 
@@ -63,7 +60,6 @@ export default function Dashboard() {
   const showGamification = widgets?.gamification !== false;
   const showSubscriptions = widgets?.subscriptions !== false;
   const showTopCategories = widgets?.topCategories !== false;
-  const showLeftColumn = showFocus || showGamification || showSubscriptions || showTopCategories;
 
   const quickAddDirect = async (category: string, amount: number) => {
     if (!user) return toast.error("Sign in to add expenses");
@@ -112,7 +108,6 @@ export default function Dashboard() {
   const smartInsight = useMemo(() => getSmartInsight(filteredExpenses, settings.monthlyBudget, selectedMonth), [filteredExpenses, settings.monthlyBudget, selectedMonth]);
   const budgetUsagePercent = settings.monthlyBudget > 0 ? Math.min(100, Math.round((monthlyComparison.current / settings.monthlyBudget) * 100)) : 0;
   const budgetColorClass = getUsageColor(budgetUsagePercent).split(" ")[0];
-  const storySlides = useStoryGenerator(filteredExpenses, selectedMonth);
 
   const categoryBudgetAlerts = useMemo(() => {
     return budgets
@@ -384,11 +379,18 @@ export default function Dashboard() {
     ),
   };
 
-  const currentOrder = settings.dashboardOrder || DEFAULTS.dashboardOrder;
+  const currentOrder = useMemo(() => {
+    const savedOrder = settings.dashboardOrder || [];
+    const knownIds = DEFAULTS.dashboardOrder;
+
+    return [
+      ...savedOrder.filter((id) => knownIds.includes(id)),
+      ...knownIds.filter((id) => !savedOrder.includes(id)),
+    ];
+  }, [settings.dashboardOrder]);
 
   return (
     <>
-      <StoryViewer isOpen={showStory} onClose={() => setShowStory(false)} slides={storySlides} />
       <FocusConfigModal isOpen={showFocusConfig} onClose={() => setShowFocusConfig(false)} />
 
       <motion.div variants={containerVariants} initial="hidden" animate="visible" className="min-h-screen max-w-7xl mx-auto px-4 md:px-8 pt-20 md:pt-24 pb-32">
