@@ -13,6 +13,7 @@ import SeedDataPage from "./pages/SeedData";
 import Header from "./components/Header";
 import MobileActionDock from "./components/MobileActionDock";
 import BottomNav from "./components/BottomNav";
+import AuditPage from "./pages/AuditPage";
 
 import SettingsPage from "./pages/Settings";
 import SubscriptionsPage from "./pages/SubscriptionsPage";
@@ -101,6 +102,7 @@ function AppRoutes() {
               <Route path="/split/:id" element={<SplitDetailPage />} />
               <Route path="/travel/new" element={<CreateTripWizard />} />
               <Route path="/travel/:tripId" element={<TripDetailPage />} />
+              <Route path="/audit" element={<AuditPage />} />
               {import.meta.env.DEV && (
                 <Route path="/seed" element={<SeedDataPage />} />
               )}

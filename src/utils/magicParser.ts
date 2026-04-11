@@ -149,12 +149,13 @@ export function parseMagicEntry(text: string): ParsedExpense {
   // 4. Extract & Clean Note
   // Remove known date/amount fragments
   let noteParts = words.filter(word => {
-    // Skip if it's purely part of the amount
-    if (amount !== null && (word.includes(amount.toString()) || ["k", "grand", "bucks", "rs", "₹", "$"].includes(word))) return false;
+    // Skip if it's purely part of the amount or currency symbols
+    const amountStr = amount?.toString();
+    if (amountStr && (word.includes(amountStr) || ["k", "grand", "bucks", "rs", "₹", "$"].includes(word.toLowerCase()))) return false;
     // Skip common date words if date was found
-    if (dateFound && ["today", "yesterday", "last", "night", "ago", "days", "day", ...Object.keys(DAY_MAP), ...Object.keys(MONTH_MAP)].includes(word)) return false;
+    if (dateFound && ["today", "yesterday", "last", "night", "ago", "days", "day", ...Object.keys(DAY_MAP), ...Object.keys(MONTH_MAP)].includes(word.toLowerCase())) return false;
     // Skip stop words
-    if (STOP_WORDS.includes(word)) return false;
+    if (STOP_WORDS.includes(word.toLowerCase())) return false;
     return true;
   });
 
@@ -162,7 +163,9 @@ export function parseMagicEntry(text: string): ParsedExpense {
   
   // Final cleanup: remove trailing/leading punctuation
   note = note.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, "");
-  note = note.charAt(0).toUpperCase() + note.slice(1);
+  if (note) {
+    note = note.charAt(0).toUpperCase() + note.slice(1);
+  }
 
   return {
     amount,
@@ -171,4 +174,34 @@ export function parseMagicEntry(text: string): ParsedExpense {
     category,
     confidence: maxScore > 0 ? Math.min(maxScore / 5, 1) : 0.5
   };
+}
+
+export function parseMagicBatch(text: string): ParsedExpense[] {
+  // Split by newlines or "and" if it seems to separate items
+  // First, try newlines as the primary separator
+  const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
+  
+  const results: ParsedExpense[] = [];
+  
+  for (const line of lines) {
+    const parsed = parseMagicEntry(line);
+    // Only include if we found a valid amount, as that's the core of an expense
+    if (parsed.amount !== null) {
+      results.push(parsed);
+    }
+  }
+
+  // Fallback: If no expenses found via newlines, try splitting by " and " 
+  // but only if the text is relatively short (preventing false positives in long notes)
+  if (results.length === 0 && text.toLowerCase().includes(" and ") && text.length < 200) {
+    const parts = text.split(/\s+and\s+/i);
+    for (const part of parts) {
+      const parsed = parseMagicEntry(part);
+      if (parsed.amount !== null) {
+        results.push(parsed);
+      }
+    }
+  }
+
+  return results;
 }

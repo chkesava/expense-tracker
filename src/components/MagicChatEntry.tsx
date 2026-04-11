@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Send, Calendar, Tag, CreditCard, ChevronRight, CheckCircle2, AlertCircle } from "lucide-react";
-import { parseMagicEntry, type ParsedExpense } from "../utils/magicParser";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { Sparkles, Send, Calendar, Tag, CreditCard, ChevronRight, CheckCircle2, AlertCircle, Mic, MicOff, Trash2, Save } from "lucide-react";
+import { parseMagicEntry, parseMagicBatch, type ParsedExpense } from "../utils/magicParser";
+import { addDoc, collection, serverTimestamp, writeBatch, doc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../hooks/useAuth";
 import { toast } from "react-toastify";
@@ -33,30 +33,99 @@ export default function MagicChatEntry({ onSuccess }: MagicChatEntryProps) {
   const { rules } = useCategorizationRules();
   const [input, setInput] = useState("");
   const [parsed, setParsed] = useState<ParsedExpense | null>(null);
+  const [batchResults, setBatchResults] = useState<ParsedExpense[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isSpeechSupported, setIsSpeechSupported] = useState(false);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const recognitionRef = useRef<any>(null);
+
+  // Check speech support
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      setIsSpeechSupported(true);
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+          .map((result: any) => result[0])
+          .map((result: any) => result.transcript)
+          .join("");
+        setInput(transcript);
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error);
+        setIsRecording(false);
+        toast.error("Speech recognition failed");
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsRecording(false);
+      };
+    }
+  }, []);
+
+  const toggleRecording = () => {
+    if (!isSpeechSupported) return;
+    
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      setIsRecording(false);
+    } else {
+      inputRef.current?.focus();
+      recognitionRef.current?.start();
+      setIsRecording(true);
+      toast.info("Listening...", { autoClose: 2000, icon: <Mic className="text-blue-500 animate-pulse" /> });
+    }
+  };
 
   useEffect(() => {
     if (input.trim().length > 2) {
-      const result = parseMagicEntry(input);
-      
-      // Secondary category matching with user rules
-      const normalizedInput = input.toLowerCase();
-      const match = rules.find((rule) => normalizedInput.includes(rule.keyword.toLowerCase()));
-      if (match) {
-        result.category = match.category;
+      // Check if it's multiple lines
+      if (input.includes("\n")) {
+        const batch = parseMagicBatch(input);
+        setBatchResults(batch);
+        setParsed(null);
+      } else {
+        const result = parseMagicEntry(input);
+        
+        // Secondary category matching with user rules
+        const normalizedInput = input.toLowerCase();
+        const match = rules.find((rule) => normalizedInput.includes(rule.keyword.toLowerCase()));
+        if (match) {
+          result.category = match.category;
+        }
+        
+        setParsed(result);
+        setBatchResults([]);
       }
-      
-      setParsed(result);
     } else {
       setParsed(null);
+      setBatchResults([]);
+    }
+
+    // Auto-resize textarea
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+      inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 200)}px`;
     }
   }, [input, rules]);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!user || !parsed || !parsed.amount) return;
+    if (!user) return;
+
+    // Handle Batch Submit
+    if (batchResults.length > 0) {
+      return handleBatchSubmit();
+    }
+
+    if (!parsed || !parsed.amount) return;
     const amount = parsed.amount;
 
     setIsSubmitting(true);
@@ -98,10 +167,51 @@ export default function MagicChatEntry({ onSuccess }: MagicChatEntryProps) {
 
       setInput("");
       setParsed(null);
+      setBatchResults([]);
       if (onSuccess) onSuccess();
     } catch (err) {
       console.error(err);
       toast.error("Failed to add magic expense");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleBatchSubmit = async () => {
+    if (!user || batchResults.length === 0) return;
+
+    setIsSubmitting(true);
+    try {
+      const batch = writeBatch(db);
+      const userExpensesRef = collection(db, "users", user.uid, "expenses");
+      const timestamp = serverTimestamp();
+      const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+      batchResults.forEach((item) => {
+        const newDocRef = doc(userExpensesRef);
+        batch.set(newDocRef, {
+          amount: item.amount,
+          date: item.date,
+          category: item.category,
+          note: item.note,
+          month: item.date.slice(0, 7),
+          time,
+          createdAt: timestamp,
+        });
+      });
+
+      await batch.commit();
+      
+      toast.success(`Successfully saved ${batchResults.length} items!`, {
+        icon: <Sparkles className="text-blue-500" />
+      });
+
+      setInput("");
+      setBatchResults([]);
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save batch expenses");
     } finally {
       setIsSubmitting(false);
     }
@@ -174,47 +284,130 @@ export default function MagicChatEntry({ onSuccess }: MagicChatEntryProps) {
               </motion.div>
             </div>
             
-            <input
+            <textarea
               ref={inputRef}
-              type="text"
+              rows={1}
               placeholder="Record: 'Rs 500 for Starbucks today'..."
-              className="flex-1 bg-transparent border-none focus:ring-0 outline-none py-4 text-slate-800 dark:text-slate-100 font-semibold text-lg placeholder:text-slate-400 dark:placeholder:text-slate-600 placeholder:font-medium"
+              className="flex-1 bg-transparent border-none focus:ring-0 outline-none py-4 text-slate-800 dark:text-slate-100 font-semibold text-lg placeholder:text-slate-400 dark:placeholder:text-slate-600 placeholder:font-medium resize-none overflow-hidden min-h-[56px] flex items-center"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey && !input.includes('\n')) {
+                  e.preventDefault();
+                  handleSubmit();
+                }
+              }}
               disabled={isSubmitting}
             />
 
-            <AnimatePresence mode="wait">
-              {parsed?.amount && (
+            <div className="flex items-center gap-1.5 mr-1">
+              {isSpeechSupported && !input && (
                 <motion.button
-                  key="submit"
-                  initial={{ scale: 0, opacity: 0, x: 20 }}
-                  animate={{ scale: 1, opacity: 1, x: 0 }}
-                  exit={{ scale: 0, opacity: 0, x: 20 }}
-                  whileHover={{ scale: 1.1, rotate: draftMode ? 0 : 5 }}
+                  whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-500/40 mr-1 group/btn"
-                >
-                  {isSubmitting ? (
-                    <motion.div 
-                      animate={{ rotate: 360 }} 
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-                    />
-                  ) : (
-                    <Send size={20} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  type="button"
+                  onClick={toggleRecording}
+                  className={cn(
+                    "p-3 rounded-2xl transition-all",
+                    isRecording 
+                      ? "bg-red-500 text-white shadow-lg shadow-red-500/40" 
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-blue-500"
                   )}
+                >
+                  {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
                 </motion.button>
               )}
-            </AnimatePresence>
+
+              <AnimatePresence mode="wait">
+                {(parsed?.amount || batchResults.length > 0) && (
+                  <motion.button
+                    key="submit"
+                    initial={{ scale: 0, opacity: 0, x: 20 }}
+                    animate={{ scale: 1, opacity: 1, x: 0 }}
+                    exit={{ scale: 0, opacity: 0, x: 20 }}
+                    whileHover={{ scale: 1.1, rotate: draftMode ? 0 : 5 }}
+                    whileTap={{ scale: 0.9 }}
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-500/40 group/btn"
+                  >
+                    {isSubmitting ? (
+                      <motion.div 
+                        animate={{ rotate: 360 }} 
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                      />
+                    ) : (
+                      batchResults.length > 0 ? <Save size={20} /> : <Send size={20} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    )}
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           <AnimatePresence>
-            {parsed && (
+            {batchResults.length > 0 && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="border-t border-slate-100 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-950/40 overflow-hidden"
+              >
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">Batch Preview ({batchResults.length})</h4>
+                    <button 
+                      type="button"
+                      onClick={() => { setInput(""); setBatchResults([]); }}
+                      className="text-slate-400 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                  <div className="grid gap-2 max-h-[300px] overflow-y-auto pr-1">
+                    {batchResults.map((item, idx) => (
+                      <motion.div 
+                        initial={{ x: -10, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: idx * 0.05 }}
+                        key={idx} 
+                        className="flex items-center justify-between gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black",
+                            CATEGORY_COLORS[item.category] || CATEGORY_COLORS.Other
+                          )}>
+                            {item.category[0]}
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-slate-800 dark:text-slate-200">{item.note}</div>
+                            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{item.category}</div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs font-black text-slate-900 dark:text-white">₹{item.amount?.toLocaleString()}</div>
+                          <div className="text-[9px] font-bold text-emerald-500">{new Date(item.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleBatchSubmit}
+                    className="w-full py-3 rounded-xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 group"
+                  >
+                    <span>Save All {batchResults.length} Expenses</span>
+                    <Sparkles size={14} className="group-hover:animate-spin" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {parsed && !batchResults.length && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}

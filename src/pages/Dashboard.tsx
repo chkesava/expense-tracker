@@ -1,8 +1,8 @@
 import { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { motion, type Variants, Reorder } from "framer-motion";
-import { GripVertical, LayoutPanelLeft, Check } from "lucide-react";
+import { motion, type Variants, Reorder, AnimatePresence } from "framer-motion";
+import { GripVertical, LayoutPanelLeft, Check, Sparkles, ArrowRight } from "lucide-react";
 import { toast } from "react-toastify";
 import GamificationCard from "../components/GamificationCard";
 import FocusWidget from "../components/focus/FocusWidget";
@@ -139,6 +139,14 @@ export default function Dashboard() {
     danger: "from-red-500 to-rose-600 shadow-red-500/20",
     neutral: "from-slate-600 to-slate-700 shadow-slate-500/20",
   };
+
+  const auditableCount = useMemo(() => {
+    return expenses.filter(e => {
+      const needsCategory = !e.category || e.category === "Other" || e.category === "Uncategorized";
+      const needsNote = !e.note || e.note.trim() === "" || e.note.toLowerCase().includes("no note");
+      return (needsCategory || needsNote) && !e.isAudited;
+    }).length;
+  }, [expenses]);
 
   const widgetMap: Record<string, React.ReactNode> = {
     focus: showFocus && <FocusWidget onOpenConfig={() => setShowFocusConfig(true)} />,
@@ -426,8 +434,41 @@ export default function Dashboard() {
         </div>
 
         {!isReordering && (
-          <div className="mb-10">
+          <div className="flex flex-col gap-6 mb-10">
             <MagicChatEntry />
+            
+            <AnimatePresence>
+              {auditableCount > 0 && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="relative group p-6 rounded-[2.5rem] bg-gradient-to-br from-indigo-600 to-violet-700 text-white shadow-xl shadow-indigo-500/20 overflow-hidden cursor-pointer active:scale-[0.98] transition-all"
+                  onClick={() => navigate("/audit")}
+                >
+                  <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-500">
+                    <Sparkles size={80} />
+                  </div>
+                  <div className="relative z-10 flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-black uppercase tracking-widest">Action Needed</span>
+                        <div className="flex -space-x-1">
+                          {[1, 2, 3].map(i => (
+                            <div key={i} className="w-4 h-4 rounded-full border border-indigo-600 bg-white/10" />
+                          ))}
+                        </div>
+                      </div>
+                      <h2 className="text-xl font-bold mb-1">Audit Your Expenses</h2>
+                      <p className="text-indigo-100 text-xs font-medium max-w-[200px]">You have {auditableCount} items that need a quick category or note.</p>
+                    </div>
+                    <div className="w-12 h-12 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center backdrop-blur-md transition-colors">
+                      <ArrowRight size={24} />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
 
