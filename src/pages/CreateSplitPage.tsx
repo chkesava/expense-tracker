@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useSplits } from "../hooks/useSplits";
 import { useAuth } from "../hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
@@ -39,6 +39,7 @@ const itemVariants = {
 
 export default function CreateSplitPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { createSplit } = useSplits();
   const { user } = useAuth();
   
@@ -52,7 +53,7 @@ export default function CreateSplitPage() {
   const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
   const [activeSearchIndex, setActiveSearchIndex] = useState<number | null>(null);
 
-  // Initialize with current user
+  // Initialize with current user or pre-filled data
   useEffect(() => {
     if (user && participants.length === 0) {
       setParticipants([
@@ -65,7 +66,18 @@ export default function CreateSplitPage() {
         }
       ]);
     }
-  }, [user]);
+
+    // Check for pre-filled data from state
+    if (location.state) {
+      const { amount, title: preFilledTitle, category: preFilledCategory } = location.state as any;
+      if (amount) setTotalAmount(amount.toString());
+      if (preFilledTitle) setTitle(preFilledTitle);
+      if (preFilledCategory) setCategory(preFilledCategory);
+      
+      // Clear state so it doesn't re-trigger on refresh? 
+      // Actually navigate replace is better but let's just initialize once.
+    }
+  }, [user, location.state]);
 
   // Recalculate equal amounts when total or participant count changes
   useEffect(() => {

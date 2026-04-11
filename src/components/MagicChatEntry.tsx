@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Send, Calendar, Tag, CreditCard, ChevronRight, CheckCircle2, AlertCircle } from "lucide-react";
 import { parseMagicEntry, type ParsedExpense } from "../utils/magicParser";
@@ -8,6 +9,8 @@ import { useAuth } from "../hooks/useAuth";
 import { toast } from "react-toastify";
 import { cn } from "../lib/utils";
 import { useCategorizationRules } from "../hooks/useCategorizationRules";
+import { shouldSuggestSplit } from "../utils/proactiveSplits";
+import { SplitSuggestionToast } from "./SplitSuggestionToast";
 
 interface MagicChatEntryProps {
   onSuccess?: () => void;
@@ -26,6 +29,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 export default function MagicChatEntry({ onSuccess }: MagicChatEntryProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { rules } = useCategorizationRules();
   const [input, setInput] = useState("");
   const [parsed, setParsed] = useState<ParsedExpense | null>(null);
@@ -53,6 +57,7 @@ export default function MagicChatEntry({ onSuccess }: MagicChatEntryProps) {
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!user || !parsed || !parsed.amount) return;
+    const amount = parsed.amount;
 
     setIsSubmitting(true);
     try {
@@ -67,9 +72,30 @@ export default function MagicChatEntry({ onSuccess }: MagicChatEntryProps) {
         createdAt: serverTimestamp(),
       });
 
-      toast.success(`Saved: ₹${parsed.amount} in ${parsed.category}`, {
+      toast.success(`Saved: ₹${amount} in ${parsed.category}`, {
         icon: <CheckCircle2 className="text-emerald-500" />
       });
+
+      // Proactive split suggestion
+      if (shouldSuggestSplit(amount, parsed.note)) {
+        toast.info(
+          ({ closeToast }) => (
+            <SplitSuggestionToast 
+              amount={amount} 
+              note={parsed.note} 
+              category={parsed.category}
+              onSplit={(data) => navigate("/split/create", { state: data })}
+              closeToast={closeToast}
+            />
+          ),
+          { 
+            autoClose: 10000,
+            icon: false,
+            className: "p-0 overflow-hidden rounded-2xl border border-blue-100 dark:border-blue-900 shadow-xl"
+          }
+        );
+      }
+
       setInput("");
       setParsed(null);
       if (onSuccess) onSuccess();

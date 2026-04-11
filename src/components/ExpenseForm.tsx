@@ -14,6 +14,8 @@ import { cn } from "../lib/utils";
 import { motion } from "framer-motion";
 import { useCategorizationRules } from "../hooks/useCategorizationRules";
 import { useTrips } from "../hooks/useTrips";
+import { shouldSuggestSplit } from "../utils/proactiveSplits";
+import { SplitSuggestionToast } from "./SplitSuggestionToast";
 
 export default function ExpenseForm({ 
   editingExpense, 
@@ -126,6 +128,26 @@ export default function ExpenseForm({
         });
         toast.success("Expense added");
         addXP(10);
+
+        // Proactive split suggestion
+        if (shouldSuggestSplit(Number(amount), note)) {
+          toast.info(
+            ({ closeToast }) => (
+              <SplitSuggestionToast 
+                amount={Number(amount)} 
+                note={note} 
+                category={category}
+                onSplit={(data) => navigate("/split/create", { state: data })}
+                closeToast={closeToast}
+              />
+            ),
+            { 
+              autoClose: 10000, // Show for longer
+              icon: false, // Custom component handles icon
+              className: "p-0 overflow-hidden rounded-2xl border border-blue-100 dark:border-blue-900 shadow-xl"
+            }
+          );
+        }
       }
 
       // Sync trip spending
