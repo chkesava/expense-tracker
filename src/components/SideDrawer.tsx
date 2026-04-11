@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Home, Wallet, Users, RefreshCw, BarChart3, Settings, Shield, LogOut, Sun, Moon } from "lucide-react";
+import { X, Home, Wallet, Users, RefreshCw, BarChart3, Settings, Shield, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useUserRole } from "../hooks/useUserRole";
@@ -16,7 +16,7 @@ export default function SideDrawer({ isOpen, onClose }: SideDrawerProps) {
   const location = useLocation();
   const { logout, user } = useAuth();
   const { isAdmin } = useUserRole();
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
 
   const links = [
     { path: "/dashboard", label: "Dashboard", icon: Home },
@@ -109,20 +109,12 @@ export default function SideDrawer({ isOpen, onClose }: SideDrawerProps) {
 
               <div className="flex gap-2">
                 <button
-                  onClick={toggleTheme}
-                  className="flex-1 flex items-center justify-center gap-2 py-4 rounded-[2rem] bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-extrabold text-sm hover:bg-slate-100 transition-colors"
-                >
-                  {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
-                  {theme === "light" ? "Dark" : "Light"}
-                </button>
-
-                <button
                   onClick={async () => {
                     await logout();
                     onClose();
                     navigate('/');
                   }}
-                  className="flex-[2] flex items-center justify-center gap-2 py-4 rounded-[2rem] bg-red-50 dark:bg-red-500/10 text-red-500 font-extrabold text-sm hover:bg-red-100 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 py-4 rounded-[2rem] bg-red-50 dark:bg-red-500/10 text-red-500 font-extrabold text-sm hover:bg-red-100 transition-colors"
                 >
                   <LogOut size={18} /> Sign Out
                 </button>

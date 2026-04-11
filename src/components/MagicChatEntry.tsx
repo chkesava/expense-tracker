@@ -87,36 +87,72 @@ export default function MagicChatEntry({ onSuccess }: MagicChatEntryProps) {
         initial={false}
         animate={{ 
           scale: isFocused ? 1.02 : 1,
-          y: isFocused ? -4 : 0
+          y: isFocused ? -6 : 0
         }}
         className="relative"
       >
-        {/* Animated Gradient Border */}
+        {/* Google-style Multi-layered Glow (Aurora) - Persistent */}
+        <div className="absolute inset-0 -z-20 overflow-visible">
+          {/* Main Glow Aura */}
+          <div className={cn(
+            "absolute -inset-10 blur-[80px] rounded-full transition-opacity duration-1000",
+            isFocused ? "opacity-60" : "opacity-30"
+          )}>
+            <div className="absolute top-0 left-1/4 w-1/2 h-full bg-blue-500/30 animate-[aura-float_10s_ease-in-out_infinite]" />
+            <div className="absolute bottom-0 right-1/4 w-1/2 h-full bg-purple-500/30 animate-[aura-float_12s_ease-in-out_infinite_reverse]" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1/3 h-1/3 bg-cyan-400/20 animate-[aura-float_8s_ease-in-out_infinite_offset]" />
+          </div>
+          
+          {/* Focused Highlight blobs */}
+          <motion.div
+            animate={{ 
+              opacity: isFocused ? 1 : 0.5,
+              scale: isFocused ? 1 : 0.9 
+            }}
+            className="absolute -inset-4 blur-3xl rounded-[3rem] bg-gradient-to-r from-blue-600/10 via-indigo-500/10 to-purple-600/10 -z-10"
+          />
+        </div>
+
+        {/* Moving Conic Border (Google AI Style) - Persistent */}
         <div className={cn(
-          "absolute -inset-[2px] rounded-[2rem] blur-sm bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 opacity-20 transition-opacity duration-500",
-          isFocused ? "opacity-40 animate-pulse" : "group-hover:opacity-30"
-        )} />
+          "absolute -inset-[2px] rounded-[2rem] overflow-hidden transition-opacity duration-500",
+          isFocused ? "opacity-100" : "opacity-60"
+        )}>
+          <div className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,transparent_0%,#3b82f6_25%,#8b5cf6_50%,#06b6d4_75%,transparent_100%)] animate-[glow-rotate_4s_linear_infinite]" />
+        </div>
         
         <form 
           onSubmit={handleSubmit}
           className={cn(
-            "relative bg-white/80 dark:bg-slate-900/90 backdrop-blur-2xl border border-white/50 dark:border-slate-800 rounded-[1.8rem] shadow-2xl overflow-hidden transition-all duration-500",
-            isFocused ? "ring-2 ring-blue-500/20 dark:ring-blue-500/10 shadow-blue-500/10" : ""
+            "relative bg-white/70 dark:bg-slate-900/80 backdrop-blur-3xl border border-white/60 dark:border-slate-800/80 rounded-[1.8rem] shadow-[0_20px_70px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_70px_rgba(0,0,0,0.4)] overflow-hidden transition-all duration-500",
+            isFocused ? "shadow-blue-500/20" : ""
           )}
         >
           <div className="p-2.5 flex items-center gap-3">
-            <div className={cn(
-              "pl-4 transition-colors duration-500",
-              parsed?.amount ? "text-blue-500" : "text-slate-400"
-            )}>
-              <Sparkles size={22} className={cn(parsed?.amount ? "animate-spin-slow" : "animate-pulse")} />
+            <div className="relative pl-4 group/icon">
+              <motion.div
+                animate={{
+                  scale: isFocused ? [1, 1.2, 1] : [1, 1.1, 1],
+                }}
+                transition={{ duration: 3, repeat: Infinity }}
+                className={cn(
+                  "transition-all duration-500",
+                  parsed?.amount ? "text-blue-500" : "text-slate-400 dark:text-slate-600"
+                )}
+              >
+                <div className={cn(
+                  "absolute inset-0 blur-md bg-blue-500/40 rounded-full transition-opacity duration-500",
+                  parsed?.amount || isFocused ? "opacity-100 animate-[sparkle-pulse_2s_infinite]" : "opacity-40"
+                )} />
+                <Sparkles size={24} className="relative z-10" />
+              </motion.div>
             </div>
             
             <input
               ref={inputRef}
               type="text"
               placeholder="Record: 'Rs 500 for Starbucks today'..."
-              className="flex-1 bg-transparent border-none focus:ring-0 py-4 text-slate-800 dark:text-slate-100 font-semibold text-lg placeholder:text-slate-400 dark:placeholder:text-slate-600 placeholder:font-medium"
+              className="flex-1 bg-transparent border-none focus:ring-0 outline-none py-4 text-slate-800 dark:text-slate-100 font-semibold text-lg placeholder:text-slate-400 dark:placeholder:text-slate-600 placeholder:font-medium"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onFocus={() => setIsFocused(true)}

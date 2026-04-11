@@ -18,6 +18,8 @@ type Settings = {
     expenses: boolean;
     split: boolean;
     subscriptions: boolean;
+    analytics: boolean;
+    settings: boolean;
   };
   dashboardWidgets: {
     subscriptions: boolean;
@@ -26,6 +28,7 @@ type Settings = {
     topCategories: boolean;
   };
   dashboardOrder: string[];
+  navigationStyle: "bottom" | "dock";
 };
 
 export const DEFAULTS: Settings = {
@@ -42,6 +45,8 @@ export const DEFAULTS: Settings = {
     expenses: true,
     split: true,
     subscriptions: true,
+    analytics: true,
+    settings: true,
   },
   dashboardWidgets: {
     subscriptions: true,
@@ -50,6 +55,7 @@ export const DEFAULTS: Settings = {
     topCategories: true,
   },
   dashboardOrder: ["focus", "gamification", "subscriptions", "topCategories", "overview", "quickAdd", "insight", "budgetAlerts", "financialGoals", "recentActivity"],
+  navigationStyle: "bottom",
 };
 
 type SettingsContextType = {
@@ -66,6 +72,7 @@ type SettingsContextType = {
   toggleBottomNavTab: (key: keyof Settings["bottomNavTabs"]) => void;
   toggleDashboardWidget: (key: keyof Settings["dashboardWidgets"]) => void;
   setDashboardOrder: (order: string[]) => void;
+  setNavigationStyle: (val: Settings["navigationStyle"]) => void;
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -83,15 +90,17 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Changed path to root user document: users/{uid}
     const ref = doc(db, "users", user.uid);
     const unsub = onSnapshot(ref, (snap) => {
       if (snap.exists()) {
-        // Merge defaults with existing data to ensure new fields are handled
         const data = snap.data();
         setSettings({
           ...DEFAULTS,
           ...data,
+          bottomNavTabs: {
+            ...DEFAULTS.bottomNavTabs,
+            ...(data.bottomNavTabs || {}),
+          },
           dashboardWidgets: {
             ...DEFAULTS.dashboardWidgets,
             ...(data.dashboardWidgets || {}),
@@ -99,7 +108,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           dashboardOrder: data.dashboardOrder || DEFAULTS.dashboardOrder,
         } as Settings);
       } else {
-        // Init defaults if document doesn't exist
         setDoc(ref, DEFAULTS, { merge: true }).catch(console.error);
         setSettings(DEFAULTS);
       }
@@ -109,13 +117,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     return () => unsub();
   }, [user]);
 
-  // Helper to update specific fields
   const updateSettings = async (updates: Partial<Settings>) => {
     if (!user) return;
-
-    // Optimistic update
     setSettings((prev) => ({ ...prev, ...updates }));
-
     try {
       const ref = doc(db, "users", user.uid);
       await setDoc(ref, updates, { merge: true });
@@ -144,6 +148,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   };
 
   const setDashboardOrder = (order: string[]) => updateSettings({ dashboardOrder: order });
+  const setNavigationStyle = (val: Settings["navigationStyle"]) => updateSettings({ navigationStyle: val });
 
   return (
     <SettingsContext.Provider
@@ -161,6 +166,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         toggleBottomNavTab,
         toggleDashboardWidget,
         setDashboardOrder,
+        setNavigationStyle,
       }}
     >
       {!loading && children}

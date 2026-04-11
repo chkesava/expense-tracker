@@ -7,12 +7,10 @@ import {
   Calendar,
   Home,
   LogOut,
-  Moon,
   Plus,
   RefreshCw,
   Settings,
   Shield,
-  Sun,
   Wallet,
   Users,
 } from "lucide-react";
@@ -44,7 +42,7 @@ export default function Header() {
   const { isOnline } = useOnline();
   const { stats } = useGamification();
   const { isAdmin } = useUserRole();
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const { setIsMonthDrawerOpen, setIsAddExpenseOpen, globalMonth } = useModals();
   const { expenses } = useExpenses();
 
@@ -182,15 +180,6 @@ export default function Header() {
             <span className="text-[10px] font-black tracking-[0.08em] sm:hidden">{formatMonthLabel(selectedMonth, true)}</span>
           </motion.button>
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={toggleTheme}
-            className="hidden md:inline-flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 p-2.5 text-slate-600 dark:text-slate-200 shadow-sm hover:shadow-md transition-all"
-            aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
-          >
-            {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
-          </motion.button>
 
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -264,15 +253,6 @@ export default function Header() {
                 <div className="h-px bg-slate-200/50 dark:bg-slate-800 mx-2 mb-2" />
 
                 <div className="space-y-1">
-                  <button
-                    onClick={toggleTheme}
-                    className="w-full flex items-center gap-3 p-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-900 transition-colors"
-                  >
-                    <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-300">
-                      {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
-                    </span>
-                    {theme === "light" ? "Dark Mode" : "Light Mode"}
-                  </button>
 
                   <button
                     onClick={() => navigate("/settings")}

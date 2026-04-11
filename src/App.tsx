@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import SeedDataPage from "./pages/SeedData";
 import Header from "./components/Header";
 import MobileActionDock from "./components/MobileActionDock";
+import BottomNav from "./components/BottomNav";
 
 import SettingsPage from "./pages/Settings";
 import SubscriptionsPage from "./pages/SubscriptionsPage";
@@ -111,7 +112,7 @@ function AppRoutes() {
           </AnimatePresence>
         </div>
 
-        <MobileActionDock />
+        {settings.navigationStyle === 'bottom' ? <BottomNav /> : <MobileActionDock />}
       </div>
     </>
   );

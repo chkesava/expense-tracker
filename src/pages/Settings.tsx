@@ -57,9 +57,9 @@ const itemVariants: Variants = {
 };
 
 export default function SettingsPage() {
-  const { settings, setLockPastMonths, setDefaultCategory, setDefaultView, setExportYear, setMonthlyBudget, setTimezone, setUpiId, toggleBottomNavTab, toggleDashboardWidget } = useSettings();
+  const { settings, setLockPastMonths, setDefaultCategory, setDefaultView, setExportYear, setMonthlyBudget, setTimezone, setUpiId, toggleBottomNavTab, toggleDashboardWidget, setNavigationStyle } = useSettings();
   const { user } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const { expenses } = useExpenses();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -153,8 +153,6 @@ export default function SettingsPage() {
     setIsSavingProfile(true);
     try {
       const docRef = doc(db, "users", user.uid);
-      // Sync Auth data (email, displayName) to Firestore along with new username
-      // This ensures Admin Dashboard has data to display
       await updateDoc(docRef, {
         username,
         email: user.email,
@@ -164,7 +162,6 @@ export default function SettingsPage() {
       toast.success("Profile updated successfully");
     } catch (err) {
       console.error(err);
-      // If doc doesn't exist (updateDoc fails), try setDoc with merge
       try {
         const docRef = doc(db, "users", user.uid);
         await setDoc(docRef, {
@@ -172,7 +169,7 @@ export default function SettingsPage() {
           email: user.email,
           displayName: user.displayName,
           photoURL: user.photoURL,
-          role: "USER" // Default role if creating new
+          role: "USER"
         }, { merge: true });
         toast.success("Profile updated successfully");
       } catch (retryErr) {
@@ -186,7 +183,6 @@ export default function SettingsPage() {
 
   const handleExportYear = () => {
     if (!user) return toast.error("Sign in to export data");
-
     const year = settings.exportYear;
     const filtered = expenses.filter((e) => (e.month ?? "").startsWith(String(year)));
     if (!filtered.length) return toast.info("No expenses for selected year");
@@ -196,26 +192,20 @@ export default function SettingsPage() {
   const handleDeleteAll = async () => {
     if (!user) return;
     setIsDeleting(true);
-
     try {
       const colRef = collection(db, "users", user.uid, "expenses");
       const snap = await getDocs(colRef);
-
       if (snap.empty) {
         toast.info("No data to delete");
         setIsDeleting(false);
         setShowDeleteConfirm(false);
         return;
       }
-
-      // Batch delete (limit 500 per batch)
       const batch = writeBatch(db);
       snap.docs.forEach((doc) => {
         batch.delete(doc.ref);
       });
-
       await batch.commit();
-
       toast.success(`Deleted ${snap.size} expenses`);
       setShowDeleteConfirm(false);
     } catch (err) {
@@ -355,18 +345,83 @@ export default function SettingsPage() {
               <p className="text-[10px] text-slate-500 dark:text-slate-400 ml-1">Used to generate payment links for split expenses.</p>
             </div>
 
-            <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50/70 dark:bg-slate-950/60 border border-slate-100/80 dark:border-slate-800 px-4 py-3">
-
-              <div>
-                <div className="text-[15px] font-semibold text-slate-800 dark:text-slate-100">Theme mode</div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Stored in this browser. Default is light.</div>
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <div className="text-[15px] font-bold text-slate-800 dark:text-slate-100">App Atmosphere</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Curated premium themes for your journal</div>
+                </div>
               </div>
-              <button
-                onClick={toggleTheme}
-                className="min-h-11 rounded-xl bg-slate-900 dark:bg-slate-100 px-4 py-2 text-sm font-bold text-white dark:text-slate-900 transition-colors"
-              >
-                {theme === "light" ? "Dark" : "Light"}
-              </button>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {[
+                  { id: 'light', label: 'Classic Light', colors: 'bg-white border-slate-200', text: 'text-slate-800' },
+                  { id: 'dark', label: 'Midnight', colors: 'bg-slate-900 border-slate-800', text: 'text-slate-100' },
+                  { id: 'midnight-olive', label: 'Midnight Olive', colors: 'bg-[#0f140f] border-[#1a201a]', text: 'text-[#d4d9d1]' },
+                  { id: 'vintage-parchment', label: 'Vintage Parchment', colors: 'bg-[#f4f1ea] border-[#e8e4d8]', text: 'text-[#2c2724]' },
+                  { id: 'sakura-bloom', label: 'Sakura Bloom', colors: 'bg-[#fff5f6] border-[#fce4e8]', text: 'text-[#4a3b3d]' }
+                ].map((atm) => (
+                  <button
+                    key={atm.id}
+                    onClick={() => setTheme(atm.id as any)}
+                    className={cn(
+                      "group relative flex flex-col items-center gap-3 p-3 rounded-2xl border-2 transition-all duration-300",
+                      theme === atm.id 
+                        ? "border-blue-500 bg-blue-50/30 ring-4 ring-blue-500/10 scale-[1.02]" 
+                        : "border-transparent bg-slate-50/50 hover:border-slate-200 hover:bg-slate-100/50"
+                    )}
+                  >
+                    <div className={cn("w-full aspect-video rounded-xl shadow-inner flex items-center justify-center border", atm.colors)}>
+                      <div className={cn("w-8 h-1 rounded-full opacity-40", atm.id === 'light' ? 'bg-slate-400' : 'bg-white/40')} />
+                    </div>
+                    <span className={cn("text-xs font-bold tracking-tight", atm.text)}>{atm.label}</span>
+                    
+                    {theme === atm.id && (
+                      <motion.div 
+                        layoutId="activeTheme"
+                        className="absolute -top-2 -right-2 bg-blue-500 text-white p-1 rounded-full shadow-lg"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      </motion.div>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              <div className="space-y-4 pt-6 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <div className="text-[15px] font-bold text-slate-800 dark:text-slate-100">Navigation Style</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Choose how you move through your journal</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    { id: 'bottom', label: 'Modern Tab Bar', desc: 'Industry standard, easy thumb reach', icon: '📱' },
+                    { id: 'dock', label: 'Floating Menu', desc: 'Minimal look with side navigation', icon: '🔘' }
+                  ].map((style) => (
+                    <button
+                      key={style.id}
+                      onClick={() => setNavigationStyle(style.id as any)}
+                      className={cn(
+                        "flex items-start gap-4 p-4 rounded-2xl border-2 transition-all duration-300 text-left",
+                        settings.navigationStyle === style.id 
+                          ? "border-blue-500 bg-blue-50/30 ring-4 ring-blue-500/10" 
+                          : "border-transparent bg-slate-50/50 hover:border-slate-200 hover:bg-slate-100/50"
+                      )}
+                    >
+                      <div className="p-3 rounded-xl bg-white dark:bg-slate-800 shadow-sm text-xl">{style.icon}</div>
+                      <div className="flex-1">
+                        <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{style.label}</div>
+                        <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1">{style.desc}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -384,6 +439,8 @@ export default function SettingsPage() {
               { id: 'expenses', label: 'Expenses', desc: 'Full expense list' },
               { id: 'split', label: 'Split', desc: 'Shared costs & groups' },
               { id: 'subscriptions', label: 'Subscriptions', desc: 'Recurring payments' },
+              { id: 'analytics', label: 'Analytics', desc: 'Detailed spending charts' },
+              { id: 'settings', label: 'Settings', desc: 'App configuration & themes' },
             ].map((tab) => (
               <div key={tab.id} className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-950/60 border border-slate-100/80 dark:border-slate-800 min-h-20">
                 <div>
@@ -397,7 +454,7 @@ export default function SettingsPage() {
                     onChange={() => toggleBottomNavTab(tab.id as any)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-100 dark:peer-focus:ring-blue-900/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                 </label>
               </div>
             ))}
@@ -405,9 +462,9 @@ export default function SettingsPage() {
         </motion.div>
 
         {/* Dashboard Customization Section */}
-        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
-          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">📊</span>
+        <motion.div variants={itemVariants} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/60 dark:border-slate-800 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4 transition-colors">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400">📊</span>
             Dashboard Widgets
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -417,10 +474,10 @@ export default function SettingsPage() {
               { id: 'gamification', label: 'Gamification', desc: 'Level, XP & stats' },
               { id: 'topCategories', label: 'Top Categories', desc: 'Ranking by spend' },
             ].map((widget) => (
-              <div key={widget.id} className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50/70 border border-slate-100/80 min-h-20">
+              <div key={widget.id} className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-950/60 border border-slate-100/80 dark:border-slate-800 min-h-20">
                 <div>
-                  <div className="text-[14px] font-semibold text-slate-800">{widget.label}</div>
-                  <div className="mt-1 text-[11px] leading-4 text-slate-500 font-medium">{widget.desc}</div>
+                  <div className="text-[14px] font-semibold text-slate-800 dark:text-slate-100">{widget.label}</div>
+                  <div className="mt-1 text-[11px] leading-4 text-slate-500 dark:text-slate-400 font-medium">{widget.desc}</div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -429,7 +486,7 @@ export default function SettingsPage() {
                     onChange={() => toggleDashboardWidget(widget.id as any)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                  <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-100 dark:peer-focus:ring-indigo-900/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                 </label>
               </div>
             ))}
@@ -437,15 +494,15 @@ export default function SettingsPage() {
         </motion.div>
 
         {/* Protection Section */}
-        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
-            <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">🛡️</span>
+        <motion.div variants={itemVariants} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/60 dark:border-slate-800 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-colors">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4">
+            <span className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400">🛡️</span>
             Protection
           </h3>
-          <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50/70 border border-slate-100/80 px-4 py-3">
+          <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50/70 dark:bg-slate-950/60 border border-slate-100/80 dark:border-slate-800 px-4 py-3">
             <div>
-              <div className="text-[15px] font-semibold text-slate-800">Lock past months</div>
-              <div className="text-xs text-slate-500 font-medium mt-0.5">Prevent changes to history</div>
+              <div className="text-[15px] font-semibold text-slate-800 dark:text-slate-100">Lock past months</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Prevent changes to history</div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -454,15 +511,15 @@ export default function SettingsPage() {
                 onChange={(e) => setLockPastMonths(e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-100 dark:peer-focus:ring-blue-900/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
             </label>
           </div>
         </motion.div>
 
         {/* Data Section */}
-        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
-          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-amber-50 text-amber-600">💾</span>
+        <motion.div variants={itemVariants} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/60 dark:border-slate-800 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4 transition-colors">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">💾</span>
             Data Management
           </h3>
           <div className="flex flex-col sm:flex-row gap-3">
@@ -470,7 +527,7 @@ export default function SettingsPage() {
               <select
                 value={String(settings.exportYear)}
                 onChange={(e) => setExportYear(Number(e.target.value))}
-                className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3 pr-10 hover:bg-slate-100 transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-offset-1"
+                className="w-full appearance-none bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3 pr-10 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-offset-1"
               >
                 {Array.from({ length: 5 }).map((_, i) => {
                   const y = new Date().getFullYear() - i;
@@ -504,16 +561,16 @@ export default function SettingsPage() {
           </Link>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
-          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-rose-50 text-rose-600">B</span>
+        <motion.div variants={itemVariants} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/60 dark:border-slate-800 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4 transition-colors">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400">B</span>
             Category Budgets
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <select
               value={budgetCategory}
               onChange={(e) => setBudgetCategory(e.target.value)}
-              className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none cursor-pointer appearance-none"
+              className="min-h-11 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl px-3 py-3 outline-none cursor-pointer appearance-none"
             >
               <option value="">Select category</option>
               {allCategoryOptions.map((item) => (
@@ -524,7 +581,7 @@ export default function SettingsPage() {
               type="month"
               value={budgetMonth}
               onChange={(e) => setBudgetMonth(e.target.value)}
-              className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none"
+              className="min-h-11 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl px-3 py-3 outline-none"
             />
             <input
               type="number"
@@ -532,7 +589,7 @@ export default function SettingsPage() {
               value={budgetAmount}
               onChange={(e) => setBudgetAmount(e.target.value)}
               placeholder="Budget amount"
-              className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none"
+              className="min-h-11 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl px-3 py-3 outline-none"
             />
           </div>
           <button
@@ -548,14 +605,14 @@ export default function SettingsPage() {
           </button>
           <div className="space-y-2 max-h-56 overflow-y-auto pr-1 scrollbar-thin">
             {budgets.map((budget) => (
-              <div key={budget.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+              <div key={budget.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 p-4">
                 <div>
-                  <div className="text-sm font-bold text-slate-800">{budget.category}</div>
-                  <div className="text-xs font-medium text-slate-500">{budget.month} • ₹{budget.amount.toLocaleString()}</div>
+                  <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{budget.category}</div>
+                  <div className="text-xs font-medium text-slate-500 dark:text-slate-400">{budget.month} • ₹{budget.amount.toLocaleString()}</div>
                 </div>
                 <button
                   onClick={() => deleteBudget(budget.id)}
-                  className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-500 transition-colors hover:bg-red-100"
+                  className="rounded-xl border border-red-200 dark:border-red-900/30 bg-red-50 dark:bg-red-900/10 px-3 py-2 text-xs font-bold text-red-500 transition-colors hover:bg-red-100"
                 >
                   Delete
                 </button>
@@ -565,9 +622,9 @@ export default function SettingsPage() {
           </div>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
-          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">G</span>
+        <motion.div variants={itemVariants} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/60 dark:border-slate-800 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4 transition-colors">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400">G</span>
             Financial Goals
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -576,13 +633,13 @@ export default function SettingsPage() {
               value={goalName}
               onChange={(e) => setGoalName(e.target.value)}
               placeholder="Goal name"
-              className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none"
+              className="min-h-11 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl px-3 py-3 outline-none"
             />
             <input
               type="date"
               value={goalDeadline}
               onChange={(e) => setGoalDeadline(e.target.value)}
-              className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none"
+              className="min-h-11 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl px-3 py-3 outline-none"
             />
             <input
               type="number"
@@ -590,7 +647,7 @@ export default function SettingsPage() {
               value={goalTarget}
               onChange={(e) => setGoalTarget(e.target.value)}
               placeholder="Target amount"
-              className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none"
+              className="min-h-11 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl px-3 py-3 outline-none"
             />
             <input
               type="number"
@@ -598,7 +655,7 @@ export default function SettingsPage() {
               value={goalCurrent}
               onChange={(e) => setGoalCurrent(e.target.value)}
               placeholder="Current progress"
-              className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none"
+              className="min-h-11 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl px-3 py-3 outline-none"
             />
           </div>
           <button
@@ -618,23 +675,23 @@ export default function SettingsPage() {
             {goals.map((goal) => {
               const progress = goal.targetAmount > 0 ? Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100)) : 0;
               return (
-                <div key={goal.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+                <div key={goal.id} className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="text-sm font-bold text-slate-800">{goal.name}</div>
-                      <div className="text-xs font-medium text-slate-500">
+                      <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{goal.name}</div>
+                      <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         ₹{goal.currentAmount.toLocaleString()} of ₹{goal.targetAmount.toLocaleString()}
                         {goal.deadline ? ` • ${goal.deadline}` : ""}
                       </div>
                     </div>
                     <button
                       onClick={() => deleteGoal(goal.id)}
-                      className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-500 transition-colors hover:bg-red-100"
+                      className="rounded-xl border border-red-200 dark:border-red-900/30 bg-red-50 dark:bg-red-900/10 px-3 py-2 text-xs font-bold text-red-500 transition-colors hover:bg-red-100"
                     >
                       Delete
                     </button>
                   </div>
-                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                     <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" style={{ width: `${progress}%` }} />
                   </div>
                   <div className="mt-3 flex items-center gap-2">
@@ -643,9 +700,9 @@ export default function SettingsPage() {
                       min={0}
                       defaultValue={goal.currentAmount}
                       onBlur={(e) => updateGoalProgress(goal.id, Number(e.target.value))}
-                      className="min-h-10 flex-1 bg-white border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-2 outline-none"
+                      className="min-h-10 flex-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl px-3 py-2 outline-none"
                     />
-                    <span className="text-xs font-bold text-emerald-600">{progress}%</span>
+                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{progress}%</span>
                   </div>
                 </div>
               );
@@ -654,9 +711,9 @@ export default function SettingsPage() {
           </div>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
-          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">R</span>
+        <motion.div variants={itemVariants} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/60 dark:border-slate-800 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4 transition-colors">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400">R</span>
             Auto-Categorization Rules
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-[1.1fr_1fr_auto] gap-3">
@@ -665,12 +722,12 @@ export default function SettingsPage() {
               value={ruleKeyword}
               onChange={(e) => setRuleKeyword(e.target.value)}
               placeholder='Keyword in note, e.g. "netflix"'
-              className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none"
+              className="min-h-11 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl px-3 py-3 outline-none"
             />
             <select
               value={ruleCategory}
               onChange={(e) => setRuleCategory(e.target.value)}
-              className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none cursor-pointer appearance-none"
+              className="min-h-11 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl px-3 py-3 outline-none cursor-pointer appearance-none"
             >
               <option value="">Select category</option>
               {allCategoryOptions.map((item) => (
@@ -691,14 +748,14 @@ export default function SettingsPage() {
           </div>
           <div className="space-y-2 max-h-56 overflow-y-auto pr-1 scrollbar-thin">
             {rules.map((rule) => (
-              <div key={rule.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+              <div key={rule.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 p-4">
                 <div>
-                  <div className="text-sm font-bold text-slate-800">{rule.keyword}</div>
-                  <div className="text-xs font-medium text-slate-500">Assigns to {rule.category}</div>
+                  <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{rule.keyword}</div>
+                  <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Assigns to {rule.category}</div>
                 </div>
                 <button
                   onClick={() => deleteRule(rule.id)}
-                  className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-500 transition-colors hover:bg-red-100"
+                  className="rounded-xl border border-red-200 dark:border-red-900/30 bg-red-50 dark:bg-red-900/10 px-3 py-2 text-xs font-bold text-red-500 transition-colors hover:bg-red-100"
                 >
                   Delete
                 </button>
@@ -709,9 +766,9 @@ export default function SettingsPage() {
         </motion.div>
 
         {/* Account Types Section */}
-        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
-          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-purple-50 text-purple-600">🏷️</span>
+        <motion.div variants={itemVariants} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/60 dark:border-slate-800 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4 transition-colors">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400">🏷️</span>
             Account Types
           </h3>
           <div className="flex flex-col sm:flex-row gap-2">
@@ -720,7 +777,7 @@ export default function SettingsPage() {
               value={newAccountType}
               onChange={(e) => setNewAccountType(e.target.value)}
               placeholder="e.g. Bank, Cash, Card"
-              className="min-h-11 flex-1 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="min-h-11 flex-1 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-blue-500/20"
             />
             <button
               onClick={() => { addAccountType(newAccountType); setNewAccountType(""); }}
@@ -731,7 +788,7 @@ export default function SettingsPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-1 scrollbar-thin">
             {accountTypes.map((type) => (
-              <div key={type.id} className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50/70 border border-slate-100 group">
+              <div key={type.id} className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800 group">
                 <span className={cn("inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold uppercase tracking-[0.24em]", getAccountTypePalette(type.name).chip)}>
                   <span className={cn("h-2 w-2 rounded-full", getAccountTypePalette(type.name).dot)} />
                   {type.name}
@@ -749,9 +806,9 @@ export default function SettingsPage() {
         </motion.div>
 
         {/* Accounts Section */}
-        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
-          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">🏦</span>
+        <motion.div variants={itemVariants} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/60 dark:border-slate-800 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4 transition-colors">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400">🏦</span>
             Accounts
           </h3>
           <div className="space-y-3">
@@ -761,12 +818,12 @@ export default function SettingsPage() {
                 value={newAccountName}
                 onChange={(e) => setNewAccountName(e.target.value)}
                 placeholder="Account Name"
-                className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="min-h-11 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-blue-500/20"
               />
               <select
                 value={selectedAccountType}
                 onChange={(e) => setSelectedAccountType(e.target.value)}
-                className="min-h-11 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none cursor-pointer appearance-none"
+                className="min-h-11 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl px-3 py-3 outline-none cursor-pointer appearance-none"
               >
                 <option value="">Select Type</option>
                 {accountTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -784,26 +841,22 @@ export default function SettingsPage() {
             {accounts.map((acc) => {
               const typeName = accountTypes.find(t => t.id === acc.typeId)?.name || "Unknown Type";
               const palette = getAccountTypePalette(typeName);
-
               return (
-                <div key={acc.id} className="group relative overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-gradient-to-br from-white to-slate-50/80 p-4 pt-12 shadow-[0_8px_30px_rgb(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_35px_rgb(15,23,42,0.08)]">
+                <div key={acc.id} className="group relative overflow-hidden rounded-[1.4rem] border border-slate-200/80 dark:border-slate-800 bg-gradient-to-br from-white to-slate-50/80 dark:from-slate-900 dark:to-slate-950 p-4 pt-12 shadow-[0_8px_30px_rgb(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_35px_rgb(15,23,42,0.08)]">
                   <div className={cn("absolute right-3 top-3 rounded-full px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.24em] shadow-sm", palette.ribbon)}>
                     {typeName}
                   </div>
-
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-bold text-slate-900">{acc.name}</div>
-                      <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                      <div className="truncate text-sm font-bold text-slate-900 dark:text-slate-100">{acc.name}</div>
+                      <div className="mt-2 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                         <span className={cn("h-2.5 w-2.5 rounded-full", palette.dot)} />
                         Ready for expense tagging
                       </div>
                     </div>
-
                     <button
                       onClick={() => deleteAccount(acc.id)}
-                      className="shrink-0 rounded-xl border border-slate-200 bg-white p-2 text-slate-400 transition-colors hover:border-red-200 hover:text-red-500 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-                      aria-label={`Delete ${acc.name}`}
+                      className="shrink-0 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2 text-slate-400 transition-colors hover:border-red-200 hover:text-red-500 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                     </button>
@@ -811,14 +864,13 @@ export default function SettingsPage() {
                 </div>
               );
             })}
-            {accounts.length === 0 && <p className="text-xs text-slate-400 text-center py-4 italic sm:col-span-2">No accounts added yet.</p>}
           </div>
         </motion.div>
 
         {/* Custom Categories Section */}
-        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-white/60 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
-          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-orange-50 text-orange-600">📁</span>
+        <motion.div variants={itemVariants} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/60 dark:border-slate-800 p-4 md:p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4 transition-colors">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400">📁</span>
             Custom Categories
           </h3>
           <div className="flex flex-col sm:flex-row gap-2">
@@ -827,7 +879,7 @@ export default function SettingsPage() {
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
               placeholder="New category name"
-              className="min-h-11 flex-1 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="min-h-11 flex-1 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 text-sm rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-blue-500/20"
             />
             <button
               onClick={() => { addCategory(newCategory); setNewCategory(""); }}
@@ -838,17 +890,16 @@ export default function SettingsPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
             {categories.map((cat) => (
-              <div key={cat.id} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/50 border border-slate-100 group">
-                <span className="text-xs font-bold text-slate-700">{cat.name}</span>
+              <div key={cat.id} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800 group">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{cat.name}</span>
                 <button
                   onClick={() => deleteCategory(cat.id)}
-                  className="text-slate-400 hover:text-red-500 p-1 transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                  className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 p-1 transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                 </button>
               </div>
             ))}
-            {categories.length === 0 && <p className="text-xs text-slate-400 text-center col-span-2 py-4 italic">No custom categories. (Defaults available)</p>}
           </div>
         </motion.div>
 
