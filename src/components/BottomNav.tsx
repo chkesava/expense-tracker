@@ -83,7 +83,7 @@ export default function BottomNav() {
   const ActionIcon = actionLink.icon;
 
   return (
-    <div className="fixed bottom-6 left-0 w-full flex justify-center z-[100] px-4 pointer-events-none md:hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-0 w-full flex justify-center z-[100] px-3 sm:px-4 pointer-events-none md:hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
       <nav className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-white/40 dark:border-slate-800/60 rounded-[2.5rem] px-2 py-2 shadow-[0_20px_50px_rgba(0,0,0,0.1)] pointer-events-auto flex items-center justify-between gap-1 w-full max-w-[440px] transition-all">
         {/* Left Nav Group */}
         {leftLinks.map(renderLink)}

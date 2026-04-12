@@ -402,8 +402,8 @@ export default function Dashboard() {
     <>
       <FocusConfigModal isOpen={showFocusConfig} onClose={() => setShowFocusConfig(false)} />
 
-      <motion.div variants={containerVariants} initial="hidden" animate="visible" className="min-h-screen max-w-7xl mx-auto px-4 md:px-8 pt-20 md:pt-24 pb-32">
-        <div className="flex items-center justify-between mb-8 overflow-hidden">
+      <motion.div variants={containerVariants} initial="hidden" animate="visible" className="min-h-[100dvh] max-w-7xl mx-auto px-4 md:px-8 pt-20 md:pt-24 pb-32">
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-500/20">
               <LayoutPanelLeft size={20} />
@@ -416,7 +416,7 @@ export default function Dashboard() {
           <button
             onClick={() => setIsReordering(!isReordering)}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all active:scale-95",
+              "w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all active:scale-95",
               isReordering 
                 ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" 
                 : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800"
@@ -449,7 +449,7 @@ export default function Dashboard() {
                   <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-500">
                     <Sparkles size={80} />
                   </div>
-                  <div className="relative z-10 flex items-center justify-between">
+                  <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-black uppercase tracking-widest">Action Needed</span>
@@ -460,9 +460,9 @@ export default function Dashboard() {
                         </div>
                       </div>
                       <h2 className="text-xl font-bold mb-1">Audit Your Expenses</h2>
-                      <p className="text-indigo-100 text-xs font-medium max-w-[200px]">You have {auditableCount} items that need a quick category or note.</p>
+                      <p className="text-indigo-100 text-xs font-medium max-w-none sm:max-w-[200px]">You have {auditableCount} items that need a quick category or note.</p>
                     </div>
-                    <div className="w-12 h-12 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center backdrop-blur-md transition-colors">
+                    <div className="w-12 h-12 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center backdrop-blur-md transition-colors self-end sm:self-auto">
                       <ArrowRight size={24} />
                     </div>
                   </div>

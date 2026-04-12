@@ -324,13 +324,13 @@ export default function ExpenseListPage() {
                   exit={{ height: 0, opacity: 0 }}
                   className="overflow-hidden"
                 >
-                  <div className="pt-4 grid grid-cols-1 gap-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <select
-                        value={selectedCategory}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
-                      >
+                    <div className="pt-4 grid grid-cols-1 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <select
+                          value={selectedCategory}
+                          onChange={(e) => setSelectedCategory(e.target.value)}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+                        >
                         <option value="">All Categories</option>
                         {userCategories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                         {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}

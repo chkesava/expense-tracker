@@ -135,6 +135,19 @@
     font-feature-settings: "rlig" 1, "calt" 1;
     transition: background-color 200ms ease, color 200ms ease;
   }
+
+  html,
+  body {
+    width: 100%;
+    overflow-x: clip;
+  }
+
+  @supports not (overflow: clip) {
+    html,
+    body {
+      overflow-x: hidden;
+    }
+  }
 }
 
 /* Smooth scrollbar styling */
@@ -261,4 +274,3 @@
   background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png");
   filter: sepia(0.2);
 }
-

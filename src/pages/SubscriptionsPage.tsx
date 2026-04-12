@@ -191,7 +191,7 @@ export default function SubscriptionsPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Amount</label>
                     <div className="relative mt-1">
@@ -262,7 +262,7 @@ export default function SubscriptionsPage() {
                   </div>
 
                   {type === "emi" && (
-                    <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
                       <div>
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">End Month</label>
                         <select

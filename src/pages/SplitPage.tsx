@@ -66,7 +66,7 @@ export default function SplitPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-[100dvh] flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -81,20 +81,20 @@ export default function SplitPage() {
     >
       {/* Header & Stats */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
             <Users className="text-blue-600" size={28} />
             Split Expenses
           </h1>
           <Link
             to="/split/create"
-            className="p-2.5 rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-all active:scale-95"
+            className="w-full sm:w-auto flex items-center justify-center p-2.5 rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-all active:scale-95"
           >
             <Plus size={24} />
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <motion.div 
             variants={itemVariants}
             className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm"

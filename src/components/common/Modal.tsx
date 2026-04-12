@@ -52,12 +52,12 @@ export default function Modal({ isOpen, onClose, title, children, className }: M
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className={cn(
-              "relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl shadow-slate-900/20 overflow-hidden flex flex-col max-h-[90vh]",
+              "relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl shadow-slate-900/20 overflow-hidden flex flex-col max-h-[90dvh]",
               className
             )}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-8 py-6 border-b border-slate-50 dark:border-slate-800/50">
+            <div className="flex items-center justify-between px-5 sm:px-8 py-4 sm:py-6 border-b border-slate-50 dark:border-slate-800/50">
               {title && (
                 <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
                   {title}
@@ -72,7 +72,7 @@ export default function Modal({ isOpen, onClose, title, children, className }: M
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-5 sm:p-8 custom-scrollbar">
               {children}
             </div>
           </motion.div>

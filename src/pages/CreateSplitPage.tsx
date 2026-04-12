@@ -222,7 +222,7 @@ export default function CreateSplitPage() {
             </div>
           </motion.div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <motion.div variants={itemVariants} className="space-y-2">
               <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Total Amount</label>
               <div className="relative group">

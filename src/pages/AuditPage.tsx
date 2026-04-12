@@ -76,7 +76,7 @@ export default function AuditPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-20 px-4 flex flex-col items-center">
+      <div className="min-h-[100dvh] pt-20 px-4 flex flex-col items-center">
         <Skeleton className="h-8 w-48 mb-8" />
         <Skeleton className="h-[400px] w-full max-w-md rounded-3xl" />
       </div>
@@ -84,7 +84,7 @@ export default function AuditPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-20 pb-32 px-4 flex flex-col items-center">
+    <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-950 pt-20 pb-32 px-4 flex flex-col items-center">
       {/* Header */}
       <div className="w-full max-w-md flex items-center justify-between mb-8">
         <button 

@@ -42,7 +42,7 @@ export default function AnalyticsPage() {
     <motion.main
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="mx-auto min-h-screen max-w-6xl px-4 pb-20 pt-24 md:px-6"
+      className="mx-auto min-h-[100dvh] max-w-6xl px-4 pb-20 pt-24 md:px-6"
     >
       <div className="space-y-6">
         <section className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">

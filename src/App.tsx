@@ -83,10 +83,10 @@ function AppRoutes() {
       {/* Global animated background */}
       <div className="fixed inset-0 z-[-1] bg-gradient-to-br from-slate-50 to-blue-50/50 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 pointer-events-none transition-colors" />
 
-      <div className="min-h-screen flex flex-col font-sans text-slate-900 dark:text-slate-100 transition-colors">
+      <div className="min-h-[100dvh] flex flex-col font-sans text-slate-900 dark:text-slate-100 transition-colors overflow-x-clip">
         <Header />
 
-        <div className="flex-1 w-full pb-24 md:pb-0">
+        <div className="flex-1 w-full pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
               <Route path="/" element={<Navigate to={`/${settings.defaultView || 'dashboard'}`} replace />} />
