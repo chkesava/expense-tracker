@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { motion, type Variants, Reorder, AnimatePresence } from "framer-motion";
-import { GripVertical, LayoutPanelLeft, Check, Sparkles, ArrowRight } from "lucide-react";
+import { GripVertical, LayoutPanelLeft, Check, Sparkles, ArrowRight, Zap, BarChart3, Target, History as HistoryIcon, LayoutGrid } from "lucide-react";
 import { toast } from "react-toastify";
 import GamificationCard from "../components/GamificationCard";
 import FocusWidget from "../components/focus/FocusWidget";
@@ -43,8 +43,25 @@ export default function Dashboard() {
   const { budgets } = useCategoryBudgets();
   const { goals } = useFinancialGoals();
   const { user } = useAuth();
-  const { settings } = useSettings();
+  const { settings, setDashboardOrder } = useSettings();
   const navigate = useNavigate();
+
+  const CATEGORY_DEFS = [
+    { id: "pulse", label: "Pulse", icon: Zap, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-500/10" },
+    { id: "snap", label: "Snapshot", icon: BarChart3, color: "text-indigo-600 dark:text-indigo-400", bg: "bg-indigo-50 dark:bg-indigo-500/10" },
+    { id: "plan", label: "Planning", icon: Target, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-500/10" },
+    { id: "log", label: "History", icon: HistoryIcon, color: "text-slate-600 dark:text-slate-400", bg: "bg-slate-50 dark:bg-slate-700/20" },
+  ] as const;
+
+  type CategoryId = (typeof CATEGORY_DEFS)[number]["id"];
+  const [activeCategory, setActiveCategory] = useState<CategoryId | "all">("snap");
+
+  const CATEGORY_WIDGETS: Record<CategoryId, string[]> = {
+    pulse: ["magicChat", "audit", "quickAdd", "focus"],
+    snap: ["overview", "topCategories", "insight"],
+    plan: ["budgetAlerts", "financialGoals", "subscriptions", "gamification"],
+    log: ["recentActivity"],
+  };
 
   const months = useMemo(() => Array.from(new Set(expenses.map((e) => e.month))).sort().reverse(), [expenses]);
   const { globalMonth } = useModals();
@@ -54,7 +71,6 @@ export default function Dashboard() {
   const [isAdding, setIsAdding] = useState(false);
   const [showFocusConfig, setShowFocusConfig] = useState(false);
   const [isReordering, setIsReordering] = useState(false);
-  const { setDashboardOrder } = useSettings();
 
   const widgets = settings.dashboardWidgets;
   const showFocus = widgets?.focus !== false;
@@ -149,6 +165,31 @@ export default function Dashboard() {
   }, [expenses]);
 
   const widgetMap: Record<string, React.ReactNode> = {
+    magicChat: <MagicChatEntry />,
+    audit: auditableCount > 0 && (
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="relative group p-6 rounded-[2.5rem] bg-gradient-to-br from-indigo-600 to-violet-700 text-white shadow-xl shadow-indigo-500/20 overflow-hidden cursor-pointer active:scale-[0.98] transition-all h-full"
+        onClick={() => navigate("/audit")}
+      >
+        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-500">
+          <Sparkles size={80} />
+        </div>
+        <div className="relative z-10 flex flex-col justify-between h-full">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-black uppercase tracking-widest">Needs Audit</span>
+            </div>
+            <h2 className="text-xl font-bold mb-1 leading-tight">Clean Up Expenses</h2>
+            <p className="text-indigo-100 text-[10px] font-medium opacity-80">{auditableCount} items to categorize</p>
+          </div>
+          <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md self-end">
+            <ArrowRight size={20} />
+          </div>
+        </div>
+      </motion.div>
+    ),
     focus: showFocus && <FocusWidget onOpenConfig={() => setShowFocusConfig(true)} />,
     gamification: showGamification && <GamificationCard />,
     subscriptions: showSubscriptions && (
@@ -390,13 +431,22 @@ export default function Dashboard() {
 
   const currentOrder = useMemo(() => {
     const savedOrder = settings.dashboardOrder || [];
-    const knownIds = DEFAULTS.dashboardOrder;
+    const knownIds = [
+      ...DEFAULTS.dashboardOrder,
+      "magicChat",
+      "audit"
+    ];
 
-    return [
+    const sortedKnown = [
       ...savedOrder.filter((id) => knownIds.includes(id)),
       ...knownIds.filter((id) => !savedOrder.includes(id)),
     ];
-  }, [settings.dashboardOrder]);
+
+    if (isReordering || activeCategory === "all") return sortedKnown;
+
+    const categoryWidgets = CATEGORY_WIDGETS[activeCategory];
+    return sortedKnown.filter(id => categoryWidgets.includes(id));
+  }, [settings.dashboardOrder, isReordering, activeCategory]);
 
   return (
     <>
@@ -433,83 +483,154 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {!isReordering && (
-          <div className="flex flex-col gap-6 mb-10">
-            <MagicChatEntry />
-            
-            <AnimatePresence>
-              {auditableCount > 0 && (
-                <motion.div 
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="relative group p-6 rounded-[2.5rem] bg-gradient-to-br from-indigo-600 to-violet-700 text-white shadow-xl shadow-indigo-500/20 overflow-hidden cursor-pointer active:scale-[0.98] transition-all"
-                  onClick={() => navigate("/audit")}
-                >
-                  <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-500">
-                    <Sparkles size={80} />
-                  </div>
-                  <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-black uppercase tracking-widest">Action Needed</span>
-                        <div className="flex -space-x-1">
-                          {[1, 2, 3].map(i => (
-                            <div key={i} className="w-4 h-4 rounded-full border border-indigo-600 bg-white/10" />
-                          ))}
-                        </div>
+        <div className="md:flex md:items-start md:gap-8 min-h-[600px]">
+          {/* Desktop Dashboard Sidebar */}
+          {!isReordering && (
+            <aside className="hidden md:block sticky top-24 z-10 w-20 shrink-0 lg:w-64 self-start">
+              <div className={cn(surfaceClass, "p-3 shadow-sm flex flex-col gap-1")}>
+                {CATEGORY_DEFS.map((cat) => {
+                  const isActive = activeCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => setActiveCategory(cat.id)}
+                      className={cn(
+                        "flex items-center gap-3 rounded-2xl px-3 py-3 transition-all",
+                        isActive 
+                          ? "bg-slate-900 text-white shadow-lg dark:bg-white dark:text-slate-900 scale-[1.02]" 
+                          : "hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-500 dark:text-slate-400"
+                      )}
+                    >
+                      <cat.icon className={cn("h-5 w-5 shrink-0", isActive ? cat.color : "opacity-70")} />
+                      <div className="hidden lg:block text-sm font-black tracking-tight">{cat.label}</div>
+                      <div className="hidden lg:block ml-auto">
+                        <div className={cn("w-1.5 h-1.5 rounded-full", isActive ? "bg-current" : "bg-transparent")} />
                       </div>
-                      <h2 className="text-xl font-bold mb-1">Audit Your Expenses</h2>
-                      <p className="text-indigo-100 text-xs font-medium max-w-none sm:max-w-[200px]">You have {auditableCount} items that need a quick category or note.</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center backdrop-blur-md transition-colors self-end sm:self-auto">
-                      <ArrowRight size={24} />
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
-
-        <Reorder.Group
-          axis="y"
-          values={currentOrder}
-          onReorder={setDashboardOrder}
-          className={cn(
-            "grid gap-6 transition-all duration-300",
-            isReordering ? "grid-cols-1 max-w-2xl mx-auto" : "md:grid-cols-2 lg:grid-cols-3"
+                    </button>
+                  );
+                })}
+                <div className="h-px bg-slate-100 dark:bg-slate-800 my-2 mx-1" />
+                <button
+                  onClick={() => setIsReordering(true)}
+                  className="flex items-center gap-3 rounded-2xl px-3 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all"
+                >
+                  <LayoutGrid className="h-5 w-5 shrink-0" />
+                  <div className="hidden lg:block text-sm font-black tracking-tight">Rearrange</div>
+                </button>
+              </div>
+            </aside>
           )}
-        >
-          {currentOrder.map((id) => {
-            const component = widgetMap[id];
-            if (!component) return null;
 
-            return (
-              <Reorder.Item
-                key={id}
-                value={id}
-                dragListener={isReordering}
-                className={cn(
-                  "relative group",
-                  !isReordering && (id === "overview" || id === "recentActivity") && "md:col-span-2"
-                )}
-              >
-                {isReordering && (
-                  <div className="absolute -left-2 top-1/2 -translate-y-1/2 z-30 p-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 cursor-grab active:cursor-grabbing text-slate-400 hover:text-blue-600 transition-colors">
-                    <GripVertical size={16} />
-                  </div>
-                )}
-                <div className={cn(
-                  "h-full transition-transform duration-300",
-                  isReordering && "scale-[0.98] group-hover:scale-[1.0] group-active:scale-[0.95]"
-                )}>
-                  {component}
+          <div className="flex-1 min-w-0">
+            {/* Mobile Category Switcher (Top Segmented Control) */}
+            {!isReordering && (
+              <div className="md:hidden mb-10 overflow-hidden">
+                <div className="bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-[2rem] flex items-center relative border border-slate-200/50 dark:border-slate-800/50">
+                  {CATEGORY_DEFS.map((cat) => {
+                    const isActive = activeCategory === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => setActiveCategory(cat.id)}
+                        className={cn(
+                          "relative z-10 flex flex-col items-center justify-center gap-1 flex-1 py-3 transition-colors",
+                          isActive ? "text-slate-900 dark:text-white" : "text-slate-500"
+                        )}
+                      >
+                        {isActive && (
+                          <motion.div
+                            layoutId="activeCategoryPill"
+                            className="absolute inset-0 bg-white dark:bg-slate-800 rounded-[1.5rem] shadow-sm z-[-1]"
+                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                          />
+                        )}
+                        <cat.icon size={18} className={cn(isActive && cat.color)} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{cat.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
-              </Reorder.Item>
-            );
-          })}
-        </Reorder.Group>
+              </div>
+            )}
+
+            {/* Contextual Header */}
+            {!isReordering && (
+              <div className="mb-8 px-1">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeCategory}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    className="flex flex-col gap-1"
+                  >
+                    <div className="flex items-center gap-2">
+                       <h2 className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white capitalize">
+                        {activeCategory === "all" ? "Manage Layout" : CATEGORY_DEFS.find(c => c.id === activeCategory)?.label}
+                      </h2>
+                      {activeCategory !== "all" && (
+                        <div className={cn("px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-widest", CATEGORY_DEFS.find(c => c.id === activeCategory)?.bg, CATEGORY_DEFS.find(c => c.id === activeCategory)?.color)}>
+                          {CATEGORY_WIDGETS[activeCategory as CategoryId].length} Items
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                      {activeCategory === "pulse" && "Ready to take action on your finances."}
+                      {activeCategory === "snap" && "Your financial landscape at a glance."}
+                      {activeCategory === "plan" && "Tracking goals and future commitments."}
+                      {activeCategory === "log" && "A record of your recent spending activity."}
+                    </p>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            )}
+
+            <Reorder.Group
+              axis="y"
+              values={currentOrder}
+              onReorder={setDashboardOrder}
+              className={cn(
+                "grid gap-6 transition-all duration-500",
+                isReordering ? "grid-cols-1 max-w-2xl mx-auto" : "md:grid-cols-2 lg:grid-cols-2"
+              )}
+            >
+              <AnimatePresence initial={false} mode="popLayout">
+                {currentOrder.map((id) => {
+                  const component = widgetMap[id];
+                  if (!component) return null;
+
+                  return (
+                    <Reorder.Item
+                      key={id}
+                      value={id}
+                      initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                      layout
+                      dragListener={isReordering}
+                      className={cn(
+                        "relative group h-full",
+                        !isReordering && (id === "overview" || id === "recentActivity" || id === "magicChat") && "md:col-span-2"
+                      )}
+                    >
+                      {isReordering && (
+                        <div className="absolute -left-2 top-1/2 -translate-y-1/2 z-30 p-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 cursor-grab active:cursor-grabbing text-slate-400 hover:text-blue-600 transition-colors">
+                          <GripVertical size={16} />
+                        </div>
+                      )}
+                      <div className={cn(
+                        "h-full transition-all duration-300",
+                        isReordering && "scale-[0.98] group-hover:scale-[1.0] group-active:scale-[0.95]"
+                      )}>
+                        {component}
+                      </div>
+                    </Reorder.Item>
+                  );
+                })}
+              </AnimatePresence>
+            </Reorder.Group>
+          </div>
+        </div>
       </motion.div>
     </>
   );
