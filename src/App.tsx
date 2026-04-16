@@ -13,14 +13,11 @@ import SeedDataPage from "./pages/SeedData";
 import Header from "./components/Header";
 import MobileActionDock from "./components/MobileActionDock";
 import BottomNav from "./components/BottomNav";
-import AuditPage from "./pages/AuditPage";
-
+import AnalysisLab from "./pages/AnalysisLab";
 import SettingsPage from "./pages/Settings";
 import SubscriptionsPage from "./pages/SubscriptionsPage";
-import ImportPage from "./pages/ImportPage";
 import useSettings, { SettingsProvider } from "./hooks/useSettings";
 import SplitPage from "./pages/SplitPage";
-import CreateSplitPage from "./pages/CreateSplitPage";
 import SplitDetailPage from "./pages/SplitDetailPage";
 import CreateTripWizard from "./pages/CreateTripWizard";
 import TripDetailPage from "./pages/TripDetailPage";
@@ -41,9 +38,7 @@ import AdminRouteGuard from "./guards/AdminRouteGuard";
 import AuthPage from "./pages/AuthPage";
 
 function AppContent() {
-  const location = useLocation();
-  const { user, login } = useAuth();
-  const { settings } = useSettings();
+  const { user } = useAuth();
   const { processSubscriptions } = useSubscriptions();
 
   // Auto-process subscriptions on app load (when this component mounts)
@@ -96,13 +91,11 @@ function AppRoutes() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/subscriptions" element={<SubscriptionsPage />} />
-              <Route path="/import" element={<ImportPage />} />
               <Route path="/split" element={<SplitPage />} />
-              <Route path="/split/create" element={<CreateSplitPage />} />
               <Route path="/split/:id" element={<SplitDetailPage />} />
               <Route path="/travel/new" element={<CreateTripWizard />} />
               <Route path="/travel/:tripId" element={<TripDetailPage />} />
-              <Route path="/audit" element={<AuditPage />} />
+              <Route path="/analysis" element={<AnalysisLab />} />
               {import.meta.env.DEV && (
                 <Route path="/seed" element={<SeedDataPage />} />
               )}

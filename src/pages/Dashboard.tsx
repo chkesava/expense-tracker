@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { motion, type Variants, Reorder, AnimatePresence } from "framer-motion";
-import { GripVertical, LayoutPanelLeft, Check, Sparkles, ArrowRight, Zap, BarChart3, Target, History as HistoryIcon, LayoutGrid } from "lucide-react";
+import { GripVertical, LayoutPanelLeft, Check, Sparkles, ArrowRight, Zap, BarChart3, Target, History as HistoryIcon, LayoutGrid, Search, ChevronRight } from "lucide-react";
 import { toast } from "react-toastify";
 import GamificationCard from "../components/GamificationCard";
 import FocusWidget from "../components/focus/FocusWidget";
@@ -58,7 +58,7 @@ export default function Dashboard() {
 
   const CATEGORY_WIDGETS: Record<CategoryId, string[]> = {
     pulse: ["magicChat", "audit", "quickAdd", "focus"],
-    snap: ["overview", "topCategories", "insight"],
+    snap: ["overview", "topCategories", "insight", "analysisLab"],
     plan: ["budgetAlerts", "financialGoals", "subscriptions", "gamification"],
     log: ["recentActivity"],
   };
@@ -166,12 +166,36 @@ export default function Dashboard() {
 
   const widgetMap: Record<string, React.ReactNode> = {
     magicChat: <MagicChatEntry />,
+    analysisLab: (
+      <motion.div 
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => navigate("/analysis")}
+        className="group relative cursor-pointer overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-blue-600 to-indigo-700 p-1 shadow-xl shadow-blue-500/20"
+      >
+        <div className="relative z-10 flex h-full items-center justify-between rounded-[2.3rem] bg-white/10 p-6 backdrop-blur-xl dark:bg-slate-900/10 transition-colors group-hover:bg-white/5 dark:group-hover:bg-slate-950/5">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 text-white shadow-inner backdrop-blur-md">
+              <Search size={24} />
+            </div>
+            <div>
+              <h3 className="text-lg font-extrabold text-white">Deep Analysis</h3>
+              <p className="text-xs font-bold text-blue-100/70 uppercase tracking-widest">Custom Ranges • Advanced Filters</p>
+            </div>
+          </div>
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition-transform group-hover:translate-x-1">
+            <ChevronRight size={20} />
+          </div>
+        </div>
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10 blur-3xl transition-transform group-hover:scale-150" />
+      </motion.div>
+    ),
     audit: auditableCount > 0 && (
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="relative group p-6 rounded-[2.5rem] bg-gradient-to-br from-indigo-600 to-violet-700 text-white shadow-xl shadow-indigo-500/20 overflow-hidden cursor-pointer active:scale-[0.98] transition-all h-full"
-        onClick={() => navigate("/audit")}
+        onClick={() => navigate("/expenses", { state: { tab: "audit" } })}
       >
         <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-500">
           <Sparkles size={80} />

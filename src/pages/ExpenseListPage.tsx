@@ -2,668 +2,518 @@ import { useExpenses } from "../hooks/useExpenses";
 import { useAccounts } from "../hooks/useAccounts";
 import { useCategories } from "../hooks/useCategories";
 import { useAccountTypes } from "../hooks/useAccountTypes";
+import { useCategorizationRules } from "../hooks/useCategorizationRules";
 import { useMemo, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { doc, getDoc, setDoc, deleteDoc, writeBatch } from "firebase/firestore";
-import BulkActionBar from "../components/BulkActionBar";
+import { doc, getDoc, setDoc, deleteDoc, writeBatch, addDoc, collection, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
-import ConfirmDialog from "../components/common/ConfirmDialog";
-import Modal from "../components/common/Modal";
-import ExpenseForm from "../components/ExpenseForm";
-import { getMonthlySummary } from "../utils/monthSummary";
-import { groupExpensesByDay } from "../utils/dayGrouping";
 import { toast } from "react-toastify";
-import { exportExpensesToCSV } from "../utils/exportCsv";
-import useSettings from "../hooks/useSettings";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../lib/utils";
 import { useModals } from "../hooks/useModals";
-import { Filter, X, ChevronDown, ChevronUp, Search, CheckCircle2 } from "lucide-react";
-import { CATEGORIES } from "../types/expense";
+import useSettings from "../hooks/useSettings";
+
+import { 
+  Filter, 
+  Search, 
+  CheckCircle2, 
+  History, 
+  Sparkles, 
+  Database, 
+  Download, 
+  Upload,
+  ArrowUpDown,
+  X,
+  Plus
+} from "lucide-react";
+
+import PageHeader from "../components/layout/PageHeader";
+import BulkActionBar from "../components/BulkActionBar";
+import ConfirmDialog from "../components/common/ConfirmDialog";
+import Modal from "../components/common/Modal";
+import ExpenseForm from "../components/ExpenseForm";
 import { Skeleton } from "../components/common/Skeleton";
+import { CATEGORIES } from "../types/expense";
+import { getMonthlySummary } from "../utils/monthSummary";
+import { groupExpensesByDay } from "../utils/dayGrouping";
+import { exportExpensesToCSV } from "../utils/exportCsv";
+
+// Audit Components
+import AuditCard from "../components/audit/AuditCard";
+import AuditControls from "../components/audit/AuditControls";
+
+type ExpensesTab = "history" | "audit" | "data";
 
 export default function ExpenseListPage() {
   const { settings } = useSettings();
   const { expenses, loading } = useExpenses();
   const { accounts } = useAccounts();
-  const { globalMonth } = useModals();
-
   const { categories: userCategories } = useCategories();
   const { accountTypes } = useAccountTypes();
+  const { rules } = useCategorizationRules();
+  const { globalMonth } = useModals();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const months = useMemo(
-    () => [...new Set(expenses.map((e) => e.month))].sort().reverse(),
-    [expenses]
-  );
+  const [activeTab, setActiveTab] = useState<ExpensesTab>(() => {
+    if (location.state?.tab) return location.state.tab as ExpensesTab;
+    return "history";
+  });
 
+  // --- HISTORY STATE ---
+  const months = useMemo(() => [...new Set(expenses.map((e) => e.month))].sort().reverse(), [expenses]);
   const selectedMonth = globalMonth ?? months[0] ?? "";
   const currentMonth = new Date().toISOString().slice(0, 7);
-
-  // Filter states
+  
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
   const [selectedAccountTypeId, setSelectedAccountTypeId] = useState<string>("");
   const [showFilters, setShowFilters] = useState(false);
-
-  const filteredExpenses = useMemo(
-    () => expenses.filter((e) => e.month === selectedMonth),
-    [expenses, selectedMonth]
-  );
-
-
   const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState(query);
+  const [sortField, setSortField] = useState<"date" | "amount">("date");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => setDebouncedQuery(query), 300);
-    return () => clearTimeout(timeoutId);
-  }, [query]);
+  // --- AUDIT STATE ---
+  const [auditIndex, setAuditIndex] = useState(0);
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
-  const isSearching = query !== debouncedQuery;
+  // --- DATA STATE ---
+  const [importRows, setImportRows] = useState<any[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
+  const [defaultImportAccountId, setDefaultImportAccountId] = useState("");
 
-  const searchedExpenses = useMemo(() => {
-    const normalizedQuery = debouncedQuery.trim().toLowerCase();
-    
-    return filteredExpenses.filter((expense) => {
-      // 1. Search Query Filter
-      if (normalizedQuery) {
-        const note = (expense.note ?? "").toLowerCase();
-        const category = (expense.category ?? "").toLowerCase();
-        const amount = String(expense.amount);
-        const matchesSearch = note.includes(normalizedQuery) ||
-                category.includes(normalizedQuery) ||
-                amount.includes(normalizedQuery);
-        if (!matchesSearch) return false;
-      }
-
-      // 2. Category Filter
-      if (selectedCategory && expense.category !== selectedCategory) {
-        return false;
-      }
-
-      // 3. Account Filter
-      if (selectedAccountId && expense.accountId !== selectedAccountId) {
-        return false;
-      }
-
-      // 4. Account Type Filter
-      if (selectedAccountTypeId) {
-        const account = accounts.find(a => a.id === expense.accountId);
-        if (!account || account.typeId !== selectedAccountTypeId) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  }, [filteredExpenses, debouncedQuery, selectedCategory, selectedAccountId, selectedAccountTypeId, accounts]);
-
-  const summary = useMemo(
-    () => getMonthlySummary(searchedExpenses),
-    [searchedExpenses]
-  );
-
-  const hasActiveFilters = selectedCategory || selectedAccountId || selectedAccountTypeId;
-
-  const clearFilters = () => {
-    setSelectedCategory("");
-    setSelectedAccountId("");
-    setSelectedAccountTypeId("");
-    setQuery("");
-  };
-
-  const { today, yesterday, earlier } = useMemo(
-    () => groupExpensesByDay(searchedExpenses, settings.timezone),
-    [searchedExpenses, settings.timezone]
-  );
-
-  const navigate = useNavigate();
-  const { user } = useAuth();
+  // --- COMMON UI STATE ---
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [editingExpense, setEditingExpense] = useState<any | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
 
+  // --- LOGIC: HISTORY ---
+  const filteredByMonth = useMemo(() => expenses.filter(e => e.month === selectedMonth), [expenses, selectedMonth]);
+  
+  const searchedExpenses = useMemo(() => {
+    let results = filteredByMonth.filter(e => {
+        if (selectedCategory && e.category !== selectedCategory) return false;
+        if (selectedAccountId && e.accountId !== selectedAccountId) return false;
+        if (selectedAccountTypeId) {
+            const acc = accounts.find(a => a.id === e.accountId);
+            if (!acc || acc.typeId !== selectedAccountTypeId) return false;
+        }
+        if (query) {
+            const q = query.toLowerCase();
+            const matches = (e.note || "").toLowerCase().includes(q) || e.category.toLowerCase().includes(q) || String(e.amount).includes(q);
+            if (!matches) return false;
+        }
+        return true;
+    });
+
+    results.sort((a, b) => {
+        if (sortField === "date") {
+            const valA = a.date + (a.time || "");
+            const valB = b.date + (b.time || "");
+            return sortOrder === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        } else {
+            return sortOrder === "asc" ? a.amount - b.amount : b.amount - a.amount;
+        }
+    });
+
+    return results;
+  }, [filteredByMonth, query, selectedCategory, selectedAccountId, selectedAccountTypeId, accounts, sortField, sortOrder]);
+
+  const historySummary = useMemo(() => getMonthlySummary(searchedExpenses), [searchedExpenses]);
+  const { today, yesterday, earlier } = useMemo(() => groupExpensesByDay(searchedExpenses, settings.timezone), [searchedExpenses, settings.timezone]);
+
+  // --- LOGIC: AUDIT ---
+  const auditableExpenses = useMemo(() => {
+    return expenses.filter(e => {
+      const isUncategorized = !e.category || ["Other", "Uncategorized"].includes(e.category);
+      const isMissingNote = !e.note || e.note.trim() === "" || e.note.toLowerCase().includes("no note");
+      return (isUncategorized || isMissingNote) && !e.isAudited;
+    });
+  }, [expenses]);
+  
+  const currentAuditExpense = auditableExpenses[auditIndex];
+  const auditTotal = auditableExpenses.length;
+  const auditRemaining = auditTotal - auditIndex;
+
+  const handleAuditAction = async (action: "keep" | "edit" | "categorize" | "update-category", data?: any) => {
+    if (!user || !currentAuditExpense?.id) return;
+    try {
+        const ref = doc(db, "users", user.uid, "expenses", currentAuditExpense.id);
+        if (action === "keep") {
+            await updateDoc(ref, { isAudited: true, lastAuditedAt: serverTimestamp() });
+            toast.success("Confirmed!");
+        } else if (action === "update-category") {
+            await updateDoc(ref, { category: data.category, isAudited: true });
+            toast.success(`Set to ${data.category}`);
+            setShowCategoryPicker(false);
+        } else if (action === "categorize") {
+            setShowCategoryPicker(true);
+            return;
+        } else if (action === "edit") {
+            setEditingExpense(currentAuditExpense);
+            return;
+        }
+        setAuditIndex(prev => prev + 1);
+    } catch (err) {
+        toast.error("Audit failed");
+    }
+  };
+
+  // --- LOGIC: DATA ---
+  const handleCsvFile = async (file: File) => {
+    const text = await file.text();
+    const rows = text.split("\n").filter(l => l.trim()).slice(1);
+    const parsed = rows.map(line => {
+        const parts = line.split(",").map(p => p.trim());
+        return {
+            amount: Number(parts[0]),
+            date: parts[1],
+            category: parts[2] || "Other",
+            note: parts[3] || "",
+            month: parts[1]?.slice(0, 7)
+        };
+    }).filter(r => r.amount > 0 && r.date);
+    setImportRows(parsed);
+    toast.info(`Loaded ${parsed.length} rows`);
+  };
+
+  const executeImport = async () => {
+    if (!user || !importRows.length) return;
+    setIsImporting(true);
+    try {
+        const batch = writeBatch(db);
+        for (const row of importRows) {
+            const ref = doc(collection(db, "users", user.uid, "expenses"));
+            batch.set(ref, {
+                ...row,
+                accountId: defaultImportAccountId || accounts[0]?.id || "",
+                createdAt: serverTimestamp(),
+                time: "12:00"
+            });
+        }
+        await batch.commit();
+        toast.success(`Imported ${importRows.length} expenses`);
+        setImportRows([]);
+    } catch (err) {
+        toast.error("Import failed");
+    } finally {
+        setIsImporting(false);
+    }
+  };
+
+  // --- COMMON LOGIC ---
   const toggleSelection = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
-      
       if (next.size === 0) setIsSelectionMode(false);
       return next;
     });
   };
 
-  const clearSelection = () => {
-    setSelectedIds(new Set());
-    setIsSelectionMode(false);
-  };
-
   const handleBulkDelete = async () => {
-    if (!user || selectedIds.size === 0) return;
-    if (!window.confirm(`Are you sure you want to delete ${selectedIds.size} items?`)) return;
-
+    if (!user || !selectedIds.size) return;
+    if (!window.confirm(`Delete ${selectedIds.size} items?`)) return;
     try {
       const batch = writeBatch(db);
-      selectedIds.forEach(id => {
-        batch.delete(doc(db, "users", user.uid, "expenses", id));
-      });
+      selectedIds.forEach(id => batch.delete(doc(db, "users", user.uid, "expenses", id)));
       await batch.commit();
-      toast.success(`Deleted ${selectedIds.size} expenses`);
-      clearSelection();
-    } catch (err) {
-      console.error(err);
-      toast.error("Bulk delete failed");
-    }
+      toast.success("Deleted!");
+      setSelectedIds(new Set());
+      setIsSelectionMode(false);
+    } catch (err) { toast.error("Bulk delete failed"); }
   };
 
   const handleBulkCategorize = async (category: string) => {
-    if (!user || selectedIds.size === 0) return;
-
+    if (!user || !selectedIds.size) return;
     try {
       const batch = writeBatch(db);
-      selectedIds.forEach(id => {
-        batch.update(doc(db, "users", user.uid, "expenses", id), { category });
-      });
+      selectedIds.forEach(id => batch.update(doc(db, "users", user.uid, "expenses", id), { category }));
       await batch.commit();
-      toast.success(`Updated ${selectedIds.size} items to ${category}`);
-      clearSelection();
-    } catch (err) {
-      console.error(err);
-      toast.error("Bulk update failed");
-    }
+      toast.success("Updated!");
+      setSelectedIds(new Set());
+      setIsSelectionMode(false);
+    } catch (err) { toast.error("Bulk update failed"); }
   };
 
-  const doDelete = async (id?: string) => {
-    if (!user || !id) {
-      return;
-    }
-
-    try {
-      const expenseRef = doc(db, "users", user.uid, "expenses", id);
-      const snapshot = await getDoc(expenseRef);
-
-      if (!snapshot.exists()) {
-        setDeleteTarget(null);
-        toast.error("Expense already removed");
-        return;
-      }
-
-      const data = snapshot.data();
-
-      if (data.month && data.month !== currentMonth) {
-        setDeleteTarget(null);
-        toast.error("Cannot delete expense from a past month");
-        return;
-      }
-
-      await deleteDoc(expenseRef);
-      setDeleteTarget(null);
-
-      const toastId = toast(
-        () => (
-          <div className="flex items-center gap-3">
-            <div>Expense deleted</div>
-            <button
-              className="rounded-md bg-slate-700 px-2 py-1 text-xs text-white transition-colors hover:bg-slate-800"
-              onClick={async () => {
-                try {
-                  await setDoc(doc(db, "users", user.uid, "expenses", id), data);
-                  toast.dismiss(toastId);
-                  toast.success("Expense restored");
-                } catch (error) {
-                  console.error(error);
-                  toast.error("Failed to restore expense");
-                }
-              }}
-            >
-              Undo
-            </button>
-          </div>
-        ),
-        { autoClose: 5000 }
-      );
-    } catch (error) {
-      console.error(error);
-      const message = error instanceof Error ? error.message : String(error);
-      toast.error(message ?? "Failed to delete expense");
-      setDeleteTarget(null);
-    }
-  };
+  // Render Section
+  const tabs = [
+    { id: "history", label: "History", icon: <History size={16} /> },
+    { id: "audit", label: "Audit", icon: <Sparkles size={16} /> },
+    { id: "data", label: "Data", icon: <Database size={16} /> },
+  ];
 
   return (
-    <motion.main
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="mx-auto max-w-3xl space-y-6 px-4 pb-32 pt-24"
-    >
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Monthly Summary
-            </h3>
-            {hasActiveFilters && (
-              <span className="text-[10px] bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full font-bold">
-                Filtered
-              </span>
-            )}
-          </div>
-
-          <div className="mb-4 text-2xl font-extrabold text-slate-900 dark:text-slate-50">
-            {loading ? <Skeleton className="h-8 w-24" /> : `₹${summary.total.toLocaleString()}`}
-          </div>
-
-          <div className="space-y-4">
-            {loading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-              </div>
-            ) : searchedExpenses.length === 0 ? (
-              <p className="text-xs text-slate-400 dark:text-slate-500 italic">
-                No data matching your selection
-              </p>
-            ) : (
-              <div className="space-y-2 max-h-[120px] overflow-y-auto pr-1">
-                {Object.entries(summary.byCategory).map(([category, amount]) => (
-                  <div key={category} className="flex justify-between text-sm">
-                    <span className="font-medium text-slate-600 dark:text-slate-300">
-                      {category}
-                    </span>
-                    <span className="font-bold text-slate-800 dark:text-slate-100">
-                      ₹{amount.toLocaleString()}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div className="rounded-3xl border border-white/60 bg-white/80 p-3 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-9 pr-4 py-2.5 text-sm font-medium text-slate-800 transition-all placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100 dark:placeholder:text-slate-500"
-                />
-              </div>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={cn(
-                  "flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-bold transition-all active:scale-95",
-                  showFilters || hasActiveFilters
-                    ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20"
-                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-300"
-                )}
-              >
-                <Filter className="h-4 w-4" />
-                <span className="hidden sm:inline">Filters</span>
-                {hasActiveFilters && (
-                  <span className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] text-blue-600 dark:bg-blue-100">
-                    !
-                  </span>
-                )}
-              </button>
-            </div>
-
-            <AnimatePresence>
-              {showFilters && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden"
-                >
-                    <div className="pt-4 grid grid-cols-1 gap-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <select
-                          value={selectedCategory}
-                          onChange={(e) => setSelectedCategory(e.target.value)}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
-                        >
-                        <option value="">All Categories</option>
-                        {userCategories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
-
-                      <select
-                        value={selectedAccountTypeId}
-                        onChange={(e) => setSelectedAccountTypeId(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
-                      >
-                        <option value="">All Types</option>
-                        {accountTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                      </select>
-                    </div>
-
-                    <select
-                      value={selectedAccountId}
-                      onChange={(e) => setSelectedAccountId(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
-                    >
-                      <option value="">All Accounts</option>
-                      {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                    </select>
-
-                    <button
-                      onClick={clearFilters}
-                      className="text-center text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors py-1"
-                    >
-                      Clear All Filters
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <div className="flex items-center justify-between rounded-3xl border border-white/60 bg-white/80 p-3 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
-            <span className="pl-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-              Data
-            </span>
-            <button
-              disabled={!searchedExpenses.length}
-              onClick={() =>
-                exportExpensesToCSV(searchedExpenses, `expenses-filtered.csv`)
-              }
-              className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white transition-all active:scale-95 hover:bg-slate-800 disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-500"
-            >
-              <span>Export Filtered</span>
-              <span className="opacity-70">↓</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="min-h-[400px] overflow-hidden rounded-3xl border border-white/40 bg-white/60 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/80">
-        {loading ? (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="p-4 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4 flex-1">
-                  <Skeleton className="h-12 w-12 rounded-2xl" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-3 w-32" />
-                  </div>
-                </div>
-                <div className="space-y-2 text-right">
-                  <Skeleton className="h-5 w-16 ml-auto" />
-                  <Skeleton className="h-3 w-12 ml-auto" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : searchedExpenses.length === 0 ? (
-          <div className="flex h-64 flex-col items-center justify-center text-slate-400 dark:text-slate-500">
-            <div className="mb-2 text-4xl">🔍</div>
-            <p className="text-sm font-medium">No expenses found</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
-            {today.length > 0 && (
-              <div className="bg-slate-50/50 p-4 dark:bg-slate-950/40">
-                <h4 className="mb-3 ml-2 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  Today
-                </h4>
-                <div className="space-y-2">
-                  {today.map((expense) => (
-                    <ExpenseRow
-                      key={expense.id}
-                      expense={expense}
-                      currentMonth={currentMonth}
-                      settings={settings}
-                      navigate={navigate}
-                      setDeleteTarget={setDeleteTarget}
-                      setEditingExpense={setEditingExpense}
-                      accounts={accounts}
-                      isSelected={expense.id ? selectedIds.has(expense.id) : false}
-                      isSelectionMode={isSelectionMode}
-                      onSelect={() => expense.id && toggleSelection(expense.id)}
-                      onLongPress={() => {
-                        if (expense.id) {
-                          setIsSelectionMode(true);
-                          toggleSelection(expense.id);
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {yesterday.length > 0 && (
-              <div className="p-4">
-                <h4 className="mb-3 ml-2 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  Yesterday
-                </h4>
-                <div className="space-y-2">
-                  {yesterday.map((expense) => (
-                    <ExpenseRow
-                      key={expense.id}
-                      expense={expense}
-                      currentMonth={currentMonth}
-                      settings={settings}
-                      navigate={navigate}
-                      setDeleteTarget={setDeleteTarget}
-                      setEditingExpense={setEditingExpense}
-                      accounts={accounts}
-                      isSelected={expense.id ? selectedIds.has(expense.id) : false}
-                      isSelectionMode={isSelectionMode}
-                      onSelect={() => expense.id && toggleSelection(expense.id)}
-                      onLongPress={() => {
-                        if (expense.id) {
-                          setIsSelectionMode(true);
-                          toggleSelection(expense.id);
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {earlier.length > 0 && (
-              <div className="bg-slate-50/30 p-4 dark:bg-slate-950/30">
-                <h4 className="mb-3 ml-2 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  Earlier
-                </h4>
-                <div className="space-y-2">
-                  {earlier.map((expense) => (
-                    <ExpenseRow
-                      key={expense.id}
-                      expense={expense}
-                      currentMonth={currentMonth}
-                      settings={settings}
-                      navigate={navigate}
-                      setDeleteTarget={setDeleteTarget}
-                      setEditingExpense={setEditingExpense}
-                      accounts={accounts}
-                      isSelected={expense.id ? selectedIds.has(expense.id) : false}
-                      isSelectionMode={isSelectionMode}
-                      onSelect={() => expense.id && toggleSelection(expense.id)}
-                      onLongPress={() => {
-                        if (expense.id) {
-                          setIsSelectionMode(true);
-                          toggleSelection(expense.id);
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      <ConfirmDialog
-        open={!!deleteTarget}
-        title="Delete expense"
-        message="Do you want to delete this expense? This action cannot be undone."
-        confirmText="Delete"
-        cancelText="Cancel"
-        onCancel={() => setDeleteTarget(null)}
-        onConfirm={() => doDelete(deleteTarget ?? undefined)}
+    <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-4xl px-4 pb-32 pt-24">
+      <PageHeader 
+        title="Expenses Hub" 
+        subtitle="Manage, audit, and import your finance data."
+        icon={<CheckCircle2 size={24} />}
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
       />
 
-      <Modal
-        isOpen={!!editingExpense}
-        onClose={() => setEditingExpense(null)}
-        title="Edit Expense"
-      >
-        <ExpenseForm 
-          editingExpense={editingExpense} 
-          onSuccess={() => setEditingExpense(null)} 
-        />
+      <AnimatePresence mode="wait">
+        <motion.div key={activeTab} initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}>
+          
+          {/* HISTORY TAB */}
+          {activeTab === "history" && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
+                <div className="space-y-6">
+                  {/* Summary & Filters */}
+                  <div className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Monthly Pulse</h3>
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => setSortField("date")} className={cn("text-[10px] font-bold px-2 py-1 rounded-lg", sortField === "date" ? "bg-slate-900 text-white" : "bg-slate-100 dark:bg-slate-800")}>Date</button>
+                            <button onClick={() => setSortField("amount")} className={cn("text-[10px] font-bold px-2 py-1 rounded-lg", sortField === "amount" ? "bg-slate-900 text-white" : "bg-slate-100 dark:bg-slate-800")}>Amount</button>
+                        </div>
+                    </div>
+                    <div className="text-3xl font-black text-slate-900 dark:text-white">₹{historySummary.total.toLocaleString()}</div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                        {Object.entries(historySummary.byCategory).slice(0, 5).map(([c, a]) => (
+                            <div key={c} className="text-[10px] font-black uppercase bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg text-slate-500">
+                                {c}: ₹{a.toLocaleString()}
+                            </div>
+                        ))}
+                    </div>
+                  </div>
+
+                  {/* Expense Items */}
+                  <div className="min-h-[400px] rounded-3xl border border-white/40 bg-white/50 backdrop-blur-md overflow-hidden">
+                    {loading ? <Skeleton className="h-full w-full" /> : (
+                        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                           {[...today, ...yesterday, ...earlier].length === 0 ? (
+                               <div className="py-20 text-center text-slate-400 italic">No matches found</div>
+                           ) : (
+                               [...today, ...yesterday, ...earlier].map(e => (
+                               <ExpenseRow 
+                                    key={e.id} 
+                                    expense={e} 
+                                    accounts={accounts} 
+                                    isSelected={selectedIds.has(e.id!)} 
+                                    onSelect={() => toggleSelection(e.id!)}
+                                    onEdit={() => setEditingExpense(e)}
+                                    onDelete={() => setDeleteTarget(e.id!)}
+                               />
+                               ))
+                           )}
+                        </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Sidebar: Filters */}
+                <aside className="space-y-4">
+                    <div className="rounded-3xl border border-white/60 bg-white/80 p-5 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
+                        <div className="relative mb-4">
+                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input 
+                                value={query} 
+                                onChange={e => setQuery(e.target.value)}
+                                placeholder="Search..."
+                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 ring-blue-500/20"
+                            />
+                        </div>
+                        <div className="space-y-3">
+                            <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-bold">
+                                <option value="">All Categories</option>
+                                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                            <select value={selectedAccountId} onChange={e => setSelectedAccountId(e.target.value)} className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-bold">
+                                <option value="">All Accounts</option>
+                                {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                            </select>
+                            <button onClick={() => { setQuery(""); setSelectedCategory(""); setSelectedAccountId(""); }} className="w-full text-[10px] font-black uppercase text-slate-400 hover:text-blue-500 transition-colors">Clear filters</button>
+                        </div>
+                    </div>
+                </aside>
+              </div>
+            </div>
+          )}
+
+          {/* AUDIT TAB */}
+          {activeTab === "audit" && (
+            <div className="flex flex-col items-center">
+                <div className="w-full max-w-md mb-8 flex justify-between items-center bg-white/80 dark:bg-slate-900/80 p-4 rounded-3xl border border-white/20">
+                    <div className="text-left">
+                        <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">Audit Mode</h3>
+                        <p className="text-xs font-bold">{auditRemaining} tasks left</p>
+                    </div>
+                    <div className="h-1.5 w-32 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <motion.div initial={{ width: 0 }} animate={{ width: `${(auditIndex/auditTotal)*100}%` }} className="h-full bg-blue-600" />
+                    </div>
+                </div>
+
+                <div className="relative w-full max-w-md aspect-[3/4] mb-12">
+                    {auditRemaining > 0 ? (
+                        <AuditCard 
+                            key={currentAuditExpense.id} 
+                            expense={currentAuditExpense} 
+                            onAction={handleAuditAction}
+                            onSwipe={(dir) => {
+                                if (dir === "right") handleAuditAction("keep");
+                                if (dir === "up") handleAuditAction("categorize");
+                                if (dir === "left") handleAuditAction("edit");
+                            }}
+                        />
+                    ) : (
+                        <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-white/80 dark:bg-slate-900/80 rounded-[3rem] border-2 border-dashed border-slate-200">
+                            <CheckCircle2 size={48} className="text-emerald-500 mb-4" />
+                            <h3 className="text-xl font-black">Laboratory Clean!</h3>
+                            <p className="text-sm text-slate-500 mt-2 text-balance">All expenses have been categorized and confirmed.</p>
+                        </div>
+                    )}
+                </div>
+
+                {auditRemaining > 0 && <AuditControls onAction={handleAuditAction as any} />}
+            </div>
+          )}
+
+          {/* DATA TAB */}
+          {activeTab === "data" && (
+            <div className="space-y-6">
+                <section className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-6">Import / Export Hub</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-4">
+                            <label className="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                <Upload className="text-blue-500" />
+                                <span className="text-sm font-bold">Upload CSV</span>
+                                <input type="file" className="hidden" accept=".csv" onChange={e => e.target.files?.[0] && handleCsvFile(e.target.files[0])} />
+                            </label>
+                            
+                            <select 
+                                value={defaultImportAccountId} 
+                                onChange={e => setDefaultImportAccountId(e.target.value)}
+                                className="w-full bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl px-3 py-3 text-sm font-bold"
+                            >
+                                <option value="">Default Import Account</option>
+                                {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                            </select>
+                        </div>
+
+                        <div className="space-y-4">
+                             <button 
+                                onClick={() => exportExpensesToCSV(expenses, "backup.csv")}
+                                className="flex w-full items-center justify-between p-6 rounded-3xl bg-slate-900 text-white hover:bg-slate-800 transition-colors"
+                            >
+                                <div className="text-left">
+                                    <h4 className="font-black text-sm uppercase tracking-widest">Full Backup</h4>
+                                    <p className="text-[10px] text-slate-400">Download all {expenses.length} records</p>
+                                </div>
+                                <Download size={24} />
+                            </button>
+                            {importRows.length > 0 && (
+                                <button 
+                                    onClick={executeImport}
+                                    disabled={isImporting}
+                                    className="flex w-full items-center justify-between p-6 rounded-3xl bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20"
+                                >
+                                    <div className="text-left">
+                                        <h4 className="font-black text-sm uppercase tracking-widest">{isImporting ? "Processing..." : "Commit Import"}</h4>
+                                        <p className="text-[10px] text-blue-100">Add {importRows.length} new records</p>
+                                    </div>
+                                    <ArrowUpDown size={24} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {importRows.length > 0 && (
+                        <div className="mt-8 space-y-2">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Import Preview</h4>
+                            <div className="max-h-64 overflow-y-auto space-y-2 pr-2">
+                                {importRows.map((r, i) => (
+                                    <div key={i} className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                        <div>
+                                            <div className="text-xs font-black uppercase">{r.category}</div>
+                                            <div className="text-[10px] text-slate-400">{r.note || "No note"} • {r.date}</div>
+                                        </div>
+                                        <div className="text-sm font-black">₹{r.amount.toLocaleString()}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </section>
+            </div>
+          )}
+
+        </motion.div>
+      </AnimatePresence>
+
+      {/* MODALS */}
+      <ConfirmDialog open={!!deleteTarget} title="Delete Record" message="Once purged, this record is gone." onConfirm={() => { deleteDoc(doc(db, "users", user!.uid, "expenses", deleteTarget!)); setDeleteTarget(null); }} onCancel={() => setDeleteTarget(null)} />
+      <Modal isOpen={!!editingExpense} onClose={() => setEditingExpense(null)} title="Edit Laboratory Record">
+        <ExpenseForm editingExpense={editingExpense} onSuccess={() => setEditingExpense(null)} />
       </Modal>
+
+      {/* CATEGORY PICKER FOR AUDIT */}
+      <AnimatePresence>
+        {showCategoryPicker && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/60 backdrop-blur-sm flex items-end justify-center sm:items-center p-4">
+            <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }} className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-black uppercase tracking-widest">Select Category</h3>
+                <button onClick={() => setShowCategoryPicker(false)}><X size={20} /></button>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {CATEGORIES.map(c => (
+                    <button key={c} onClick={() => handleAuditAction("update-category", { category: c })} className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 text-[10px] font-black uppercase hover:bg-blue-600 hover:text-white transition-all">{c}</button>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {isSelectionMode && (
-          <BulkActionBar 
-            selectedCount={selectedIds.size}
-            onClear={clearSelection}
-            onDelete={handleBulkDelete}
-            onCategorize={handleBulkCategorize}
-            userCategories={userCategories}
-          />
+          <BulkActionBar selectedCount={selectedIds.size} onClear={() => { setSelectedIds(new Set()); setIsSelectionMode(false); }} onDelete={handleBulkDelete} onCategorize={handleBulkCategorize} userCategories={userCategories} />
         )}
       </AnimatePresence>
     </motion.main>
   );
 }
 
-function ExpenseRow({ 
-  expense, 
-  currentMonth, 
-  settings, 
-  navigate, 
-  setDeleteTarget, 
-  setEditingExpense, 
-  accounts,
-  isSelected,
-  isSelectionMode,
-  onSelect,
-  onLongPress
-}: any) {
-  const isLocked = settings.lockPastMonths && expense.month !== currentMonth;
-  const account = accounts.find((item: any) => item.id === expense.accountId);
-
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0, scale: isSelected ? 0.98 : 1 }}
-      className={cn(
-        "group relative cursor-pointer overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-all hover:border-blue-100 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/95 dark:hover:border-blue-900/70",
-        isLocked && "cursor-not-allowed opacity-60 grayscale-[0.5] hover:border-slate-100 hover:shadow-sm dark:hover:border-slate-800",
-        isSelected && "border-blue-500 bg-blue-50/50 dark:border-blue-500 dark:bg-blue-500/10 shadow-lg shadow-blue-500/10"
-      )}
-      onClick={() => {
-        if (isSelectionMode) {
-          onSelect();
-        } else if (!isLocked) {
-          setEditingExpense(expense);
-        }
-      }}
-      onContextMenu={(e) => {
-        e.preventDefault();
-        onLongPress();
-      }}
-      role={!isLocked ? "button" : undefined}
-      tabIndex={!isLocked ? 0 : -1}
-      onKeyDown={(event) => {
-        if (!isLocked && (event.key === "Enter" || event.key === " ")) {
-          if (isSelectionMode) onSelect();
-          else setEditingExpense(expense);
-        }
-      }}
-    >
-      <div className="z-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between relative">
-        {/* Selection Indicator */}
-        <div className={cn(
-          "absolute -left-6 top-1/2 -translate-y-1/2 transition-all duration-300",
-          isSelectionMode ? "left-0 opacity-100" : "-left-6 opacity-0"
-        )}>
-          <div className={cn(
-            "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
-            isSelected ? "bg-blue-600 border-blue-600 text-white" : "border-slate-300 dark:border-slate-600"
-          )}>
-            {isSelected && <CheckCircle2 size={12} />}
-          </div>
-        </div>
-
-        <div className={cn("min-w-0 flex-1 transition-all duration-300", isSelectionMode && "pl-8")}>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-bold text-slate-800 dark:text-slate-100">
-              {expense.category}
-            </span>
-            {isLocked && (
-              <span className="rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                Locked
-              </span>
+function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete }: any) {
+    const acc = accounts.find((a: any) => a.id === expense.accountId);
+    return (
+        <div 
+            onClick={onSelect}
+            onContextMenu={e => { e.preventDefault(); onSelect(); }}
+            className={cn(
+                "group flex items-center justify-between p-4 transition-all cursor-pointer",
+                isSelected ? "bg-blue-50/50 dark:bg-blue-500/10 border-l-4 border-blue-500" : "hover:bg-slate-50 dark:hover:bg-slate-950/40"
             )}
-          </div>
-
-          {account && (
-            <span className="mt-2 inline-flex max-w-full items-center rounded-lg border border-blue-100 bg-blue-50 px-2 py-1 text-[10px] font-bold leading-tight text-blue-600 dark:border-blue-900/60 dark:bg-blue-950/50 dark:text-blue-300">
-              {account.name}
-            </span>
-          )}
-
-          {expense.note && (
-            <div className="mt-2 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
-              {expense.note}
+        >
+            <div className="flex items-center gap-4 min-w-0">
+                <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg text-[10px] font-black uppercase", isSelected ? "bg-blue-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-blue-600 group-hover:text-white")}>
+                    {expense.category[0]}
+                </div>
+                <div className="min-w-0">
+                    <div className="font-bold text-slate-800 dark:text-slate-100 truncate">{expense.category}</div>
+                    <div className="text-[10px] text-slate-400 flex items-center gap-1.5 font-medium mt-0.5">
+                        <span className="text-blue-500 font-black tracking-tighter uppercase">{expense.date}</span>
+                        {acc && <span className="opacity-50">• {acc.name}</span>}
+                        {expense.note && <span className="opacity-50">• {expense.note}</span>}
+                    </div>
+                </div>
             </div>
-          )}
-
-          <span className="mt-2 block text-[10px] font-semibold text-slate-400 dark:text-slate-500">
-            {expense.date}
-            {expense.time ? ` • ${expense.time}` : ""}
-          </span>
+            <div className="text-right">
+                <div className="text-sm font-black text-slate-900 dark:text-slate-100">-₹{expense.amount.toLocaleString()}</div>
+                <div className="hidden group-hover:flex items-center gap-2 mt-1">
+                    <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="text-[9px] font-black uppercase text-blue-500 hover:underline">Edit</button>
+                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-[9px] font-black uppercase text-rose-500 hover:underline">Del</button>
+                </div>
+            </div>
         </div>
-
-        <div className="flex items-center justify-between gap-3 sm:w-auto sm:flex-col sm:items-end sm:justify-center">
-          <div className="whitespace-nowrap text-base font-bold text-slate-900 dark:text-slate-50">
-            -₹{expense.amount}
-          </div>
-
-          <div className={cn("flex shrink-0 items-center gap-2", (isLocked || isSelectionMode) && "hidden")}>
-            <button
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-900"
-              onClick={(event) => {
-                event.stopPropagation();
-                if (!isLocked) {
-                  setEditingExpense(expense);
-                }
-              }}
-            >
-              Edit
-            </button>
-            <button
-              className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-500 transition-colors hover:border-red-300 hover:bg-red-100 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300 dark:hover:border-red-800 dark:hover:bg-red-950/50"
-              onClick={(event) => {
-                event.stopPropagation();
-                if (!isLocked) {
-                  setDeleteTarget(expense.id ?? null);
-                }
-              }}
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
+    );
 }

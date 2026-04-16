@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, writeBatch } from "firebase/firestore";
 import { Brush, Database, Folder, LayoutGrid, SlidersHorizontal, Trash2, User, WalletCards } from "lucide-react";
 import { toast } from "react-toastify";
@@ -36,7 +36,7 @@ const TIMEZONES = [
 
 type SectionId = "profile" | "general" | "personalize" | "manage" | "accounts" | "data";
 
-type BottomTabId = "home" | "expenses" | "split" | "subscriptions" | "analytics" | "settings";
+type BottomTabId = "home" | "expenses" | "split" | "subscriptions" | "analytics" | "analysis" | "settings";
 type WidgetId = "subscriptions" | "focus" | "gamification" | "topCategories";
 
 const BOTTOM_TAB_DEFS: ReadonlyArray<{ id: BottomTabId; label: string; desc: string }> = [
@@ -45,6 +45,7 @@ const BOTTOM_TAB_DEFS: ReadonlyArray<{ id: BottomTabId; label: string; desc: str
   { id: "split", label: "Split", desc: "Shared costs" },
   { id: "subscriptions", label: "Subscriptions", desc: "Recurring payments" },
   { id: "analytics", label: "Analytics", desc: "Charts & insights" },
+  { id: "analysis", label: "Analysis", desc: "Advanced search" },
   { id: "settings", label: "Settings", desc: "Configuration" },
 ];
 
@@ -102,6 +103,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (next: bool
 }
 
 export default function SettingsPage() {
+  const navigate = useNavigate();
   const {
     settings,
     setLockPastMonths,
@@ -685,15 +687,15 @@ export default function SettingsPage() {
 
                 <div className="space-y-2 border-t border-slate-100 pt-4 dark:border-slate-800">
                   <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500 ml-1">Import</div>
-                  <Link
-                    to="/import"
-                    className="flex items-center justify-between rounded-2xl border border-dashed border-blue-200 bg-blue-50/70 px-4 py-3 text-sm font-black text-blue-700 hover:bg-blue-100/70 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-300"
+                  <button
+                    onClick={() => navigate("/expenses", { state: { tab: "data" } })}
+                    className="flex w-full items-center justify-between rounded-2xl border border-dashed border-blue-200 bg-blue-50/70 px-4 py-3 text-sm font-black text-blue-700 hover:bg-blue-100/70 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-300"
                   >
                     <span className="inline-flex items-center gap-2">
                       <Folder className="h-4 w-4" /> Import expenses from CSV
                     </span>
                     <span className="text-[10px] uppercase tracking-[0.24em]">Open</span>
-                  </Link>
+                  </button>
                 </div>
 
                 <div className="space-y-2 border-t border-slate-100 pt-4 dark:border-slate-800">

@@ -137,13 +137,13 @@ export default function ExpenseForm({
                 amount={Number(amount)} 
                 note={note} 
                 category={category}
-                onSplit={(data) => navigate("/split/create", { state: data })}
+                onSplit={(data) => navigate("/split", { state: { tab: "management", ...data } })}
                 closeToast={closeToast}
               />
             ),
             { 
-              autoClose: 10000, // Show for longer
-              icon: false, // Custom component handles icon
+              autoClose: 10000,
+              icon: false,
               className: "p-0 overflow-hidden rounded-2xl border border-blue-100 dark:border-blue-900 shadow-xl"
             }
           );

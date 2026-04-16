@@ -19,6 +19,7 @@ type Settings = {
     split: boolean;
     subscriptions: boolean;
     analytics: boolean;
+    analysis: boolean;
     settings: boolean;
   };
   dashboardWidgets: {
@@ -46,6 +47,7 @@ export const DEFAULTS: Settings = {
     split: true,
     subscriptions: true,
     analytics: true,
+    analysis: true,
     settings: true,
   },
   dashboardWidgets: {

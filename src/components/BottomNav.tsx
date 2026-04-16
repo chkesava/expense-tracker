@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useUserRole } from "../hooks/useUserRole";
 import useSettings from "../hooks/useSettings";
 import { useModals } from "../hooks/useModals";
-import { BarChart3, Home, Plus, Settings, Wallet, Users, RefreshCw } from "lucide-react";
+import { BarChart3, Home, Plus, Settings, Wallet, Users, RefreshCw, Search } from "lucide-react";
 
 export default function BottomNav() {
   const location = useLocation();
@@ -19,6 +19,7 @@ export default function BottomNav() {
     { id: "split", path: "/split", label: "Split", icon: Users },
     { id: "subscriptions", path: "/subscriptions", label: "Subs", icon: RefreshCw },
     { id: "analytics", path: "/analytics", label: "Stats", icon: BarChart3 },
+    { id: "analysis", path: "/analysis", label: "Search", icon: Search },
     { id: "settings", path: "/settings", label: "Settings", icon: Settings },
   ];
 

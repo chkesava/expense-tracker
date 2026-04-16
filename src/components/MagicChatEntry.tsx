@@ -153,7 +153,7 @@ export default function MagicChatEntry({ onSuccess }: MagicChatEntryProps) {
               amount={amount} 
               note={parsed.note} 
               category={parsed.category}
-              onSplit={(data) => navigate("/split/create", { state: data })}
+              onSplit={(data) => navigate("/split", { state: { tab: "management", ...data } })}
               closeToast={closeToast}
             />
           ),

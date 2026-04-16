@@ -13,6 +13,7 @@ import {
   Shield,
   Wallet,
   Users,
+  Search,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import useOnline from "../hooks/useOnline";
@@ -52,6 +53,7 @@ export default function Header() {
     { path: "/split", label: "Split", icon: Users },
     { path: "/subscriptions", label: "Subs", icon: RefreshCw },
     { path: "/analytics", label: "Analytics", icon: BarChart3 },
+    { path: "/analysis", label: "Analysis", icon: Search },
     ...(isAdmin ? [{ path: "/admin", label: "Admin", icon: Shield }] : []),
   ];
 
