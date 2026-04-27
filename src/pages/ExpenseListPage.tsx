@@ -509,7 +509,7 @@ function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete 
             </div>
             <div className="text-right">
                 <div className="text-sm font-black text-slate-900 dark:text-slate-100">-₹{expense.amount.toLocaleString()}</div>
-                <div className="hidden group-hover:flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-2 mt-1">
                     <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="text-[9px] font-black uppercase text-blue-500 hover:underline">Edit</button>
                     <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-[9px] font-black uppercase text-rose-500 hover:underline">Del</button>
                 </div>
