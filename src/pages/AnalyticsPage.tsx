@@ -71,9 +71,9 @@ export default function AnalyticsPage() {
             className="space-y-6"
         >
             {activeTab === "overview" && (
-                <section className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
-                    <h2 className="mb-6 flex items-center gap-2 text-sm font-black uppercase tracking-widest text-slate-400">
-                        Performance Summary
+                <section className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 p-8 shadow-sm transition-all">
+                    <h2 className="mb-8 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">
+                        Operational Intelligence
                     </h2>
                     <div className="space-y-6">
                         {loading ? (
@@ -96,20 +96,21 @@ export default function AnalyticsPage() {
 
             {activeTab === "distribution" && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <section className="rounded-[2.5rem] border border-white/60 bg-white/80 p-8 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
-                        <h2 className="mb-8 text-sm font-black uppercase tracking-widest text-slate-400 text-center">
-                            Category Breakdown
+                    <section className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 p-10 shadow-sm transition-all">
+                        <h2 className="mb-10 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 text-center">
+                            Category Distribution
                         </h2>
-                        <div className="space-y-8">
+                        <div className="space-y-10">
                             <div className="flex h-64 items-center justify-center">
                                 <CategoryPie data={groupByCategory(filteredExpenses)} />
                             </div>
+                            <div className="h-px bg-slate-100 dark:bg-white/5" />
                             <CategoryBars expenses={filteredExpenses} />
                         </div>
                     </section>
 
-                    <section className="rounded-[2.5rem] border border-white/60 bg-white/80 p-8 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
-                        <h2 className="mb-8 text-sm font-black uppercase tracking-widest text-slate-400 text-center">
+                    <section className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 p-10 shadow-sm transition-all">
+                        <h2 className="mb-10 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 text-center">
                             Account Allocation
                         </h2>
                         <AccountSpendingBars expenses={filteredExpenses} accounts={accounts} />
@@ -120,24 +121,24 @@ export default function AnalyticsPage() {
             {activeTab === "trends" && (
                 <div className="space-y-6">
                     <div className="grid gap-6 md:grid-cols-2">
-                        <section className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
-                            <h3 className="mb-6 text-xs font-black uppercase tracking-widest text-slate-400">
-                                Monthly Spend
+                        <section className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 p-8 shadow-sm transition-all">
+                            <h3 className="mb-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                Capital Outflow
                             </h3>
                             <MonthlyBar data={groupByMonth(expenses)} />
                         </section>
 
-                        <section className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
-                            <h3 className="mb-6 text-xs font-black uppercase tracking-widest text-slate-400">
-                                Velocity Trend
+                        <section className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 p-8 shadow-sm transition-all">
+                            <h3 className="mb-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                Velocity Analysis
                             </h3>
                             <TrendLine data={groupByMonth(expenses)} />
                         </section>
                     </div>
 
-                    <section className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
-                        <h3 className="mb-6 text-xs font-black uppercase tracking-widest text-slate-400">
-                            Daily Activity Pulse
+                    <section className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 p-8 shadow-sm transition-all">
+                        <h3 className="mb-8 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">
+                            Daily Pulse Metrics
                         </h3>
                         <div className="h-64">
                             {loading ? <Skeleton className="w-full h-full" /> : <DailyTrend data={groupByDay(filteredExpenses)} />}

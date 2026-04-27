@@ -99,8 +99,8 @@ export default function Header() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className={cn(
-          "fixed top-0 left-0 w-full z-50 px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-3",
-          "bg-white/75 dark:bg-slate-950/75 backdrop-blur-2xl border-b border-slate-200/60 dark:border-slate-800 shadow-[0_8px_30px_rgb(15,23,42,0.06)] transition-all duration-300"
+          "fixed top-0 left-0 w-full z-50 px-4 md:px-8 py-3 flex items-center justify-between gap-4",
+          "bg-white/70 dark:bg-slate-950/40 backdrop-blur-3xl border-b border-slate-100 dark:border-white/5 shadow-[0_2px_15px_rgb(0,0,0,0.02)] transition-all duration-300"
         )}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
@@ -108,13 +108,13 @@ export default function Header() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate("/dashboard")}
-            className="inline-flex min-w-0 items-center gap-2 rounded-full bg-white/75 px-2.5 py-1.5 shadow-sm ring-1 ring-slate-200/70 backdrop-blur dark:bg-slate-900/70 dark:ring-slate-800"
+            className="inline-flex items-center gap-2.5"
           >
-            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600/10 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300">
-              <Activity size={15} />
-            </span>
-            <span className="truncate text-sm sm:text-base font-black tracking-tight text-slate-900 dark:text-white">
-              ExpenseTracker
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xl shadow-slate-900/10">
+              <Activity size={18} />
+            </div>
+            <span className="text-xl font-black tracking-tighter text-slate-900 dark:text-white">
+              Antigravity
             </span>
           </motion.button>
 
@@ -142,7 +142,7 @@ export default function Header() {
           </div>
         </div>
 
-        <nav className="hidden md:flex items-center gap-1 bg-slate-100/70 dark:bg-slate-900/70 p-1 rounded-full border border-slate-200/70 dark:border-slate-800 backdrop-blur-md">
+        <nav className="hidden lg:flex items-center gap-1 bg-slate-50 dark:bg-white/5 p-1 rounded-xl border border-slate-100 dark:border-white/5">
           {desktopLinks.map((link) => {
             const isActive = location.pathname === link.path;
             const Icon = link.icon;
@@ -158,7 +158,7 @@ export default function Header() {
                 {isActive && (
                   <motion.div
                     layoutId="header-nav-pill"
-                    className="absolute inset-0 bg-white dark:bg-slate-950 shadow-sm rounded-full border border-slate-100 dark:border-slate-800"
+                    className="absolute inset-0 bg-white dark:bg-white/10 shadow-sm rounded-lg border border-slate-100 dark:border-white/10"
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
                 )}
@@ -208,10 +208,10 @@ export default function Header() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setOpen((value) => !value)}
-            className="hidden md:inline-flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 p-2.5 text-slate-600 dark:text-slate-200 shadow-sm hover:shadow-md transition-all"
+            className="hidden md:inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-2 text-slate-600 dark:text-slate-200 shadow-sm hover:shadow-md transition-all"
             aria-label="Open account menu"
           >
-            <Settings size={16} />
+            <Settings size={18} />
           </motion.button>
 
           <motion.button

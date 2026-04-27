@@ -267,26 +267,30 @@ export default function ExpenseListPage() {
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
                 <div className="space-y-6">
                   {/* Summary & Filters */}
-                  <div className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Monthly Pulse</h3>
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => setSortField("date")} className={cn("text-[10px] font-bold px-2 py-1 rounded-lg", sortField === "date" ? "bg-slate-900 text-white" : "bg-slate-100 dark:bg-slate-800")}>Date</button>
-                            <button onClick={() => setSortField("amount")} className={cn("text-[10px] font-bold px-2 py-1 rounded-lg", sortField === "amount" ? "bg-slate-900 text-white" : "bg-slate-100 dark:bg-slate-800")}>Amount</button>
+                  <div className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 p-8 shadow-sm transition-all duration-300">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Monthly Spending Pulse</h3>
+                        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/5">
+                            <button onClick={() => setSortField("date")} className={cn("text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-md transition-all", sortField === "date" ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm" : "text-slate-400 hover:text-slate-600")}>Date</button>
+                            <button onClick={() => setSortField("amount")} className={cn("text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-md transition-all", sortField === "amount" ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm" : "text-slate-400 hover:text-slate-600")}>Amount</button>
                         </div>
                     </div>
-                    <div className="text-3xl font-black text-slate-900 dark:text-white">₹{historySummary.total.toLocaleString()}</div>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                        {Object.entries(historySummary.byCategory).slice(0, 5).map(([c, a]) => (
-                            <div key={c} className="text-[10px] font-black uppercase bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg text-slate-500">
-                                {c}: ₹{a.toLocaleString()}
+                    <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">₹{historySummary.total.toLocaleString()}</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">gross total</span>
+                    </div>
+                    <div className="mt-8 flex flex-wrap gap-2">
+                        {Object.entries(historySummary.byCategory).slice(0, 4).map(([c, a]) => (
+                            <div key={c} className="flex items-center gap-2 bg-slate-50 dark:bg-white/5 px-3 py-2 rounded-xl border border-slate-100 dark:border-white/5">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{c}</span>
+                                <span className="text-xs font-bold text-slate-900 dark:text-white">₹{a.toLocaleString()}</span>
                             </div>
                         ))}
                     </div>
                   </div>
 
                   {/* Expense Items */}
-                  <div className="min-h-[400px] rounded-3xl border border-white/40 bg-white/50 backdrop-blur-md overflow-hidden">
+                  <div className="min-h-[400px] rounded-2xl border border-slate-200 dark:border-white/5 bg-white/50 dark:bg-slate-900/40 backdrop-blur-md overflow-hidden">
                     {loading ? <Skeleton className="h-full w-full" /> : (
                         <div className="divide-y divide-slate-100 dark:divide-slate-800">
                            {[...today, ...yesterday, ...earlier].length === 0 ? (
@@ -311,7 +315,8 @@ export default function ExpenseListPage() {
 
                 {/* Right Sidebar: Filters */}
                 <aside className="space-y-4">
-                    <div className="rounded-3xl border border-white/60 bg-white/80 p-5 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
+                    <div className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 p-6 shadow-sm backdrop-blur-xl">
+                        <div className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-6">Filter Records</div>
                         <div className="relative mb-4">
                             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input 
@@ -488,30 +493,38 @@ function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete 
     return (
         <div 
             onClick={onSelect}
-            onContextMenu={e => { e.preventDefault(); onSelect(); }}
             className={cn(
-                "group flex items-center justify-between p-4 transition-all cursor-pointer",
-                isSelected ? "bg-blue-50/50 dark:bg-blue-500/10 border-l-4 border-blue-500" : "hover:bg-slate-50 dark:hover:bg-slate-950/40"
+                "group flex items-center justify-between p-5 transition-all cursor-pointer border-b border-slate-50 dark:border-white/5 last:border-0",
+                isSelected ? "bg-blue-50/50 dark:bg-blue-500/5 ring-1 ring-inset ring-blue-500/20 shadow-inner" : "hover:bg-slate-50/80 dark:hover:bg-white/5"
             )}
         >
-            <div className="flex items-center gap-4 min-w-0">
-                <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg text-[10px] font-black uppercase", isSelected ? "bg-blue-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-blue-600 group-hover:text-white")}>
+            <div className="flex items-center gap-5 min-w-0">
+                <div className={cn(
+                    "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xs font-black uppercase transition-all duration-300", 
+                    isSelected ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "bg-slate-100 dark:bg-white/5 text-slate-500 group-hover:scale-105"
+                )}>
                     {expense.category[0]}
                 </div>
                 <div className="min-w-0">
-                    <div className="font-bold text-slate-800 dark:text-slate-100 truncate">{expense.category}</div>
-                    <div className="text-[10px] text-slate-400 flex items-center gap-1.5 font-medium mt-0.5">
-                        <span className="text-blue-500 font-black tracking-tighter uppercase">{expense.date}</span>
-                        {acc && <span className="opacity-50">• {acc.name}</span>}
-                        {expense.note && <span className="opacity-50">• {expense.note}</span>}
+                    <div className="font-bold text-[15px] text-slate-900 dark:text-white mb-0.5 tracking-tight group-hover:text-blue-600 transition-colors">{expense.category}</div>
+                    <div className="text-[11px] text-slate-400 flex items-center gap-2 font-medium">
+                        <span className="text-slate-900 dark:text-slate-300 font-bold uppercase tracking-tight">{expense.date}</span>
+                        <span className="opacity-30">•</span>
+                        {acc && <span className="truncate">{acc.name}</span>}
+                        {expense.note && (
+                            <>
+                                <span className="opacity-30">•</span>
+                                <span className="truncate italic font-normal text-slate-400/80">{expense.note}</span>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
-            <div className="text-right">
-                <div className="text-sm font-black text-slate-900 dark:text-slate-100">-₹{expense.amount.toLocaleString()}</div>
-                <div className="flex items-center gap-2 mt-1">
-                    <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="text-[9px] font-black uppercase text-blue-500 hover:underline">Edit</button>
-                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-[9px] font-black uppercase text-rose-500 hover:underline">Del</button>
+            <div className="text-right flex flex-col items-end gap-1.5 pl-4">
+                <div className="text-lg font-black text-slate-900 dark:text-white tracking-tighter">₹{expense.amount.toLocaleString()}</div>
+                <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all translate-y-1 group-hover:translate-y-0">
+                    <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700">Edit</button>
+                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-rose-600">Delete</button>
                 </div>
             </div>
         </div>

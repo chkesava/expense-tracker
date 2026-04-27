@@ -17,6 +17,7 @@ import {
   Repeat
 } from "lucide-react";
 import { useAccounts } from "../hooks/useAccounts";
+import { CATEGORIES } from "../types/expense";
 import type { Subscription } from "../types/subscription";
 import Modal from "../components/common/Modal";
 import { Skeleton } from "../components/common/Skeleton";
@@ -33,8 +34,7 @@ export default function SubscriptionsPage() {
   const [activeTab, setActiveTab] = useState<SubTab>("recurring");
   const [isAddingSub, setIsAddingSub] = useState(false);
 
-  // Form State
-  const [formData, setFormData] = useState({
+  const INITIAL_FORM_DATA = {
     name: "",
     amount: "",
     category: "Subscriptions",
@@ -43,7 +43,9 @@ export default function SubscriptionsPage() {
     type: "subscription" as "subscription" | "emi",
     endMonth: (new Date().getMonth() + 1).toString(),
     endYear: new Date().getFullYear().toString()
-  });
+  };
+
+  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
   const [editingSub, setEditingSub] = useState<Subscription | null>(null);
 
   const stats = useMemo(() => {
@@ -105,7 +107,15 @@ export default function SubscriptionsPage() {
         onTabChange={setActiveTab}
         rightElement={
             <button
-                onClick={() => activeTab === "recurring" ? setIsAddingSub(true) : navigate("/travel/new")}
+                onClick={() => {
+                  if (activeTab === "recurring") {
+                    setEditingSub(null);
+                    setFormData(INITIAL_FORM_DATA);
+                    setIsAddingSub(true);
+                  } else {
+                    navigate("/travel/new");
+                  }
+                }}
                 className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
             >
                 <Plus size={18} />
@@ -127,7 +137,14 @@ export default function SubscriptionsPage() {
                             </div>
                         ) : (
                             subscriptions.map(sub => (
-                                <SubscriptionRow key={sub.id} sub={sub} accounts={accounts} onEdit={handleEdit} onToggle={() => updateSubscription(sub.id!, { isActive: !sub.isActive })} onDelete={() => deleteSubscription(sub.id!)} />
+                                <SubscriptionRow 
+                                  key={sub.id} 
+                                  sub={sub} 
+                                  accounts={accounts} 
+                                  onEdit={() => handleEdit(sub)} 
+                                  onToggle={() => updateSubscription(sub.id!, { isActive: !sub.isActive })} 
+                                  onDelete={() => deleteSubscription(sub.id!)} 
+                                />
                             ))
                         )
                     )}
@@ -144,15 +161,20 @@ export default function SubscriptionsPage() {
                             </div>
                         ) : (
                             trips.map(trip => (
-                                <div key={trip.id} onClick={() => navigate(`/travel/${trip.id}`)} className="bg-white/80 dark:bg-slate-900/80 p-6 rounded-[2.5rem] border border-white/20 shadow-sm cursor-pointer hover:scale-[1.02] transition-all group">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <h3 className="text-xl font-black">{trip.destination}</h3>
+                                <div key={trip.id} onClick={() => navigate(`/travel/${trip.id}`)} className="bg-white dark:bg-slate-900 shadow-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-all group">
+                                    <div className="flex justify-between items-start mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                                                <Plane size={18} />
+                                            </div>
+                                            <h3 className="text-xl font-bold tracking-tight">{trip.destination}</h3>
+                                        </div>
                                         <div className="text-right">
-                                            <div className="text-lg font-black">₹{trip.spentAmount.toLocaleString()}</div>
-                                            <div className="text-[10px] text-slate-400 font-bold uppercase">Budget: ₹{trip.totalBudget.toLocaleString()}</div>
+                                            <div className="text-lg font-black tracking-tighter">₹{trip.spentAmount.toLocaleString()}</div>
+                                            <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Budget: ₹{trip.totalBudget.toLocaleString()}</div>
                                         </div>
                                     </div>
-                                    <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <div className="w-full h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
                                         <div className={cn("h-full transition-all duration-1000", (trip.spentAmount/trip.totalBudget) > 1 ? "bg-rose-500" : "bg-blue-600")} style={{ width: `${Math.min((trip.spentAmount/trip.totalBudget)*100, 100)}%` }} />
                                     </div>
                                 </div>
@@ -164,17 +186,17 @@ export default function SubscriptionsPage() {
 
             {activeTab === "stats" && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-slate-900 text-white p-6 rounded-[2.5rem] border border-white/10 shadow-xl">
-                        <div className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-2">Monthly Burden</div>
-                        <div className="text-3xl font-black">₹{stats.totalMonthly.toLocaleString()}</div>
+                    <div className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 p-8 rounded-2xl border border-white/10 shadow-2xl">
+                        <div className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-2">Monthly Commitment</div>
+                        <div className="text-4xl font-black tracking-tighter">₹{stats.totalMonthly.toLocaleString()}</div>
                     </div>
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-white/20">
-                        <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Active Subs</div>
-                        <div className="text-3xl font-black">{stats.subCount}</div>
+                    <div className="bg-white dark:bg-slate-900/40 p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm">
+                        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Total Subscriptions</div>
+                        <div className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white">{stats.subCount}</div>
                     </div>
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-white/20">
-                        <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Active EMIs</div>
-                        <div className="text-3xl font-black">{stats.emiCount}</div>
+                    <div className="bg-white dark:bg-slate-900/40 p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm">
+                        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Active Installments</div>
+                        <div className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white">{stats.emiCount}</div>
                     </div>
                 </div>
             )}
@@ -184,18 +206,71 @@ export default function SubscriptionsPage() {
 
       <Modal isOpen={isAddingSub} onClose={() => { setIsAddingSub(false); setEditingSub(null); }} title={editingSub ? "Modify Bill" : "Launch Bill"}>
           <form onSubmit={handleSubSubmit} className="space-y-4">
-              <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Service Name" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold" />
-              <div className="grid grid-cols-2 gap-4">
-                  <input type="number" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} placeholder="Amount" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold" />
-                  <select value={formData.day} onChange={e => setFormData({...formData, day: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold">
-                    {[...Array(31)].map((_, i) => <option key={i+1} value={i+1}>Day {i+1}</option>)}
-                  </select>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Service Name</label>
+                <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. Netflix, Rent" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold" required />
               </div>
-              <select value={formData.accountId} onChange={e => setFormData({...formData, accountId: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold">
-                  <option value="">No Auto-Account</option>
-                  {accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
-              </select>
-              <button type="submit" className="w-full py-4 bg-blue-600 text-white font-black rounded-3xl shadow-lg">Commit Expense</button>
+              
+              <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Amount</label>
+                    <input type="number" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} placeholder="0.00" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold" required />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Billing Day</label>
+                    <select value={formData.day} onChange={e => setFormData({...formData, day: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold">
+                      {[...Array(31)].map((_, i) => <option key={i+1} value={i+1}>Day {i+1}</option>)}
+                    </select>
+                  </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Category</label>
+                    <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold">
+                      {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Type</label>
+                    <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value as "subscription" | "emi"})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold">
+                      <option value="subscription">Subscription</option>
+                      <option value="emi">EMI / Loan</option>
+                    </select>
+                  </div>
+              </div>
+
+              {formData.type === "emi" && (
+                <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">End Month</label>
+                    <select value={formData.endMonth} onChange={e => setFormData({...formData, endMonth: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold">
+                      {[...Array(12)].map((_, i) => <option key={i+1} value={i+1}>{new Date(2000, i).toLocaleString('default', { month: 'long' })}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">End Year</label>
+                    <select value={formData.endYear} onChange={e => setFormData({...formData, endYear: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold">
+                      {[...Array(10)].map((_, i) => {
+                        const year = new Date().getFullYear() + i;
+                        return <option key={year} value={year}>{year}</option>;
+                      })}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Auto-Deduct From</label>
+                <select value={formData.accountId} onChange={e => setFormData({...formData, accountId: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold">
+                    <option value="">Manual / No Account</option>
+                    {accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
+                </select>
+              </div>
+
+              <button type="submit" className="w-full py-4 mt-2 bg-blue-600 text-white font-black rounded-3xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all">
+                {editingSub ? "Update Subscription" : "Create Subscription"}
+              </button>
           </form>
       </Modal>
     </motion.main>
@@ -204,24 +279,33 @@ export default function SubscriptionsPage() {
 
 function SubscriptionRow({ sub, accounts, onEdit, onToggle, onDelete }: any) {
     return (
-        <div className={cn("bg-white/80 dark:bg-slate-900/80 p-5 rounded-[2rem] border border-white/20 shadow-sm transition-all", !sub.isActive && "opacity-50 grayscale")}>
+        <div className={cn(
+            "bg-white dark:bg-slate-900/40 p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm transition-all", 
+            !sub.isActive && "opacity-40 grayscale"
+        )}>
             <div className="flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center font-black text-blue-600 shadow-sm">{sub.name[0].toUpperCase()}</div>
+                <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 bg-slate-900 dark:bg-white rounded-xl flex items-center justify-center font-black text-white dark:text-slate-900 shadow-xl shadow-slate-900/10">
+                        {sub.name[0].toUpperCase()}
+                    </div>
                     <div>
-                        <h4 className="font-black text-slate-800 dark:text-white flex items-center gap-2">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-1">
+                            {sub.type === "emi" ? "Installment / Loan" : "Monthly Service"}
+                        </div>
+                        <h4 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
                             {sub.name}
-                            <span className="text-[8px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-400 tracking-widest uppercase">{sub.type || "sub"}</span>
                         </h4>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Day {sub.dayOfMonth} • {accounts.find((a: any) => a.id === sub.accountId)?.name || "Manual"}</p>
+                        <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-tight mt-0.5">
+                            Billed Day {sub.dayOfMonth} • {accounts.find((a: any) => a.id === sub.accountId)?.name || "External Account"}
+                        </p>
                     </div>
                 </div>
-                <div className="text-right">
-                    <div className="text-xl font-black">₹{sub.amount.toLocaleString()}</div>
-                    <div className="flex gap-2 mt-2">
-                        <button onClick={onToggle} className="text-[9px] font-black uppercase text-amber-600">{sub.isActive ? "Pause" : "Resume"}</button>
-                        <button onClick={onEdit} className="text-[9px] font-black uppercase text-blue-500">Edit</button>
-                        <button onClick={() => window.confirm("Delete?") && onDelete()} className="text-[9px] font-black uppercase text-rose-500">Del</button>
+                <div className="text-right flex flex-col items-end gap-2">
+                    <div className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white">₹{sub.amount.toLocaleString()}</div>
+                    <div className="flex gap-4">
+                        <button onClick={onToggle} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">{sub.isActive ? "Pause" : "Resume"}</button>
+                        <button onClick={onEdit} className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700 transition-colors">Modify</button>
+                        <button onClick={() => window.confirm("Archive this subscription?") && onDelete()} className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-rose-600 transition-colors">Remove</button>
                     </div>
                 </div>
             </div>

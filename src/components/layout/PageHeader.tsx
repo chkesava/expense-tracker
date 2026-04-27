@@ -30,18 +30,18 @@ export default function PageHeader({
   return (
     <div className="mb-6 space-y-4">
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {icon && (
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/80 text-blue-600 shadow-sm backdrop-blur-xl dark:bg-slate-900/80 dark:text-blue-400">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white dark:bg-slate-900/40 text-slate-900 dark:text-white border border-slate-200 dark:border-white/5 shadow-2xl shadow-slate-900/5">
               {icon}
             </div>
           )}
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
               {title}
             </h1>
             {subtitle && (
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1">
                 {subtitle}
               </p>
             )}
@@ -55,7 +55,7 @@ export default function PageHeader({
       </div>
 
       {tabs && tabs.length > 0 && (
-        <div className="flex gap-2 p-1 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl rounded-2xl border border-white/60 dark:border-slate-800/60 overflow-x-auto scrollbar-hide no-scrollbar">
+        <div className="flex gap-1 p-1 bg-slate-100/50 dark:bg-white/5 backdrop-blur-xl rounded-xl border border-slate-200/50 dark:border-white/5 overflow-x-auto scrollbar-hide no-scrollbar">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -63,14 +63,23 @@ export default function PageHeader({
                 key={tab.id}
                 onClick={() => onTabChange?.(tab.id)}
                 className={cn(
-                  "flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-black transition-all",
+                  "relative flex items-center gap-2 whitespace-nowrap rounded-lg px-6 py-2.5 text-xs font-black uppercase tracking-widest transition-all",
                   isActive
-                    ? "bg-slate-900 text-white shadow-lg dark:bg-white dark:text-slate-900"
-                    : "text-slate-500 hover:bg-white/50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-200"
+                    ? "text-slate-900 dark:text-white"
+                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                 )}
               >
-                {tab.icon && <span>{tab.icon}</span>}
-                {tab.label}
+                {isActive && (
+                  <motion.div
+                    layoutId="active-tab-pill"
+                    className="absolute inset-0 bg-white dark:bg-slate-900 shadow-sm rounded-lg border border-slate-200/50 dark:border-white/10"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+                <span className="relative z-10 flex items-center gap-2">
+                  {tab.icon && <span>{tab.icon}</span>}
+                  {tab.label}
+                </span>
               </button>
             );
           })}

@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { motion, type Variants, Reorder, AnimatePresence } from "framer-motion";
-import { GripVertical, LayoutPanelLeft, Check, Sparkles, ArrowRight, Zap, BarChart3, Target, History as HistoryIcon, LayoutGrid, Search, ChevronRight } from "lucide-react";
+import { GripVertical, LayoutPanelLeft, Check, Sparkles, ArrowRight, Zap, BarChart3, Target, History as HistoryIcon, LayoutGrid, Search, ChevronRight, Repeat } from "lucide-react";
 import { toast } from "react-toastify";
 import GamificationCard from "../components/GamificationCard";
 import FocusWidget from "../components/focus/FocusWidget";
@@ -33,8 +33,8 @@ const itemVariants: Variants = {
   visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 15 } },
 };
 
-const surfaceClass = "bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/60 dark:border-slate-800 rounded-3xl shadow-sm transition-colors";
-const softSurfaceClass = "bg-slate-50/70 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800 transition-colors";
+const surfaceClass = "bg-white/70 dark:bg-slate-900/40 backdrop-blur-3xl border border-white/60 dark:border-white/5 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300";
+const softSurfaceClass = "bg-slate-50/50 dark:bg-white/5 border border-slate-100/50 dark:border-white/5 transition-colors";
 
 export default function Dashboard() {
   const { expenses, loading } = useExpenses();
@@ -171,45 +171,48 @@ export default function Dashboard() {
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => navigate("/analysis")}
-        className="group relative cursor-pointer overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-blue-600 to-indigo-700 p-1 shadow-xl shadow-blue-500/20"
+        className="group relative cursor-pointer overflow-hidden rounded-2xl bg-slate-900 dark:bg-white p-[1px] shadow-2xl shadow-blue-500/10"
       >
-        <div className="relative z-10 flex h-full items-center justify-between rounded-[2.3rem] bg-white/10 p-6 backdrop-blur-xl dark:bg-slate-900/10 transition-colors group-hover:bg-white/5 dark:group-hover:bg-slate-950/5">
+        <div className="relative z-10 flex h-full items-center justify-between rounded-[inherit] bg-slate-900 p-6 dark:bg-white transition-colors">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 text-white shadow-inner backdrop-blur-md">
-              <Search size={24} />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 dark:bg-slate-900/10 text-white dark:text-slate-900 shadow-inner">
+              <Search size={22} />
             </div>
             <div>
-              <h3 className="text-lg font-extrabold text-white">Deep Analysis</h3>
-              <p className="text-xs font-bold text-blue-100/70 uppercase tracking-widest">Custom Ranges • Advanced Filters</p>
+              <h3 className="text-lg font-bold text-white dark:text-slate-900">Analysis Lab</h3>
+              <p className="text-[10px] font-black text-white/40 dark:text-slate-900/40 uppercase tracking-widest">Custom Insights • Filters</p>
             </div>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition-transform group-hover:translate-x-1">
-            <ChevronRight size={20} />
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 dark:bg-slate-900/10 text-white dark:text-slate-900 transition-transform group-hover:translate-x-1">
+            <ChevronRight size={18} />
           </div>
         </div>
-        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10 blur-3xl transition-transform group-hover:scale-150" />
       </motion.div>
     ),
     audit: auditableCount > 0 && (
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative group p-6 rounded-[2.5rem] bg-gradient-to-br from-indigo-600 to-violet-700 text-white shadow-xl shadow-indigo-500/20 overflow-hidden cursor-pointer active:scale-[0.98] transition-all h-full"
+        className="relative group p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white shadow-sm overflow-hidden cursor-pointer active:scale-[0.98] transition-all h-full"
         onClick={() => navigate("/expenses", { state: { tab: "audit" } })}
       >
-        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-500">
-          <Sparkles size={80} />
+        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:rotate-12 transition-transform duration-700">
+          <Sparkles size={100} className="text-blue-600 dark:text-blue-400" />
         </div>
         <div className="relative z-10 flex flex-col justify-between h-full">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-black uppercase tracking-widest">Needs Audit</span>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <Sparkles size={16} />
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">Cleanup Required</span>
             </div>
-            <h2 className="text-xl font-bold mb-1 leading-tight">Clean Up Expenses</h2>
-            <p className="text-indigo-100 text-[10px] font-medium opacity-80">{auditableCount} items to categorize</p>
+            <h2 className="text-xl font-bold mb-1 tracking-tight">Audit Needed</h2>
+            <p className="text-slate-500 text-[11px] font-medium opacity-80">{auditableCount} items missing categories or notes</p>
           </div>
-          <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md self-end">
-            <ArrowRight size={20} />
+          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mt-4">
+             <span className="text-xs font-bold uppercase tracking-widest">Start Session</span>
+             <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
       </motion.div>
@@ -217,17 +220,20 @@ export default function Dashboard() {
     focus: showFocus && <FocusWidget onOpenConfig={() => setShowFocusConfig(true)} />,
     gamification: showGamification && <GamificationCard />,
     subscriptions: showSubscriptions && (
-      <Link to="/subscriptions" className="block relative group">
-        <section className={`${surfaceClass} p-4 cursor-pointer flex items-center justify-between relative overflow-hidden h-full`}>
-          <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <div className="flex items-center gap-3 relative z-10">
-            <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-500/15 flex items-center justify-center text-indigo-600 dark:text-indigo-300">S</div>
+      <Link to="/subscriptions" className="block relative group h-full">
+        <section className={`${surfaceClass} p-5 cursor-pointer flex items-center justify-between relative overflow-hidden h-full border-slate-100 dark:border-white/5`}>
+          <div className="flex items-center gap-4 relative z-10">
+            <div className="w-12 h-12 rounded-xl bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center text-orange-600 dark:text-orange-400 shadow-inner">
+               <Repeat size={20} />
+            </div>
             <div>
-              <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Subscriptions</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{subscriptions.filter((s) => s.isActive).length} active</p>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100 text-base">Recurring Bills</h3>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">
+                {subscriptions.filter((s) => s.isActive).length} Active Subscriptions
+              </p>
             </div>
           </div>
-          <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-950/70 flex items-center justify-center text-slate-400 dark:text-slate-300 relative z-10">Go</div>
+          <ChevronRight size={18} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
         </section>
       </Link>
     ),
@@ -267,7 +273,7 @@ export default function Dashboard() {
       </section>
     ),
     overview: (
-      <div className="rounded-3xl border border-white/60 bg-white/80 p-8 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85 h-full">
+      <div className="rounded-2xl border border-white/60 bg-white/80 p-8 shadow-sm backdrop-blur-xl dark:border-white/5 dark:bg-slate-900/40 h-full">
         {loading ? (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -479,32 +485,32 @@ export default function Dashboard() {
       <motion.div variants={containerVariants} initial="hidden" animate="visible" className="min-h-[100dvh] max-w-7xl mx-auto px-4 md:px-8 pt-20 md:pt-24 pb-32">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-500/20">
-              <LayoutPanelLeft size={20} />
+            <div className="p-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl shadow-slate-900/10 dark:shadow-white/10">
+              <LayoutPanelLeft size={18} />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Manage your personal finances</p>
+              <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Dashboard</h1>
+              <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-0.5">Control Center • {user?.displayName?.split(' ')[0] || 'Member'}</p>
             </div>
           </div>
-          <button
+            <button
             onClick={() => setIsReordering(!isReordering)}
             className={cn(
-              "w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all active:scale-95",
-              isReordering 
-                ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" 
-                : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800"
+                "w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95",
+                isReordering 
+                ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl" 
+                : "bg-white/80 dark:bg-slate-900/40 text-slate-500 dark:text-slate-300 border border-slate-200 dark:border-white/5 backdrop-blur-md"
             )}
-          >
+            >
             {isReordering ? (
-              <>
-                <Check size={16} />
-                <span>Done</span>
-              </>
+                <>
+                <Check size={14} />
+                <span>Save Layout</span>
+                </>
             ) : (
-              <span>Rearrange</span>
+                <span>Edit View</span>
             )}
-          </button>
+            </button>
         </div>
 
         <div className="md:flex md:items-start md:gap-8 min-h-[600px]">
