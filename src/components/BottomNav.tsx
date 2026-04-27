@@ -43,28 +43,28 @@ export default function BottomNav() {
         key={link.id}
         to={link.path}
         className={({ isActive }) => cn(
-          "relative flex flex-col items-center justify-center py-2 px-1 flex-1 min-w-0 transition-all duration-300",
-          isActive ? "text-blue-600" : "text-slate-400 dark:text-slate-500"
+          "relative flex flex-col items-center justify-center py-2 px-1 flex-1 min-w-0 transition-all duration-500",
+          isActive ? "text-primary" : "text-slate-400 dark:text-slate-500"
         )}
       >
         {isActive && (
           <motion.div
             layoutId="bottom-nav-active-bg"
-            className="absolute inset-0 bg-blue-50/50 dark:bg-blue-500/10 rounded-2xl -z-10"
+            className="absolute inset-0 bg-primary/5 dark:bg-primary/10 rounded-[1.5rem] -z-10"
             initial={false}
-            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+            transition={{ type: "spring", bounce: 0.3, duration: 0.8 }}
           />
         )}
         <Icon 
-          size={20} 
+          size={22} 
           strokeWidth={isActive ? 2.5 : 2}
           className={cn(
-            "transition-all duration-300",
-            isActive ? "scale-110 drop-shadow-[0_0_8px_rgba(59,130,246,0.3)]" : "scale-100"
+            "transition-all duration-500",
+            isActive ? "scale-110 drop-shadow-[0_0_12px_rgba(var(--primary),0.4)]" : "scale-100"
           )} 
         />
         <span className={cn(
-          "text-[9px] font-bold mt-1 transition-all duration-300 tracking-tight",
+          "text-[10px] font-black mt-1 transition-all duration-500 tracking-tighter uppercase",
           isActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"
         )}>
           {link.label}
@@ -73,8 +73,8 @@ export default function BottomNav() {
         {isActive && (
           <motion.div
             layoutId="bottom-nav-indicator"
-            className="absolute -bottom-1 w-1 h-1 rounded-full bg-blue-600"
-            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+            className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.6)]"
+            transition={{ type: "spring", bounce: 0.3, duration: 0.8 }}
           />
         )}
       </NavLink>
@@ -84,8 +84,8 @@ export default function BottomNav() {
   const ActionIcon = actionLink.icon;
 
   return (
-    <div className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-0 w-full flex justify-center z-[100] px-3 sm:px-4 pointer-events-none md:hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <nav className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-white/40 dark:border-slate-800/60 rounded-[2.5rem] px-2 py-2 shadow-[0_20px_50px_rgba(0,0,0,0.1)] pointer-events-auto flex items-center justify-between gap-1 w-full max-w-[440px] transition-all">
+    <div className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-0 w-full flex justify-center z-[100] px-3 sm:px-4 pointer-events-none md:hidden animate-in fade-in slide-in-from-bottom-8 duration-700">
+      <nav className="premium-glass rounded-[3rem] px-3 py-2 shadow-2xl pointer-events-auto flex items-center justify-between gap-1 w-full max-w-[480px] transition-all duration-500">
         {/* Left Nav Group */}
         {leftLinks.map(renderLink)}
 
@@ -93,14 +93,14 @@ export default function BottomNav() {
         <button
           key={actionLink.id}
           onClick={() => setIsAddExpenseOpen(true)}
-          className="relative flex flex-col items-center justify-center py-2 px-1 flex-1 min-w-0 group"
+          className="relative flex flex-col items-center justify-center p-1 flex-1 min-w-0 group"
         >
           <motion.div
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: 1.1, rotate: 90 }}
             whileTap={{ scale: 0.9 }}
-            className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20"
+            className="w-14 h-14 rounded-[1.5rem] bg-gradient-to-br from-primary via-primary to-indigo-600 text-white flex items-center justify-center shadow-xl shadow-primary/20 shine-effect"
           >
-            <ActionIcon size={24} strokeWidth={2.5} />
+            <ActionIcon size={28} strokeWidth={3} />
           </motion.div>
         </button>
 

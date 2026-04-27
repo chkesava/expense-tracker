@@ -170,14 +170,15 @@ export default function ExpenseForm({
   return (
     <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="space-y-4">
       <div className="relative">
-        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Amount</label>
-        <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xl">₹</span>
+        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Amount</label>
+        <div className="relative group">
+          <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
+          <span className="absolute left-5 top-1/2 -translate-y-1/2 text-primary font-black text-2xl relative z-10">₹</span>
           <input
             type="number"
             autoFocus
             required
-            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-10 pr-4 text-2xl font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-inner"
+            className="w-full bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-2xl py-5 pl-12 pr-6 text-4xl font-black text-slate-900 dark:text-white focus:outline-none focus:ring-0 focus:border-primary transition-all shadow-xl relative z-10 placeholder:opacity-20"
             placeholder="0"
             value={amount}
             onChange={e => setAmount(e.target.value)}
@@ -187,21 +188,21 @@ export default function ExpenseForm({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Date</label>
+          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Date</label>
           <input
             type="date"
             required
-            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+            className="w-full bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-[1.25rem] px-5 py-3.5 font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary transition-all"
             value={date}
             onChange={e => setDate(e.target.value)}
           />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Category</label>
+          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Category</label>
           <div className="relative">
             <select
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 font-medium text-slate-700 dark:text-slate-200 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
+              className="w-full bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-[1.25rem] px-5 py-3.5 font-bold text-slate-700 dark:text-slate-200 appearance-none focus:outline-none focus:border-primary transition-all cursor-pointer"
               value={category}
               onChange={e => {
                 setCategoryTouched(true);
@@ -222,16 +223,18 @@ export default function ExpenseForm({
                 </optgroup>
               )}
             </select>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">▼</div>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+               <div className="w-5 h-5 flex items-center justify-center">▼</div>
+            </div>
           </div>
         </div>
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Account (Optional)</label>
+        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Account</label>
         <div className="relative">
           <select
-            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 font-medium text-slate-700 dark:text-slate-200 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
+            className="w-full bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-[1.25rem] px-5 py-3.5 font-bold text-slate-700 dark:text-slate-200 appearance-none focus:outline-none focus:border-primary transition-all cursor-pointer"
             value={accountId}
             onChange={e => setAccountId(e.target.value)}
           >
@@ -240,21 +243,23 @@ export default function ExpenseForm({
               <option key={acc.id} value={acc.id}>{acc.name}</option>
             ))}
           </select>
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">▼</div>
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+             <div className="w-5 h-5 flex items-center justify-center">▼</div>
+          </div>
         </div>
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Note (Optional)</label>
+        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Note</label>
         <input
-          className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+          className="w-full bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-[1.25rem] px-5 py-3.5 font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary transition-all"
           placeholder="What was this for?"
           value={note}
           onChange={e => setNote(e.target.value)}
         />
         {matchedRule && !editingExpense && (
-          <div className="mt-2 text-xs font-medium text-blue-600">
-            Auto-categorized from rule: "{matchedRule}"
+          <div className="mt-2 text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-1">
+            <span className="w-1 h-1 rounded-full bg-primary" /> Auto-categorized: {matchedRule}
           </div>
         )}
       </div>
@@ -284,10 +289,10 @@ export default function ExpenseForm({
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         className={cn(
-          "w-full py-3.5 rounded-2xl font-bold text-white shadow-lg transition-all mt-2",
+          "w-full py-5 rounded-2xl font-black text-white shadow-2xl transition-all mt-4 shine-effect uppercase tracking-[0.2em] text-xs",
           isLocked
             ? "bg-slate-400 cursor-not-allowed"
-            : "bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-500/30 hover:shadow-blue-500/40"
+            : "bg-primary shadow-primary/20"
         )}
       >
         {isLocked && editingExpense

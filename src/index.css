@@ -4,49 +4,77 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98.5%;
-    --foreground: 222.2 47.4% 11.2%;
+    /* Sophisticated HSL Palette - Premium Indigo & Deep Slate */
+    --background: 210 50% 98%;
+    --foreground: 224 71% 4%;
+    
     --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
+    --card-foreground: 224 71% 4%;
+    
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
-    --primary: 221.2 83.2% 53.3%;
+    --popover-foreground: 224 71% 4%;
+    
+    --primary: 226 100% 50%; /* Deep Atmosphere Blue */
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
+    
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 224 71% 4%;
+    
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    
+    --accent: 226 100% 97%;
+    --accent-foreground: 226 100% 50%;
+    
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 1rem;
+    
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 226 100% 50%;
+    
+    --radius: 1.25rem; /* Larger, more modern radius */
+    
+    /* Design System Elevations */
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.5);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
   }
 }
 
 .dark {
-  --background: 222.2 84% 4.9%;
+  --background: 224 71% 2%; /* Ultra-deep midnight */
   --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
+  
+  --card: 224 71% 4%;
   --card-foreground: 210 40% 98%;
-  --popover: 222.2 84% 4.9%;
+  
+  --popover: 224 71% 3%;
   --popover-foreground: 210 40% 98%;
-  --primary: 217.2 91.2% 59.8%;
-  --primary-foreground: 222.2 47.4% 11.2%;
-  --secondary: 217.2 32.6% 17.5%;
+  
+  --primary: 226 100% 64%; /* Vibrant Atmosphere Blue */
+  --primary-foreground: 224 71% 4%;
+  
+  --secondary: 224 71% 8%;
   --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
+  
+  --muted: 224 71% 10%;
+  --muted-foreground: 217 19% 70%;
+  
+  --accent: 226 100% 15%;
+  --accent-foreground: 226 100% 64%;
+  
+  --destructive: 0 63% 31%;
   --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 224.3 76.3% 48%;
+  
+  --border: 224 71% 12%;
+  --input: 224 71% 12%;
+  --ring: 226 100% 64%;
+
+  /* Dark Mode Elevations */
+  --glass-bg: rgba(7, 10, 15, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
 }
 
 /* Midnight Olive Atmosphere */
@@ -127,32 +155,43 @@ html {
   @apply scroll-smooth;
 }
 
-body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  min-height: 100vh;
-  font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1, "cv11" 1;
-  transition: background-color 300ms cubic-bezier(0.4, 0, 0.2, 1), color 300ms cubic-bezier(0.4, 0, 0.2, 1);
-}
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    min-height: 100vh;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1, "cv11" 1;
+    letter-spacing: -0.011em;
+    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: 'Outfit', sans-serif;
-  letter-spacing: -0.02em;
-}
+  /* Premium Typography Hierarchy */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+  }
 
-html,
-body {
-  width: 100%;
-  overflow-x: clip;
-}
+  /* Global Grain Texture Overlay */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.025;
+    z-index: 9999;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
+
+  html,
+  body {
+    width: 100%;
+    overflow-x: clip;
+  }
 
 @supports not (overflow: clip) {
 
@@ -382,6 +421,49 @@ body {
     opacity: 0;
     transform: translateY(1.5rem);
     pointer-events: none;
+  }
+
+  /* Premium Design Utilities */
+  .premium-glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+  }
+
+  .premium-card {
+    @apply rounded-[2rem] border border-slate-200/50 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 backdrop-blur-3xl shadow-sm transition-all duration-500;
+  }
+
+  .premium-card:hover {
+    @apply shadow-2xl shadow-blue-500/5 -translate-y-1;
+  }
+
+  .text-gradient-premium {
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-white dark:via-slate-200 dark:to-slate-400;
+  }
+
+  .shine-effect {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shine-effect::after {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.5s;
+    pointer-events: none;
+  }
+
+  .shine-effect:hover::after {
+    opacity: 1;
   }
 }
 

@@ -57,6 +57,8 @@ function AppContent() {
   );
 }
 
+import AuraBackground from "./components/layout/AuraBackground";
+
 function AppRoutes() {
   const location = useLocation();
   const { settings } = useSettings();
@@ -64,6 +66,7 @@ function AppRoutes() {
 
   return (
     <>
+      <AuraBackground />
       <Modal
         isOpen={isAddExpenseOpen}
         onClose={() => setIsAddExpenseOpen(false)}

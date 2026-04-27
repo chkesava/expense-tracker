@@ -22,6 +22,7 @@ import { getUsageColor, getSmartInsight } from "../utils/insights";
 import { CATEGORIES } from "../types/expense";
 import { cn } from "../lib/utils";
 import MagicChatEntry from "../components/MagicChatEntry";
+import NumberTicker from "../components/common/NumberTicker";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -33,8 +34,8 @@ const itemVariants: Variants = {
   visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 15 } },
 };
 
-const surfaceClass = "bg-white/70 dark:bg-slate-900/40 backdrop-blur-3xl border border-white/60 dark:border-white/5 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300";
-const softSurfaceClass = "bg-slate-50/50 dark:bg-white/5 border border-slate-100/50 dark:border-white/5 transition-colors";
+const surfaceClass = "premium-card shine-effect";
+const softSurfaceClass = "bg-primary/5 dark:bg-white/5 border border-primary/10 dark:border-white/5 transition-all duration-300 rounded-2xl";
 
 export default function Dashboard() {
   const { expenses, loading } = useExpenses();
@@ -47,7 +48,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const CATEGORY_DEFS = [
-    { id: "pulse", label: "Pulse", icon: Zap, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-500/10" },
+    { id: "pulse", label: "Pulse", icon: Zap, color: "text-primary dark:text-primary", bg: "bg-primary/10 dark:bg-primary/20" },
     { id: "snap", label: "Snapshot", icon: BarChart3, color: "text-indigo-600 dark:text-indigo-400", bg: "bg-indigo-50 dark:bg-indigo-500/10" },
     { id: "plan", label: "Planning", icon: Target, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-500/10" },
     { id: "log", label: "History", icon: HistoryIcon, color: "text-slate-600 dark:text-slate-400", bg: "bg-slate-50 dark:bg-slate-700/20" },
@@ -273,7 +274,11 @@ export default function Dashboard() {
       </section>
     ),
     overview: (
-      <div className="rounded-2xl border border-white/60 bg-white/80 p-8 shadow-sm backdrop-blur-xl dark:border-white/5 dark:bg-slate-900/40 h-full">
+      <div className="premium-card p-8 h-full shine-effect relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:scale-110 transition-transform duration-1000">
+           <BarChart3 size={160} className="text-primary" />
+        </div>
+        <div className="relative z-10">
         {loading ? (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -295,7 +300,9 @@ export default function Dashboard() {
               </span>
             </div>
             <div className="flex items-baseline gap-2 mb-8">
-              <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">₹{summary.total.toLocaleString()}</span>
+              <span className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter">
+                ₹<NumberTicker value={summary.total} />
+              </span>
               <span className="text-sm font-bold text-slate-400">total spent</span>
             </div>
             <div className="space-y-4">
@@ -317,6 +324,7 @@ export default function Dashboard() {
             </div>
           </>
         )}
+        </div>
       </div>
     ),
     quickAdd: (
@@ -407,7 +415,7 @@ export default function Dashboard() {
       </section>
     ),
     recentActivity: (
-      <div className="rounded-3xl border border-white/40 bg-white/60 p-8 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/80 h-full">
+      <div className="premium-card p-8 h-full shine-effect relative overflow-hidden">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Recent Activity</h3>
           <button onClick={() => navigate("/expenses")} className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest hover:underline px-2 py-1">View All</button>
@@ -489,8 +497,8 @@ export default function Dashboard() {
               <LayoutPanelLeft size={18} />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Dashboard</h1>
-              <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-0.5">Control Center • {user?.displayName?.split(' ')[0] || 'Member'}</p>
+              <h1 className="text-4xl font-black text-gradient-premium tracking-tight">Dashboard</h1>
+              <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.25em] mt-1 opacity-60">Control Center • {user?.displayName?.split(' ')[0] || 'Member'}</p>
             </div>
           </div>
             <button
@@ -525,16 +533,16 @@ export default function Dashboard() {
                       key={cat.id}
                       onClick={() => setActiveCategory(cat.id)}
                       className={cn(
-                        "flex items-center gap-3 rounded-2xl px-3 py-3 transition-all",
+                        "flex items-center gap-3 rounded-[1.25rem] px-4 py-3.5 transition-all duration-500 group/item",
                         isActive 
-                          ? "bg-slate-900 text-white shadow-lg dark:bg-white dark:text-slate-900 scale-[1.02]" 
-                          : "hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-500 dark:text-slate-400"
+                          ? "bg-primary text-white shadow-xl shadow-primary/20 scale-[1.05]" 
+                          : "hover:bg-primary/5 text-slate-500 dark:text-slate-400"
                       )}
                     >
-                      <cat.icon className={cn("h-5 w-5 shrink-0", isActive ? cat.color : "opacity-70")} />
-                      <div className="hidden lg:block text-sm font-black tracking-tight">{cat.label}</div>
+                      <cat.icon className={cn("h-5 w-5 shrink-0 transition-transform duration-500", isActive ? "scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" : "opacity-70 group-hover/item:scale-110")} />
+                      <div className="hidden lg:block text-sm font-black tracking-tight uppercase tracking-[0.05em]">{cat.label}</div>
                       <div className="hidden lg:block ml-auto">
-                        <div className={cn("w-1.5 h-1.5 rounded-full", isActive ? "bg-current" : "bg-transparent")} />
+                        <div className={cn("w-1.5 h-1.5 rounded-full transition-all duration-500", isActive ? "bg-white scale-100" : "bg-transparent scale-0")} />
                       </div>
                     </button>
                   );
@@ -555,31 +563,31 @@ export default function Dashboard() {
             {/* Mobile Category Switcher (Top Segmented Control) */}
             {!isReordering && (
               <div className="md:hidden mb-10 overflow-hidden">
-                <div className="bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-[2rem] flex items-center relative border border-slate-200/50 dark:border-slate-800/50">
-                  {CATEGORY_DEFS.map((cat) => {
-                    const isActive = activeCategory === cat.id;
-                    return (
-                      <button
-                        key={cat.id}
-                        onClick={() => setActiveCategory(cat.id)}
-                        className={cn(
-                          "relative z-10 flex flex-col items-center justify-center gap-1 flex-1 py-3 transition-colors",
-                          isActive ? "text-slate-900 dark:text-white" : "text-slate-500"
-                        )}
-                      >
-                        {isActive && (
-                          <motion.div
-                            layoutId="activeCategoryPill"
-                            className="absolute inset-0 bg-white dark:bg-slate-800 rounded-[1.5rem] shadow-sm z-[-1]"
-                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                          />
-                        )}
-                        <cat.icon size={18} className={cn(isActive && cat.color)} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">{cat.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+            <div className="premium-glass p-1.5 rounded-[2.5rem] flex items-center relative border border-white/10">
+              {CATEGORY_DEFS.map((cat) => {
+                const isActive = activeCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.id)}
+                    className={cn(
+                      "relative z-10 flex flex-col items-center justify-center gap-1 flex-1 py-3 transition-all duration-500",
+                      isActive ? "text-primary scale-110" : "text-slate-500 opacity-60"
+                    )}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeCategoryPill"
+                        className="absolute inset-0 bg-white dark:bg-white/5 rounded-[2rem] shadow-xl z-[-1] border border-white/20"
+                        transition={{ type: "spring", bounce: 0.3, duration: 0.8 }}
+                      />
+                    )}
+                    <cat.icon size={20} className={cn(isActive && "drop-shadow-[0_0_8px_rgba(var(--primary),0.4)]")} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">{cat.label}</span>
+                  </button>
+                );
+              })}
+            </div>
               </div>
             )}
 

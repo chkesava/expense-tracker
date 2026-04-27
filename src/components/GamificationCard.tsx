@@ -41,8 +41,8 @@ export default function GamificationCard() {
             <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/0 to-white/40 opacity-50 pointer-events-none" />
 
             <div className={cn(
-                "relative backdrop-blur-3xl bg-gradient-to-br from-indigo-600/90 via-purple-700/80 to-indigo-900/90",
-                "rounded-[1.9rem] p-6 text-white shadow-2xl border border-white/20",
+                "relative premium-glass",
+                "rounded-[1.9rem] p-8 text-white shadow-2xl border border-white/20",
                 "overflow-hidden"
             )}>
 
@@ -65,7 +65,7 @@ export default function GamificationCard() {
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.2 }}
-                            className="text-indigo-100 font-semibold text-xs tracking-[0.2em] uppercase mb-1"
+                            className="text-white/40 font-black text-[10px] tracking-[0.3em] uppercase mb-1"
                         >
                             Level {stats.level}
                         </motion.h3>
@@ -74,9 +74,9 @@ export default function GamificationCard() {
                                 initial={{ scale: 0.5, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
                                 transition={{ type: "spring", stiffness: 200, delay: 0.3 }}
-                                className="text-4xl font-black bg-gradient-to-br from-white to-blue-200 bg-clip-text text-transparent filter drop-shadow-sm"
+                                className="text-6xl font-black text-white tracking-tighter"
                             >
-                                {stats.points.toLocaleString()} <span className="text-lg">XP</span>
+                                {stats.points.toLocaleString()} <span className="text-xl opacity-40">XP</span>
                             </motion.span>
                         </div>
                     </div>

@@ -97,10 +97,10 @@ export default function Header() {
       <motion.header
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         className={cn(
-          "fixed top-0 left-0 w-full z-50 px-4 md:px-8 py-3 flex items-center justify-between gap-4",
-          "bg-white/70 dark:bg-slate-950/40 backdrop-blur-3xl border-b border-slate-100 dark:border-white/5 shadow-[0_2px_15px_rgb(0,0,0,0.02)] transition-all duration-300"
+          "fixed top-0 left-0 w-full z-50 px-4 md:px-8 py-4 flex items-center justify-between gap-4",
+          "premium-glass border-b border-white/10 shadow-2xl transition-all duration-500"
         )}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
@@ -113,7 +113,7 @@ export default function Header() {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xl shadow-slate-900/10">
               <Activity size={18} />
             </div>
-            <span className="text-xl font-black tracking-tighter text-slate-900 dark:text-white">
+            <span className="text-2xl font-black tracking-tighter text-gradient-premium">
               Antigravity
             </span>
           </motion.button>

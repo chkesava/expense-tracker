@@ -43,31 +43,32 @@ export default function Modal({ isOpen, onClose, title, children, className }: M
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-950/40 backdrop-blur-md"
           />
 
           {/* Modal Content */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.9, y: 100, rotateX: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 100, rotateX: 15 }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className={cn(
-              "relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl shadow-slate-900/20 overflow-hidden flex flex-col max-h-[90dvh]",
+              "relative w-full max-w-lg premium-glass rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[90dvh] border border-white/20",
               className
             )}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 sm:px-8 py-4 sm:py-6 border-b border-slate-50 dark:border-slate-800/50">
+            <div className="flex items-center justify-between px-8 py-6 border-b border-white/10">
               {title && (
-                <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                <h2 className="text-2xl font-black text-gradient-premium tracking-tighter">
                   {title}
                 </h2>
               )}
               <button
                 onClick={onClose}
-                className="p-2 -mr-2 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 rounded-2xl transition-all active:scale-90"
+                className="p-3 -mr-2 bg-white/10 text-slate-400 hover:text-white rounded-2xl transition-all active:scale-90"
               >
-                <X size={20} />
+                <X size={24} />
               </button>
             </div>
 
