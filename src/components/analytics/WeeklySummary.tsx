@@ -1,5 +1,7 @@
 import type { Expense } from "../../types/expense";
 import { getWeeklySummary } from "../../utils/weeklySummary";
+import Amount from "../common/Amount";
+
 
 export default function WeeklySummary({
   expenses,
@@ -43,7 +45,7 @@ export default function WeeklySummary({
                 <span style={{ fontSize: 11, color: '#2563eb', fontWeight: 500 }}>(Current)</span>
               )}
             </span>
-            <span>₹{w.total.toLocaleString()}</span>
+            <span><Amount value={w.total} /></span>
           </div>
         ))}
       </div>
@@ -58,7 +60,7 @@ export default function WeeklySummary({
             textAlign: "right"
           }}
         >
-          Daily avg: ₹{currentWeekAvg}
+          Daily avg: <Amount value={currentWeekAvg} />
         </div>
       )}
     </div>

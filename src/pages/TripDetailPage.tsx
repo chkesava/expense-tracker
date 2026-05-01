@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { Skeleton } from "../components/common/Skeleton";
+import Amount from "../components/common/Amount";
+
 
 export default function TripDetailPage() {
   const { tripId } = useParams();
@@ -54,14 +56,14 @@ export default function TripDetailPage() {
       list.push({ type: "warning", message: "You've used over 80% of your budget!" });
     }
     if (isOverBudget) {
-      list.push({ type: "danger", message: `You are over budget by ₹${(trip.spentAmount - trip.totalBudget).toLocaleString()}` });
+      list.push({ type: "danger", message: <span>You are over budget by <Amount value={trip.spentAmount - trip.totalBudget} /></span> });
     }
     
     // Highest spending category
     const byCat = groupByCategory(tripExpenses);
     if (byCat.length > 0) {
       const highest = byCat.sort((a, b) => b.value - a.value)[0];
-      list.push({ type: "info", message: `${highest.category} is your top expense category (₹${highest.value.toLocaleString()})` });
+      list.push({ type: "info", message: <span>{highest.category} is your top expense category (<Amount value={highest.value} />)</span> });
     }
 
     if (tripExpenses.length === 0) {
@@ -164,13 +166,13 @@ export default function TripDetailPage() {
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Total Spending</p>
                 <h2 className="text-4xl font-black text-slate-900 dark:text-white">
-                  ₹{trip.spentAmount.toLocaleString()}
+                  <Amount value={trip.spentAmount} />
                 </h2>
               </div>
               <div className="text-right">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Budget</p>
                 <p className="text-lg font-bold text-slate-600 dark:text-slate-400">
-                  ₹{trip.totalBudget.toLocaleString()}
+                  <Amount value={trip.totalBudget} />
                 </p>
               </div>
             </div>
@@ -258,7 +260,7 @@ export default function TripDetailPage() {
                   <div key={cb.category}>
                     <div className="flex justify-between text-xs font-bold mb-1.5">
                       <span className="text-slate-600 dark:text-slate-300">{cb.category}</span>
-                      <span className="text-slate-400">₹{catSpent} / ₹{cb.limit}</span>
+                      <span className="text-slate-400"><Amount value={catSpent} /> / <Amount value={cb.limit} /></span>
                     </div>
                     <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                       <motion.div

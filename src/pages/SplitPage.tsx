@@ -24,6 +24,8 @@ import {
 import { cn } from "../lib/utils";
 import PageHeader from "../components/layout/PageHeader";
 import Avatar from "../components/Avatar";
+import Amount from "../components/common/Amount";
+
 import { CATEGORIES } from "../types/expense";
 import type { Participant } from "../types/split";
 import type { UserProfile } from "../hooks/useUsers";
@@ -128,14 +130,14 @@ export default function SplitPage() {
                                 <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600"><TrendingUp size={20} /></div>
                                 <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">To Receive</h3>
                             </div>
-                            <div className="text-2xl font-black">₹{summary.toReceive.toLocaleString()}</div>
+                            <div className="text-2xl font-black"><Amount value={summary.toReceive} /></div>
                         </section>
                         <section className="bg-white/80 dark:bg-slate-900/80 p-6 rounded-3xl border border-white/20 shadow-sm backdrop-blur-xl">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600"><Receipt size={20} /></div>
                                 <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">To Pay</h3>
                             </div>
-                            <div className="text-2xl font-black">₹{summary.toPay.toLocaleString()}</div>
+                            <div className="text-2xl font-black"><Amount value={summary.toPay} /></div>
                         </section>
                     </div>
 
@@ -165,7 +167,7 @@ export default function SplitPage() {
                                             </div>
                                             <div>
                                                 <div className="font-bold text-slate-900 dark:text-white group-hover:text-blue-600">{s.title}</div>
-                                                <div className="text-[10px] text-slate-400 font-medium">₹{s.totalAmount.toLocaleString()} • {s.participants.length} members</div>
+                                                <div className="text-[10px] text-slate-400 font-medium"><Amount value={s.totalAmount} /> • {s.participants.length} members</div>
                                             </div>
                                         </div>
                                         <ChevronRight size={16} className="text-slate-300" />

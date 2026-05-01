@@ -4,6 +4,8 @@ import {
   getTopCategory,
   getAverageDailySpend,
 } from "../../utils/smartSummary";
+import Amount from "../common/Amount";
+
 
 export default function SmartSummary({
   expenses,
@@ -30,19 +32,19 @@ export default function SmartSummary({
         <div>
           📅 <strong>Highest day:</strong>{" "}
           {highestDay
-            ? `₹${highestDay.amount} (${highestDay.date})`
+            ? <span><Amount value={highestDay.amount} /> ({highestDay.date})</span>
             : "—"}
         </div>
 
         <div style={{ marginTop: 8 }}>
           🏷️ <strong>Top category:</strong>{" "}
           {topCategory
-            ? `${topCategory.category} (₹${topCategory.amount})`
+            ? <span>{topCategory.category} (<Amount value={topCategory.amount} />)</span>
             : "—"}
         </div>
 
         <div style={{ marginTop: 8 }}>
-          📊 <strong>Avg per day:</strong> ₹{avgDaily}
+          📊 <strong>Avg per day:</strong> <Amount value={avgDaily} />
         </div>
       </div>
     </div>

@@ -22,6 +22,8 @@ import { exportExpensesToCSV } from "../utils/exportCsv";
 import { clearDemoWorkspaceForUser, seedDemoWorkspaceForUser } from "../utils/seedData";
 import { db } from "../firebase";
 import Avatar from "../components/Avatar";
+import Amount from "../components/common/Amount";
+
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import { cn } from "../lib/utils";
 
@@ -619,7 +621,7 @@ export default function SettingsPage() {
                         <div className="min-w-0">
                           <div className="truncate text-sm font-black text-slate-900 dark:text-slate-100">{b.category}</div>
                           <div className="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">
-                            {b.month} • ₹{b.amount.toLocaleString()}
+                            {b.month} • <Amount value={b.amount} />
                           </div>
                         </div>
                         <button onClick={() => deleteBudget(b.id)} className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-600 hover:bg-red-100 dark:border-red-900/30 dark:bg-red-900/10 dark:text-red-300">
@@ -664,7 +666,7 @@ export default function SettingsPage() {
                             <div className="min-w-0">
                               <div className="truncate text-sm font-black text-slate-900 dark:text-slate-100">{g.name}</div>
                               <div className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
-                                Target ₹{g.targetAmount.toLocaleString()}
+                                Target <Amount value={g.targetAmount} />
                                 {g.deadline ? ` • by ${g.deadline}` : ""}
                               </div>
                             </div>

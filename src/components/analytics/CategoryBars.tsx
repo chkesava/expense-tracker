@@ -2,6 +2,8 @@ import type { Expense } from "../../types/expense";
 import { groupByCategory } from "../../utils/analytics";
 import { motion } from "framer-motion";
 import { cn } from "../../lib/utils";
+import Amount from "../common/Amount";
+
 
 // Map categories to specific distinct colors for better visuals
 const CATEGORY_COLORS: Record<string, string> = {
@@ -66,7 +68,7 @@ export default function CategoryBars({ expenses }: { expenses: Expense[] }) {
               />
             </div>
             <div className="mt-1 text-xs text-slate-400 font-medium text-right opacity-0 group-hover:opacity-100 transition-opacity">
-              ₹{amount.toLocaleString()}
+              <Amount value={amount} />
             </div>
           </motion.div>
         );

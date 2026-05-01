@@ -305,11 +305,11 @@ export default function Dashboard() {
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="space-y-1">
                    <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Income</p>
-                   <p className="text-2xl font-black text-white tracking-tight">₹<NumberTicker value={summary.totalIncome} /></p>
+                   <p className="text-2xl font-black text-white tracking-tight privacy-blur">₹<NumberTicker value={summary.totalIncome} /></p>
                 </div>
                 <div className="space-y-1">
                    <p className="text-[9px] font-black text-rose-400 uppercase tracking-widest">Expenses</p>
-                   <p className="text-2xl font-black text-white tracking-tight">₹<NumberTicker value={summary.totalExpenses} /></p>
+                   <p className="text-2xl font-black text-white tracking-tight privacy-blur">₹<NumberTicker value={summary.totalExpenses} /></p>
                 </div>
               </div>
               <div className="p-4 bg-white/5 rounded-2xl border border-white/10 mb-8">
@@ -366,13 +366,13 @@ export default function Dashboard() {
               onClick={() => quickAddDirect(category, 100)}
               disabled={isAdding}
             >
-              {category} • ₹100
+              {category} • <Amount value={100} />
             </button>
           ))}
         </div>
         <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex gap-2">
-          <button className="flex-1 py-2 bg-slate-50 dark:bg-slate-950/70 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 transition-colors" onClick={() => quickAddDirect("Food", 50)} disabled={isAdding}>₹50</button>
-          <button className="flex-1 py-2 bg-slate-50 dark:bg-slate-950/70 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 transition-colors" onClick={() => quickAddDirect("Transport", 100)} disabled={isAdding}>₹100</button>
+          <button className="flex-1 py-2 bg-slate-50 dark:bg-slate-950/70 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 transition-colors" onClick={() => quickAddDirect("Food", 50)} disabled={isAdding}><Amount value={50} /></button>
+          <button className="flex-1 py-2 bg-slate-50 dark:bg-slate-950/70 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 transition-colors" onClick={() => quickAddDirect("Transport", 100)} disabled={isAdding}><Amount value={100} /></button>
           <button className="flex-1 py-2 bg-slate-50 dark:bg-slate-950/70 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 transition-colors" onClick={() => quickAddDirect("Other", 200)} disabled={isAdding}>₹200</button>
         </div>
       </section>

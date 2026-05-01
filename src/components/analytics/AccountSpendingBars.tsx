@@ -2,6 +2,8 @@ import type { Expense, Account } from "../../types/expense";
 import { groupByAccount } from "../../utils/analytics";
 import { motion } from "framer-motion";
 import { cn } from "../../lib/utils";
+import Amount from "../common/Amount";
+
 
 export default function AccountSpendingBars({ 
   expenses, 
@@ -57,7 +59,7 @@ export default function AccountSpendingBars({
               />
             </div>
             <div className="mt-1 text-xs text-slate-400 font-medium text-right opacity-0 group-hover:opacity-100 transition-opacity">
-              ₹{item.amount.toLocaleString()}
+              <Amount value={item.amount} />
             </div>
           </motion.div>
         );

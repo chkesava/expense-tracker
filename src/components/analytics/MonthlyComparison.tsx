@@ -1,5 +1,7 @@
 import type { Expense } from "../../types/expense";
 import { compareCurrentWithPrevious } from "../../utils/monthlyComparison";
+import Amount from "../common/Amount";
+
 
 export default function MonthlyComparison({
   expenses,
@@ -26,11 +28,11 @@ export default function MonthlyComparison({
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
           <span>Current Month:</span>
-          <strong>₹{result.currentTotal.toLocaleString()}</strong>
+          <strong><Amount value={result.currentTotal} /></strong>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', color: '#6b7280' }}>
           <span>Last Month:</span>
-          <span>₹{result.previousTotal.toLocaleString()}</span>
+          <span><Amount value={result.previousTotal} /></span>
         </div>
 
         <div

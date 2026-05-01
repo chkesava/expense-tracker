@@ -22,6 +22,8 @@ import type { Subscription } from "../types/subscription";
 import Modal from "../components/common/Modal";
 import { Skeleton } from "../components/common/Skeleton";
 import PageHeader from "../components/layout/PageHeader";
+import Amount from "../components/common/Amount";
+
 
 type SubTab = "recurring" | "travel" | "stats";
 
@@ -170,8 +172,8 @@ export default function SubscriptionsPage() {
                                             <h3 className="text-xl font-bold tracking-tight">{trip.destination}</h3>
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-lg font-black tracking-tighter">₹{trip.spentAmount.toLocaleString()}</div>
-                                            <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Budget: ₹{trip.totalBudget.toLocaleString()}</div>
+                                            <div className="text-lg font-black tracking-tighter"><Amount value={trip.spentAmount} /></div>
+                                            <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Budget: <Amount value={trip.totalBudget} /></div>
                                         </div>
                                     </div>
                                     <div className="w-full h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
@@ -188,7 +190,7 @@ export default function SubscriptionsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 p-8 rounded-2xl border border-white/10 shadow-2xl">
                         <div className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-2">Monthly Commitment</div>
-                        <div className="text-4xl font-black tracking-tighter">₹{stats.totalMonthly.toLocaleString()}</div>
+                        <div className="text-4xl font-black tracking-tighter"><Amount value={stats.totalMonthly} /></div>
                     </div>
                     <div className="bg-white dark:bg-slate-900/40 p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm">
                         <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Total Subscriptions</div>
@@ -301,7 +303,7 @@ function SubscriptionRow({ sub, accounts, onEdit, onToggle, onDelete }: any) {
                     </div>
                 </div>
                 <div className="text-right flex flex-col items-end gap-2">
-                    <div className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white">₹{sub.amount.toLocaleString()}</div>
+                    <div className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white"><Amount value={sub.amount} /></div>
                     <div className="flex gap-4">
                         <button onClick={onToggle} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">{sub.isActive ? "Pause" : "Resume"}</button>
                         <button onClick={onEdit} className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700 transition-colors">Modify</button>
