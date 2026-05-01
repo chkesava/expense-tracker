@@ -496,6 +496,9 @@ export default function SettingsPage() {
                     <option value="midnight-olive">Midnight Olive</option>
                     <option value="vintage-parchment">Vintage Parchment</option>
                     <option value="sakura-bloom">Sakura Bloom</option>
+                    <option value="cyberpunk">Cyberpunk Neon</option>
+                    <option value="nordic">Nordic Frost</option>
+                    <option value="deep-sea">Deep Sea Abyss</option>
                   </select>
                 </SettingsRow>
 

@@ -14,6 +14,8 @@ import {
   Wallet,
   Users,
   Search,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import useOnline from "../hooks/useOnline";
@@ -23,6 +25,7 @@ import { useUserRole } from "../hooks/useUserRole";
 import { useModals } from "../hooks/useModals";
 import { useExpenses } from "../hooks/useExpenses";
 import { useStoryGenerator } from "../hooks/useStoryGenerator";
+import useSettings from "../hooks/useSettings";
 import Avatar from "./Avatar";
 import StoryViewer from "./story/StoryViewer";
 import { cn } from "../lib/utils";
@@ -46,6 +49,7 @@ export default function Header() {
   const { theme } = useTheme();
   const { setIsMonthDrawerOpen, setIsAddExpenseOpen, globalMonth } = useModals();
   const { expenses } = useExpenses();
+  const { settings, setGhostMode } = useSettings();
 
   const desktopLinks = [
     { path: "/dashboard", label: "Home", icon: Home },
@@ -119,26 +123,33 @@ export default function Header() {
           </motion.button>
 
           <div
+            onClick={() => setGhostMode(!settings.ghostMode)}
             className={cn(
-              "hidden min-[360px]:inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] shadow-sm ring-1 transition-all duration-300",
-              isOnline
-                ? "bg-emerald-500/10 text-emerald-600 ring-emerald-200/70 dark:ring-emerald-500/20"
-                : "bg-red-500/10 text-red-600 ring-red-200/70 dark:ring-red-500/20"
+              "hidden min-[360px]:inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] shadow-sm ring-1 transition-all duration-300 cursor-pointer hover:bg-white dark:hover:bg-slate-900",
+              settings.ghostMode
+                ? "bg-blue-500/10 text-blue-600 ring-blue-500/40"
+                : isOnline
+                  ? "bg-emerald-500/10 text-emerald-600 ring-emerald-200/70 dark:ring-emerald-500/20"
+                  : "bg-red-500/10 text-red-600 ring-red-200/70 dark:ring-red-500/20"
             )}
-            title={isOnline ? "Connected to database" : "Working offline - changes will sync later"}
+            title={settings.ghostMode ? "Ghost Mode Active - Amounts blurred" : isOnline ? "Connected to database" : "Working offline"}
           >
-            <span className="relative flex h-2 w-2">
-              {isOnline && (
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
-              )}
-              <span
-                className={cn(
-                  "relative inline-flex rounded-full h-2 w-2",
-                  isOnline ? "bg-emerald-500" : "bg-red-500"
+            {settings.ghostMode ? (
+              <EyeOff size={10} className="animate-pulse" />
+            ) : (
+              <span className="relative flex h-2 w-2">
+                {isOnline && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
                 )}
-              />
-            </span>
-            <span>{isOnline ? "Online" : "Offline"}</span>
+                <span
+                  className={cn(
+                    "relative inline-flex rounded-full h-2 w-2",
+                    isOnline ? "bg-emerald-500" : "bg-red-500"
+                  )}
+                />
+              </span>
+            )}
+            <span>{settings.ghostMode ? "Ghost" : isOnline ? "Online" : "Offline"}</span>
           </div>
         </div>
 

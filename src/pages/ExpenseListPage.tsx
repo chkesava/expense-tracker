@@ -46,6 +46,8 @@ import ConfirmDialog from "../components/common/ConfirmDialog";
 import Modal from "../components/common/Modal";
 import ExpenseForm from "../components/ExpenseForm";
 import { Skeleton } from "../components/common/Skeleton";
+import Amount from "../components/common/Amount";
+
 import type { Income } from "../types/expense";
 import { CATEGORIES } from "../types/expense";
 import { getMonthlySummary } from "../utils/monthSummary";
@@ -382,14 +384,14 @@ export default function ExpenseListPage() {
                         </div>
                     </div>
                     <div className="flex items-baseline gap-2">
-                        <span className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tighter">₹{historySummary.total.toLocaleString()}</span>
+                        <span className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tighter"><Amount value={historySummary.total} /></span>
                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">gross total</span>
                     </div>
                     <div className="mt-8 flex flex-wrap gap-2">
                         {Object.entries(historySummary.byCategory).slice(0, 4).map(([c, a]) => (
                             <div key={c} className="flex items-center gap-2 bg-slate-50 dark:bg-white/5 px-3 py-2 rounded-xl border border-slate-100 dark:border-white/5">
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{c}</span>
-                                <span className="text-xs font-bold text-slate-900 dark:text-white">₹{a.toLocaleString()}</span>
+                                <span className="text-xs font-bold text-slate-900 dark:text-white"><Amount value={a} /></span>
                             </div>
                         ))}
                     </div>
@@ -463,7 +465,7 @@ export default function ExpenseListPage() {
                         </span>
                     </div>
                     <div className="flex items-baseline gap-2">
-                        <span className="text-4xl sm:text-5xl font-black text-emerald-600 dark:text-emerald-400 tracking-tighter">₹{incomeSummary.total.toLocaleString()}</span>
+                        <span className="text-4xl sm:text-5xl font-black text-emerald-600 dark:text-emerald-400 tracking-tighter"><Amount value={incomeSummary.total} /></span>
                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">total earned</span>
                     </div>
                   </div>
@@ -690,7 +692,7 @@ export default function ExpenseListPage() {
                                             <div className="text-xs font-black uppercase">{r.category}</div>
                                             <div className="text-[10px] text-slate-400">{r.note || "No note"} • {r.date}</div>
                                         </div>
-                                        <div className="text-sm font-black">₹{r.amount.toLocaleString()}</div>
+                                        <div className="text-sm font-black"><Amount value={r.amount} /></div>
                                     </div>
                                 ))}
                             </div>
@@ -836,7 +838,7 @@ function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete 
                     </div>
                 </div>
                 <div className="text-right shrink-0 self-center pr-8 sm:pr-0">
-                    <div className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">₹{expense.amount.toLocaleString()}</div>
+                    <div className="text-xl font-black text-slate-900 dark:text-white tracking-tighter"><Amount value={expense.amount} /></div>
                 </div>
             </div>
         </div>
@@ -917,7 +919,7 @@ function IncomeRow({ income, accounts, onEdit, onDelete }: any) {
                     </div>
                 </div>
                 <div className="text-right shrink-0 self-center pr-8 sm:pr-0">
-                    <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 tracking-tighter">+₹{income.amount.toLocaleString()}</div>
+                    <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 tracking-tighter"><Amount value={income.amount} prefix="+₹" /></div>
                 </div>
             </div>
         </div>

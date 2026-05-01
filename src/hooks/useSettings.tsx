@@ -30,6 +30,7 @@ type Settings = {
   };
   dashboardOrder: string[];
   navigationStyle: "bottom" | "dock";
+  ghostMode: boolean;
 };
 
 export const DEFAULTS: Settings = {
@@ -58,6 +59,7 @@ export const DEFAULTS: Settings = {
   },
   dashboardOrder: ["focus", "gamification", "subscriptions", "topCategories", "overview", "quickAdd", "insight", "budgetAlerts", "financialGoals", "recentActivity"],
   navigationStyle: "bottom",
+  ghostMode: false,
 };
 
 type SettingsContextType = {
@@ -75,6 +77,7 @@ type SettingsContextType = {
   toggleDashboardWidget: (key: keyof Settings["dashboardWidgets"]) => void;
   setDashboardOrder: (order: string[]) => void;
   setNavigationStyle: (val: Settings["navigationStyle"]) => void;
+  setGhostMode: (val: boolean) => void;
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -108,6 +111,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             ...(data.dashboardWidgets || {}),
           },
           dashboardOrder: data.dashboardOrder || DEFAULTS.dashboardOrder,
+          ghostMode: data.ghostMode ?? DEFAULTS.ghostMode,
         } as Settings);
       } else {
         setDoc(ref, DEFAULTS, { merge: true }).catch(console.error);
@@ -118,6 +122,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
     return () => unsub();
   }, [user]);
+
+  useEffect(() => {
+    if (settings.ghostMode) {
+      document.body.classList.add("ghost-mode");
+    } else {
+      document.body.classList.remove("ghost-mode");
+    }
+  }, [settings.ghostMode]);
 
   const updateSettings = async (updates: Partial<Settings>) => {
     if (!user) return;
@@ -151,6 +163,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const setDashboardOrder = (order: string[]) => updateSettings({ dashboardOrder: order });
   const setNavigationStyle = (val: Settings["navigationStyle"]) => updateSettings({ navigationStyle: val });
+  const setGhostMode = (val: boolean) => updateSettings({ ghostMode: val });
 
   return (
     <SettingsContext.Provider
@@ -169,6 +182,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         toggleDashboardWidget,
         setDashboardOrder,
         setNavigationStyle,
+        setGhostMode,
       }}
     >
       {!loading && children}

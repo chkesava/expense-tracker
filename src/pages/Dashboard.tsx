@@ -24,6 +24,8 @@ import { CATEGORIES } from "../types/expense";
 import { cn } from "../lib/utils";
 import MagicChatEntry from "../components/MagicChatEntry";
 import NumberTicker from "../components/common/NumberTicker";
+import Amount from "../components/common/Amount";
+
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -257,7 +259,7 @@ export default function Dashboard() {
                     <span className="text-[10px] font-black text-slate-400 w-4">{index + 1}.</span>
                     <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{item.category}</span>
                   </div>
-                  <div className="text-sm font-black text-slate-900 dark:text-white">₹{item.value.toLocaleString()}</div>
+                  <div className="text-sm font-black text-slate-900 dark:text-white"><Amount value={item.value} /></div>
                 </div>
                 {settings.monthlyBudget > 0 && (
                   <div className="h-1 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
@@ -314,7 +316,7 @@ export default function Dashboard() {
                  <div className="flex items-center justify-between mb-1">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Monthly Savings</p>
                     <p className={cn("text-sm font-black", summary.savings >= 0 ? "text-emerald-400" : "text-rose-400")}>
-                      {summary.savings >= 0 ? "+" : ""}₹{summary.savings.toLocaleString()}
+                      <Amount value={summary.savings} prefix={summary.savings >= 0 ? "+" : ""} />
                     </p>
                  </div>
                  <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
@@ -332,7 +334,7 @@ export default function Dashboard() {
                 <div key={cat} className="space-y-1.5">
                   <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
                     <span className="text-slate-300">{cat}</span>
-                    <span className="text-white">₹{amt.toLocaleString()}</span>
+                    <span className="text-white"><Amount value={amt} /></span>
                   </div>
                   <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
                     <motion.div 
@@ -396,7 +398,7 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{budget.category}</div>
-                    <div className="text-xs font-medium text-slate-500 dark:text-slate-400">₹{budget.spent.toLocaleString()} of ₹{budget.amount.toLocaleString()}</div>
+                    <div className="text-xs font-medium text-slate-500 dark:text-slate-400"><Amount value={budget.spent} /> of <Amount value={budget.amount} /></div>
                   </div>
                   <div className={cn("text-xs font-extrabold uppercase tracking-[0.2em]", budget.level === "danger" ? "text-red-600 dark:text-red-300" : "text-amber-600 dark:text-amber-300")}>
                     {budget.percent}%
@@ -423,7 +425,7 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{goal.name}</div>
-                    <div className="text-xs font-medium text-slate-500 dark:text-slate-400">₹{goal.currentAmount.toLocaleString()} of ₹{goal.targetAmount.toLocaleString()}</div>
+                    <div className="text-xs font-medium text-slate-500 dark:text-slate-400"><Amount value={goal.currentAmount} /> of <Amount value={goal.targetAmount} /></div>
                   </div>
                   <div className="text-xs font-extrabold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-300">{goal.progress}%</div>
                 </div>
@@ -475,7 +477,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-black text-sm text-slate-900 dark:text-white">-₹{expense.amount}</div>
+                  <div className="font-black text-sm text-slate-900 dark:text-white"><Amount value={expense.amount} prefix="-₹" /></div>
                   {accounts.find(a => a.id === expense.accountId) && (
                     <div className="text-[9px] font-bold text-slate-400 uppercase">{accounts.find(a => a.id === expense.accountId)?.name}</div>
                   )}

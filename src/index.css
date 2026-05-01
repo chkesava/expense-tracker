@@ -146,6 +146,75 @@
   --ring: 350 65% 75%;
 }
 
+/* Cyberpunk Atmosphere */
+.theme-cyberpunk {
+  --background: 280 50% 4%;
+  --foreground: 180 100% 70%;
+  --card: 280 50% 7%;
+  --card-foreground: 180 100% 75%;
+  --popover: 280 50% 6%;
+  --popover-foreground: 180 100% 70%;
+  --primary: 320 100% 60%; /* Neon Pink */
+  --primary-foreground: 280 50% 4%;
+  --secondary: 250 60% 15%;
+  --secondary-foreground: 180 100% 80%;
+  --muted: 250 60% 12%;
+  --muted-foreground: 280 20% 50%;
+  --accent: 180 100% 50%; /* Cyan Glow */
+  --accent-foreground: 280 50% 4%;
+  --destructive: 0 100% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 280 40% 15%;
+  --input: 280 40% 15%;
+  --ring: 320 100% 60%;
+}
+
+/* Nordic Atmosphere */
+.theme-nordic {
+  --background: 210 20% 96%;
+  --foreground: 220 20% 20%;
+  --card: 210 20% 98%;
+  --card-foreground: 220 20% 15%;
+  --popover: 210 20% 97%;
+  --popover-foreground: 220 20% 20%;
+  --primary: 200 15% 40%; /* Muted Slate Blue */
+  --primary-foreground: 210 20% 98%;
+  --secondary: 30 10% 88%; /* Wood accent */
+  --secondary-foreground: 220 20% 30%;
+  --muted: 210 15% 90%;
+  --muted-foreground: 210 10% 50%;
+  --accent: 30 15% 92%;
+  --accent-foreground: 30 40% 30%;
+  --destructive: 10 50% 45%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 210 15% 85%;
+  --input: 210 15% 85%;
+  --ring: 200 15% 40%;
+}
+
+/* Deep Sea Atmosphere */
+.theme-deep-sea {
+  --background: 220 50% 6%;
+  --foreground: 160 80% 90%;
+  --card: 220 50% 9%;
+  --card-foreground: 160 80% 95%;
+  --popover: 220 50% 8%;
+  --popover-foreground: 160 80% 90%;
+  --primary: 165 90% 45%; /* Bioluminescent Emerald */
+  --primary-foreground: 220 50% 4%;
+  --secondary: 225 40% 15%;
+  --secondary-foreground: 160 80% 85%;
+  --muted: 225 40% 12%;
+  --muted-foreground: 220 20% 50%;
+  --accent: 190 100% 40%; /* Deep Water Blue */
+  --accent-foreground: 160 80% 95%;
+  --destructive: 0 70% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 40% 18%;
+  --input: 220 40% 18%;
+  --ring: 165 90% 45%;
+}
+
 
 * {
   border-color: hsl(var(--border));
@@ -477,6 +546,19 @@ html {
 
   .shine-effect:hover::after {
     opacity: 1;
+  }
+
+  /* Privacy Ghost Mode */
+  .ghost-mode .privacy-blur {
+    filter: blur(8px) grayscale(0.5);
+    transition: filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+    pointer-events: none;
+    opacity: 0.8;
+  }
+
+  .privacy-blur {
+    transition: filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
