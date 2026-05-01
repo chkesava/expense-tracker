@@ -87,7 +87,7 @@ function AppRoutes() {
       <Modal
         isOpen={isAddExpenseOpen}
         onClose={() => setIsAddExpenseOpen(false)}
-        title="Add Expense"
+        title="Add Transaction"
       >
         <ExpenseForm onSuccess={() => setIsAddExpenseOpen(false)} />
       </Modal>

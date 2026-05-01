@@ -9,6 +9,7 @@ import FocusWidget from "../components/focus/FocusWidget";
 import FocusConfigModal from "../components/focus/FocusConfigModal";
 import { Skeleton } from "../components/common/Skeleton";
 import { useExpenses } from "../hooks/useExpenses";
+import { useIncomes } from "../hooks/useIncomes";
 import { useSubscriptions } from "../hooks/useSubscriptions";
 import { useCategoryBudgets } from "../hooks/useCategoryBudgets";
 import { useFinancialGoals } from "../hooks/useFinancialGoals";
@@ -38,7 +39,9 @@ const surfaceClass = "bento-card";
 const softSurfaceClass = "bg-primary/5 dark:bg-white/5 border border-primary/10 dark:border-white/5 transition-all duration-300 rounded-2xl";
 
 export default function Dashboard() {
-  const { expenses, loading } = useExpenses();
+  const { expenses, loading: expensesLoading } = useExpenses();
+  const { incomes, loading: incomesLoading } = useIncomes();
+  const loading = expensesLoading || incomesLoading;
   const { accounts } = useAccounts();
   const { subscriptions } = useSubscriptions();
   const { budgets } = useCategoryBudgets();
@@ -96,20 +99,34 @@ export default function Dashboard() {
 
   const monthlyComparison = useMemo(() => {
     const byMonth = groupByMonth(expenses);
-    const current = byMonth.find((m) => m.month === selectedMonth)?.value ?? 0;
+    const currentExpenses = byMonth.find((m) => m.month === selectedMonth)?.value ?? 0;
+    
+    const incomeByMonth = groupByMonth(incomes as any);
+    const currentIncome = incomeByMonth.find((m) => m.month === selectedMonth)?.value ?? 0;
+
     const idx = byMonth.findIndex((m) => m.month === selectedMonth);
-    const prev = idx >= 0 && byMonth[idx + 1] ? byMonth[idx + 1].value : 0;
-    const change = prev === 0 ? 0 : Math.round(((current - prev) / prev) * 100);
-    return { current, prev, change };
-  }, [expenses, selectedMonth]);
+    const prevExpenses = idx >= 0 && byMonth[idx + 1] ? byMonth[idx + 1].value : 0;
+    const change = prevExpenses === 0 ? 0 : Math.round(((currentExpenses - prevExpenses) / prevExpenses) * 100);
+    
+    return { 
+      currentExpenses, 
+      currentIncome,
+      prevExpenses, 
+      change,
+      savings: currentIncome - currentExpenses,
+      savingsRate: currentIncome > 0 ? Math.round(((currentIncome - currentExpenses) / currentIncome) * 100) : 0
+    };
+  }, [expenses, incomes, selectedMonth]);
 
   const summary = useMemo(() => ({
-    total: monthlyComparison.current,
+    totalExpenses: monthlyComparison.currentExpenses,
+    totalIncome: monthlyComparison.currentIncome,
+    savings: monthlyComparison.savings,
     byCategory: Object.fromEntries(topCategories.map(c => [c.category, c.value]))
-  }), [monthlyComparison.current, topCategories]);
+  }), [monthlyComparison, topCategories]);
 
   const smartInsight = useMemo(() => getSmartInsight(filteredExpenses, settings.monthlyBudget, selectedMonth), [filteredExpenses, settings.monthlyBudget, selectedMonth]);
-  const budgetUsagePercent = settings.monthlyBudget > 0 ? Math.min(100, Math.round((monthlyComparison.current / settings.monthlyBudget) * 100)) : 0;
+  const budgetUsagePercent = settings.monthlyBudget > 0 ? Math.min(100, Math.round((monthlyComparison.currentExpenses / settings.monthlyBudget) * 100)) : 0;
   const budgetColorClass = getUsageColor(budgetUsagePercent).split(" ")[0];
 
   const categoryBudgetAlerts = useMemo(() => {
@@ -283,15 +300,35 @@ export default function Dashboard() {
                   {selectedMonth}
                 </span>
               </div>
-              <div className="flex items-baseline gap-2 mb-8">
-                <span className="text-5xl font-black text-white tracking-tighter">
-                  ₹<NumberTicker value={summary.total} />
-                </span>
-                <span className="text-xs font-black uppercase tracking-widest text-slate-400">Total</span>
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="space-y-1">
+                   <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Income</p>
+                   <p className="text-2xl font-black text-white tracking-tight">₹<NumberTicker value={summary.totalIncome} /></p>
+                </div>
+                <div className="space-y-1">
+                   <p className="text-[9px] font-black text-rose-400 uppercase tracking-widest">Expenses</p>
+                   <p className="text-2xl font-black text-white tracking-tight">₹<NumberTicker value={summary.totalExpenses} /></p>
+                </div>
+              </div>
+              <div className="p-4 bg-white/5 rounded-2xl border border-white/10 mb-8">
+                 <div className="flex items-center justify-between mb-1">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Monthly Savings</p>
+                    <p className={cn("text-sm font-black", summary.savings >= 0 ? "text-emerald-400" : "text-rose-400")}>
+                      {summary.savings >= 0 ? "+" : ""}₹{summary.savings.toLocaleString()}
+                    </p>
+                 </div>
+                 <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }} 
+                      animate={{ width: `${Math.max(0, Math.min(100, monthlyComparison.savingsRate))}%` }} 
+                      className="h-full bg-emerald-500 rounded-full" 
+                    />
+                 </div>
               </div>
             </div>
             <div className="space-y-3">
-              {Object.entries(summary.byCategory).slice(0, 3).map(([cat, amt]) => (
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Top Spend Categories</p>
+              {Object.entries(summary.byCategory).slice(0, 2).map(([cat, amt]) => (
                 <div key={cat} className="space-y-1.5">
                   <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
                     <span className="text-slate-300">{cat}</span>
@@ -300,8 +337,8 @@ export default function Dashboard() {
                   <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
                     <motion.div 
                       initial={{ width: 0 }} 
-                      animate={{ width: `${summary.total > 0 ? (amt / summary.total) * 100 : 0}%` }} 
-                      className="h-full bg-white rounded-full" 
+                      animate={{ width: `${summary.totalExpenses > 0 ? (amt / summary.totalExpenses) * 100 : 0}%` }} 
+                      className="h-full bg-white/40 rounded-full" 
                     />
                   </div>
                 </div>

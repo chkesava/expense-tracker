@@ -16,6 +16,16 @@ export const CATEGORIES = [
   "Other",
 ] as const;
 
+export const INCOME_SOURCES = [
+  "Salary",
+  "Freelance",
+  "Investment",
+  "Gift",
+  "Business",
+  "Rental",
+  "Other",
+] as const;
+
 export interface Category {
   id: string;
   name: string;
@@ -73,5 +83,16 @@ export interface Expense {
   tripId?: string | null; // ID of the trip this expense belongs to
   isRecurring?: boolean;
   isAudited?: boolean;
+  createdAt: unknown;
+}
+
+export interface Income {
+  id?: string;
+  amount: number;
+  source: string;
+  note: string;
+  date: string;
+  month: string;
+  accountId?: string;
   createdAt: unknown;
 }

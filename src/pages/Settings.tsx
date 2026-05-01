@@ -16,6 +16,7 @@ import { useFinancialGoals } from "../hooks/useFinancialGoals";
 import { useCategorizationRules } from "../hooks/useCategorizationRules";
 import { CATEGORIES } from "../types/expense";
 import { exportExpensesToCSV } from "../utils/exportCsv";
+import { clearDemoWorkspaceForUser, seedDemoWorkspaceForUser } from "../utils/seedData";
 import { db } from "../firebase";
 import Avatar from "../components/Avatar";
 import ConfirmDialog from "../components/common/ConfirmDialog";
@@ -34,7 +35,7 @@ const TIMEZONES = [
   "Pacific/Auckland",
 ];
 
-type SectionId = "profile" | "general" | "personalize" | "manage" | "accounts" | "data";
+type SectionId = "profile" | "general" | "personalize" | "manage" | "accounts" | "dev" | "data";
 
 type BottomTabId = "home" | "expenses" | "split" | "subscriptions" | "analytics" | "analysis" | "settings";
 type WidgetId = "subscriptions" | "focus" | "gamification" | "topCategories";
@@ -152,6 +153,10 @@ export default function SettingsPage() {
   const [ruleKeyword, setRuleKeyword] = useState("");
   const [ruleCategory, setRuleCategory] = useState("");
 
+  const [seedStatus, setSeedStatus] = useState<string | null>(null);
+  const [seedTag, setSeedTag] = useState<string | null>(null);
+  const [isSeeding, setIsSeeding] = useState(false);
+
   const allCategoryOptions = useMemo(() => [...CATEGORIES, ...categories.map((c) => c.name)], [categories]);
 
   useEffect(() => {
@@ -235,16 +240,70 @@ export default function SettingsPage() {
   };
 
   const sections = useMemo(
-    () => [
+    () => {
+      const base = [
       { id: "profile" as const, label: "Profile", icon: User },
       { id: "general" as const, label: "General", icon: SlidersHorizontal },
       { id: "personalize" as const, label: "Personalize", icon: Brush },
       { id: "manage" as const, label: "Manage", icon: LayoutGrid },
       { id: "accounts" as const, label: "Accounts", icon: WalletCards },
+      ...(import.meta.env.DEV ? [{ id: "dev" as const, label: "Dev Tools", icon: Folder }] : []),
       { id: "data" as const, label: "Data", icon: Database },
-    ],
+      ];
+      return base;
+    },
     []
   );
+
+  const handleSeedWorkspace = async () => {
+    if (!user) return toast.error("Sign in to seed demo data");
+    setIsSeeding(true);
+    setSeedStatus("Seeding demo data...");
+    try {
+      const res = await seedDemoWorkspaceForUser(user.uid, { months: 4 });
+      setSeedTag(res.seedTag);
+      setSeedStatus(
+        `Seeded (tag: ${res.seedTag}): ${res.counts.accounts} accounts, ${res.counts.subscriptions} subs/EMIs, ${res.counts.trips} trip, ${res.counts.splits} split, ${res.counts.expenses} expenses.`
+      );
+      toast.success("Seeded demo data");
+    } catch (err) {
+      console.error(err);
+      setSeedStatus("Failed to seed demo data");
+      toast.error("Failed to seed demo data");
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
+  const handleClearSeeded = async (scope: "tag" | "all") => {
+    if (!user) return toast.error("Sign in to clear demo data");
+    if (scope === "tag" && !seedTag) {
+      return toast.info("No seed tag yet. Seed once or clear all demo data.");
+    }
+    const ok = window.confirm(
+      scope === "all"
+        ? "Remove ALL demo data for this account? This only removes items flagged as demo."
+        : `Remove demo data with tag ${seedTag}? This only removes items flagged as demo.`
+    );
+    if (!ok) return;
+
+    setIsSeeding(true);
+    setSeedStatus("Removing demo data...");
+    try {
+      const res = await clearDemoWorkspaceForUser(user.uid, scope === "tag" ? seedTag ?? undefined : undefined);
+      setSeedStatus(
+        `Deleted: ${res.accounts} accounts, ${res.accountTypes} account types, ${res.subscriptions} subs/EMIs, ${res.trips} trips, ${res.splits} splits, ${res.expenses} expenses.`
+      );
+      setSeedTag(null);
+      toast.success("Removed demo data");
+    } catch (err) {
+      console.error(err);
+      setSeedStatus("Failed to remove demo data");
+      toast.error("Failed to remove demo data");
+    } finally {
+      setIsSeeding(false);
+    }
+  };
 
   const pill = (isActive: boolean) =>
     cn(
@@ -742,6 +801,47 @@ export default function SettingsPage() {
                       </button>
                     </div>
                   </div>
+                </div>
+              </SettingsCard>
+            )}
+
+            {import.meta.env.DEV && active === "dev" && (
+              <SettingsCard title="Dev Tools" subtitle="Seed demo data to quickly test all features." icon={Folder}>
+                <div className="rounded-2xl border border-slate-100/80 bg-white/60 p-4 dark:border-slate-800 dark:bg-slate-950/30">
+                  <div className="text-sm font-black text-slate-900 dark:text-slate-100">Seed data</div>
+                  <div className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                    Creates demo account types, bank accounts, subscriptions/EMIs, a trip (with budgets), a split, and a few months of expenses — all tagged so you can delete safely.
+                  </div>
+
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                    <button
+                      onClick={handleSeedWorkspace}
+                      disabled={isSeeding}
+                      className="min-h-11 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 text-sm font-black text-white shadow-lg shadow-blue-500/20 active:scale-[0.98] disabled:opacity-50"
+                    >
+                      {isSeeding ? "Working..." : "Seed everything"}
+                    </button>
+                    <button
+                      onClick={() => handleClearSeeded("tag")}
+                      disabled={isSeeding}
+                      className="min-h-11 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 hover:bg-slate-50 active:scale-[0.98] disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+                    >
+                      Clear this seed
+                    </button>
+                    <button
+                      onClick={() => handleClearSeeded("all")}
+                      disabled={isSeeding}
+                      className="min-h-11 rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-black text-red-700 hover:bg-red-50 active:scale-[0.98] disabled:opacity-50 dark:border-red-900/40 dark:bg-slate-950 dark:text-red-300 dark:hover:bg-red-950/30"
+                    >
+                      Clear all demo
+                    </button>
+                  </div>
+
+                  {seedStatus && (
+                    <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 text-xs font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-200">
+                      {seedStatus}
+                    </div>
+                  )}
                 </div>
               </SettingsCard>
             )}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { seedDemoExpensesForUser, clearDemoExpensesForUser } from "../utils/seedData";
+import { clearDemoWorkspaceForUser, seedDemoWorkspaceForUser } from "../utils/seedData";
 import { toast } from 'react-toastify';
 
 export default function SeedDataPage() {
@@ -12,10 +12,12 @@ export default function SeedDataPage() {
     if (!user) return setStatus("Please sign in first");
     setStatus("Seeding...");
     try {
-      const res = await seedDemoExpensesForUser(user.uid, 4);
+      const res = await seedDemoWorkspaceForUser(user.uid, { months: 4 });
       setSeedTag(res.seedTag);
-      setStatus(`Added ${res.count} demo expenses (tag: ${res.seedTag})`);
-      toast.success(`Added ${res.count} demo expenses`);
+      setStatus(
+        `Seeded demo data (tag: ${res.seedTag}): ${res.counts.accounts} accounts, ${res.counts.subscriptions} subs/EMIs, ${res.counts.trips} trip, ${res.counts.splits} split, ${res.counts.expenses} expenses.`
+      );
+      toast.success("Seeded demo data");
     } catch (err) {
       console.error(err);
       setStatus("Failed to seed data");
@@ -29,8 +31,10 @@ export default function SeedDataPage() {
     if (!ok) return;
     setStatus("Removing demo items...");
     try {
-      const res = await clearDemoExpensesForUser(user.uid, seedTag ?? undefined);
-      setStatus(`Deleted ${res.deleted} demo expenses`);
+      const res = await clearDemoWorkspaceForUser(user.uid, seedTag ?? undefined);
+      setStatus(
+        `Deleted demo data: ${res.accounts} accounts, ${res.accountTypes} account types, ${res.subscriptions} subs/EMIs, ${res.trips} trips, ${res.splits} splits, ${res.expenses} expenses.`
+      );
       setSeedTag(null);
     } catch (err) {
       console.error(err);
@@ -44,7 +48,7 @@ export default function SeedDataPage() {
       <main className="app-container">
         <div className="card">
           <p style={{ marginBottom: 12 }}>
-            This helper adds demo expenses across the last 3–4 months and tags them so you can remove them later.
+            This helper adds demo data across features (accounts, subscriptions/EMIs, trips, splits, expenses) and tags them so you can remove them later.
           </p>
 
           <div style={{ display: "flex", gap: 10 }}>
