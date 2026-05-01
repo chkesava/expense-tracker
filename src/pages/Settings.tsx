@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, writeBatch } from "firebase/firestore";
-import { Brush, Database, Folder, LayoutGrid, SlidersHorizontal, Trash2, User, WalletCards } from "lucide-react";
+import { Brush, Database, Folder, LayoutGrid, LogOut, SlidersHorizontal, Trash2, User, WalletCards } from "lucide-react";
 import { toast } from "react-toastify";
 
 import useSettings from "../hooks/useSettings";
@@ -117,7 +117,7 @@ export default function SettingsPage() {
     toggleDashboardWidget,
     setNavigationStyle,
   } = useSettings();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { expenses } = useExpenses();
   const { theme, setTheme } = useTheme();
 
@@ -131,6 +131,7 @@ export default function SettingsPage() {
   const [active, setActive] = useState<SectionId>("general");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [username, setUsername] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
@@ -222,6 +223,17 @@ export default function SettingsPage() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/");
+      toast.success("Logged out successfully");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to logout");
+    }
+  };
+
   const sections = useMemo(
     () => [
       { id: "profile" as const, label: "Profile", icon: User },
@@ -304,6 +316,19 @@ export default function SettingsPage() {
                     className="min-h-11 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-black text-white shadow-sm transition-colors hover:bg-blue-700 active:scale-95 disabled:opacity-50"
                   >
                     {isSavingProfile ? "Saving..." : "Save"}
+                  </button>
+                </div>
+
+                <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
+                  <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500 ml-1 mb-3">Account Security</div>
+                  <button
+                    onClick={() => setShowLogoutConfirm(true)}
+                    className="flex w-full items-center justify-between rounded-2xl border border-red-100 bg-red-50/50 px-4 py-3 text-sm font-black text-red-700 hover:bg-red-100/50 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <LogOut className="h-4 w-4" /> Sign Out
+                    </span>
+                    <span className="text-[10px] uppercase tracking-[0.24em]">Logout</span>
                   </button>
                 </div>
               </SettingsCard>
@@ -731,6 +756,15 @@ export default function SettingsPage() {
         confirmText={isDeleting ? "Deleting..." : "Yes, Delete Everything"}
         onConfirm={handleDeleteAll}
         onCancel={() => setShowDeleteConfirm(false)}
+      />
+
+      <ConfirmDialog
+        open={showLogoutConfirm}
+        title="Sign Out"
+        message="Are you sure you want to sign out of your account?"
+        confirmText="Sign Out"
+        onConfirm={handleLogout}
+        onCancel={() => setShowLogoutConfirm(false)}
       />
     </>
   );
