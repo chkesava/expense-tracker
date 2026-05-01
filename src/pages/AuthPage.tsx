@@ -55,11 +55,14 @@ export default function AuthPage() {
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xl shadow-slate-900/10 mx-auto mb-4">
                         <Activity size={24} />
                     </div>
-                    <h2 className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white">Antigravity</h2>
+                    <h2 className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white">Vault</h2>
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1">Autonomous Wealth Intelligence</p>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900/40 backdrop-blur-3xl border border-slate-200 dark:border-white/5 p-10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                <motion.div layout className="bento-card p-8 sm:p-10 z-10 w-full relative overflow-hidden">
+                    {/* Animated background glow inside the card */}
+                    <div className="absolute -top-32 -right-32 w-64 h-64 bg-primary/20 rounded-full blur-[80px] pointer-events-none" />
+                    <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px] pointer-events-none" />
                     <div className="mb-8">
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight mb-1">
                             {mode === "login" ? "Sign in" : mode === "signup" ? "Create account" : "Reset password"}
@@ -92,14 +95,14 @@ export default function AuthPage() {
                                         value={displayName}
                                         onChange={(e) => setDisplayName(e.target.value)}
                                         placeholder="Identification"
-                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl text-sm font-bold focus:ring-2 focus:ring-slate-900 dark:focus:ring-white outline-none transition-all dark:text-white"
+                                        className="w-full px-4 py-3.5 bg-slate-100/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary/50 dark:focus:ring-primary/50 outline-none transition-all dark:text-white shadow-inner"
                                     />
                                 </motion.div>
                             )}
                         </AnimatePresence>
 
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">
                                 Email
                             </label>
                             <input
@@ -108,42 +111,50 @@ export default function AuthPage() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="name@domain.com"
-                                className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl text-sm font-bold focus:ring-2 focus:ring-slate-900 dark:focus:ring-white outline-none transition-all dark:text-white"
+                                className="w-full px-4 py-3.5 bg-slate-100/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary/50 dark:focus:ring-primary/50 outline-none transition-all dark:text-white shadow-inner"
                             />
                         </div>
 
-                        {mode !== "forgot" && (
-                            <div className="space-y-1.5">
-                                <div className="flex justify-between items-center px-1">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                        Password
-                                    </label>
-                                    {mode === "login" && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setMode("forgot")}
-                                            className="text-[10px] text-slate-400 hover:text-slate-900 dark:hover:text-white font-black uppercase tracking-widest transition-colors"
-                                        >
-                                            Lost?
-                                        </button>
-                                    )}
-                                </div>
-                                <input
-                                    type="password"
-                                    required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="••••••••"
-                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl text-sm font-bold focus:ring-2 focus:ring-slate-900 dark:focus:ring-white outline-none transition-all dark:text-white"
-                                />
-                            </div>
-                        )}
+                        <AnimatePresence mode="wait">
+                            {mode !== "forgot" && (
+                                <motion.div
+                                    key="password-field"
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="space-y-1.5"
+                                >
+                                    <div className="flex justify-between items-center px-1">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                                            Password
+                                        </label>
+                                        {mode === "login" && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setMode("forgot")}
+                                                className="text-[10px] text-primary hover:text-indigo-600 dark:hover:text-indigo-400 font-black uppercase tracking-widest transition-colors"
+                                            >
+                                                Lost?
+                                            </button>
+                                        )}
+                                    </div>
+                                    <input
+                                        type="password"
+                                        required
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="••••••••"
+                                        className="w-full px-4 py-3.5 bg-slate-100/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary/50 dark:focus:ring-primary/50 outline-none transition-all dark:text-white shadow-inner"
+                                    />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
                         <motion.button
                             whileHover={{ scale: 1.01 }}
                             whileTap={{ scale: 0.99 }}
                             disabled={loading}
-                            className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black uppercase tracking-[0.2em] text-[10px] rounded-xl shadow-xl shadow-slate-900/10 dark:shadow-white/10 transition-all flex justify-center items-center gap-3 mt-4"
+                            className="w-full py-4 bg-gradient-to-r from-primary to-indigo-600 text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-xl shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all flex justify-center items-center gap-3 mt-6"
                         >
                             {loading && (
                                 <div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
@@ -162,7 +173,7 @@ export default function AuthPage() {
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.99 }}
                         onClick={login}
-                        className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10 text-slate-600 dark:text-slate-200 font-bold py-3.5 rounded-xl flex items-center justify-center gap-3 shadow-sm transition-all text-sm"
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-200 font-bold py-3.5 rounded-xl flex items-center justify-center gap-3 shadow-sm hover:shadow-md transition-all text-sm"
                     >
                         <img className="w-4 h-4" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
                         <span>Google Identification</span>
@@ -191,7 +202,7 @@ export default function AuthPage() {
                             </p>
                         )}
                     </div>
-                </div>
+                </motion.div>
             </motion.div>
         </div>
     );

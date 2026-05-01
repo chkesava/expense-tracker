@@ -4,8 +4,8 @@
 
 @layer base {
   :root {
-    /* Sophisticated HSL Palette - Premium Indigo & Deep Slate */
-    --background: 210 50% 98%;
+    /* Vault Premium Palette - Electric Indigo & Pristine White */
+    --background: 220 33% 98%;
     --foreground: 224 71% 4%;
     
     --card: 0 0% 100%;
@@ -14,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 224 71% 4%;
     
-    --primary: 226 100% 50%; /* Deep Atmosphere Blue */
+    --primary: 245 100% 60%; /* Vibrant Electric Indigo */
     --primary-foreground: 210 40% 98%;
     
     --secondary: 220 14% 96%;
@@ -23,58 +23,58 @@
     --muted: 220 14% 96%;
     --muted-foreground: 220 9% 46%;
     
-    --accent: 226 100% 97%;
-    --accent-foreground: 226 100% 50%;
+    --accent: 245 100% 95%;
+    --accent-foreground: 245 100% 60%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
     
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 226 100% 50%;
+    --ring: 245 100% 60%;
     
-    --radius: 1.25rem; /* Larger, more modern radius */
+    --radius: 1.5rem; /* Smoother, larger radius for Bento aesthetic */
     
     /* Design System Elevations */
-    --glass-bg: rgba(255, 255, 255, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.5);
-    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(255, 255, 255, 1);
+    --glass-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
   }
 }
 
 .dark {
-  --background: 224 71% 2%; /* Ultra-deep midnight */
+  --background: 230 40% 4%; /* Deep OLED-like Indigo */
   --foreground: 210 40% 98%;
   
-  --card: 224 71% 4%;
+  --card: 230 40% 6%;
   --card-foreground: 210 40% 98%;
   
-  --popover: 224 71% 3%;
+  --popover: 230 40% 5%;
   --popover-foreground: 210 40% 98%;
   
-  --primary: 226 100% 64%; /* Vibrant Atmosphere Blue */
-  --primary-foreground: 224 71% 4%;
+  --primary: 245 100% 65%; /* Bright Electric Indigo */
+  --primary-foreground: 230 40% 4%;
   
-  --secondary: 224 71% 8%;
+  --secondary: 230 40% 10%;
   --secondary-foreground: 210 40% 98%;
   
-  --muted: 224 71% 10%;
+  --muted: 230 40% 10%;
   --muted-foreground: 217 19% 70%;
   
-  --accent: 226 100% 15%;
-  --accent-foreground: 226 100% 64%;
+  --accent: 245 100% 15%;
+  --accent-foreground: 245 100% 65%;
   
   --destructive: 0 63% 31%;
   --destructive-foreground: 210 40% 98%;
   
-  --border: 224 71% 12%;
-  --input: 224 71% 12%;
-  --ring: 226 100% 64%;
+  --border: 230 40% 12%;
+  --input: 230 40% 12%;
+  --ring: 245 100% 65%;
 
   /* Dark Mode Elevations */
-  --glass-bg: rgba(7, 10, 15, 0.4);
-  --glass-border: rgba(255, 255, 255, 0.05);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+  --glass-bg: rgba(10, 12, 20, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.8);
 }
 
 /* Midnight Olive Atmosphere */
@@ -426,18 +426,22 @@ html {
   /* Premium Design Utilities */
   .premium-glass {
     background: var(--glass-bg);
-    backdrop-filter: blur(12px) saturate(180%);
-    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(200%);
+    -webkit-backdrop-filter: blur(24px) saturate(200%);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
   }
 
   .premium-card {
-    @apply rounded-[2rem] border border-slate-200/50 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 backdrop-blur-3xl shadow-sm transition-all duration-500;
+    @apply rounded-[2rem] border border-white dark:border-white/10 bg-white/90 dark:bg-slate-900/80 backdrop-blur-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all duration-500;
   }
 
   .premium-card:hover {
-    @apply shadow-2xl shadow-blue-500/5 -translate-y-1;
+    @apply shadow-[0_20px_40px_rgb(0,0,0,0.08)] dark:shadow-[0_20px_40px_rgb(0,0,0,0.8)] -translate-y-1;
+  }
+
+  .bento-card {
+    @apply rounded-[2rem] border border-white/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/60 backdrop-blur-2xl shadow-xl transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 overflow-hidden relative;
   }
 
   .text-gradient-premium {

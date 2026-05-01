@@ -46,14 +46,31 @@ function AppContent() {
     processSubscriptions();
   }, [processSubscriptions]);
 
-  // -------- AUTH SCREEN --------
-  if (!user) {
-    return <AuthPage />;
-  }
-
-  // -------- APP ROUTES --------
   return (
-    <AppRoutes />
+    <AnimatePresence mode="wait">
+      {!user ? (
+        <motion.div
+          key="auth"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 1.05, filter: "blur(10px)" }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="absolute inset-0 z-50"
+        >
+          <AuthPage />
+        </motion.div>
+      ) : (
+        <motion.div
+          key="app"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="w-full min-h-[100dvh]"
+        >
+          <AppRoutes />
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 

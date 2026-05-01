@@ -267,7 +267,7 @@ export default function ExpenseListPage() {
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
                 <div className="space-y-6">
                   {/* Summary & Filters */}
-                  <div className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 p-8 shadow-sm transition-all duration-300">
+                  <div className="bento-card p-8">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Monthly Spending Pulse</h3>
                         <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/5">
@@ -290,7 +290,7 @@ export default function ExpenseListPage() {
                   </div>
 
                   {/* Expense Items */}
-                  <div className="min-h-[400px] rounded-2xl border border-slate-200 dark:border-white/5 bg-white/50 dark:bg-slate-900/40 backdrop-blur-md overflow-hidden">
+                  <div className="bento-card min-h-[400px]">
                     {loading ? <Skeleton className="h-full w-full" /> : (
                         <div className="divide-y divide-slate-100 dark:divide-slate-800">
                            {[...today, ...yesterday, ...earlier].length === 0 ? (
@@ -315,7 +315,7 @@ export default function ExpenseListPage() {
 
                 {/* Right Sidebar: Filters */}
                 <aside className="space-y-4">
-                    <div className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 p-6 shadow-sm backdrop-blur-xl">
+                    <div className="bento-card p-6">
                         <div className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-6">Filter Records</div>
                         <div className="relative mb-4">
                             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -384,7 +384,7 @@ export default function ExpenseListPage() {
           {/* DATA TAB */}
           {activeTab === "data" && (
             <div className="space-y-6">
-                <section className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
+                <section className="bento-card p-6">
                     <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-6">Import / Export Hub</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-4">
@@ -520,11 +520,11 @@ function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete 
                     </div>
                 </div>
             </div>
-            <div className="text-right flex flex-col items-end gap-1.5 pl-4">
+            <div className="text-right flex flex-col items-end gap-2 pl-4">
                 <div className="text-lg font-black text-slate-900 dark:text-white tracking-tighter">₹{expense.amount.toLocaleString()}</div>
-                <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all translate-y-1 group-hover:translate-y-0">
-                    <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700">Edit</button>
-                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-rose-600">Delete</button>
+                <div className="flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all sm:translate-y-1 sm:group-hover:translate-y-0">
+                    <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors">Edit</button>
+                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-[10px] font-black uppercase tracking-widest text-rose-600 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-colors">Del</button>
                 </div>
             </div>
         </div>

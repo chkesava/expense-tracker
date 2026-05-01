@@ -99,8 +99,8 @@ export default function Header() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         className={cn(
-          "fixed top-0 left-0 w-full z-50 px-4 md:px-8 py-4 flex items-center justify-between gap-4",
-          "premium-glass border-b border-white/10 shadow-2xl transition-all duration-500"
+          "fixed top-3 left-3 right-3 sm:top-5 sm:left-5 sm:right-5 max-w-7xl mx-auto z-50 px-4 py-3 flex items-center justify-between gap-3 sm:gap-4",
+          "bento-card transition-all duration-500"
         )}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
@@ -114,7 +114,7 @@ export default function Header() {
               <Activity size={18} />
             </div>
             <span className="text-2xl font-black tracking-tighter text-gradient-premium">
-              Antigravity
+              Vault
             </span>
           </motion.button>
 
@@ -142,7 +142,7 @@ export default function Header() {
           </div>
         </div>
 
-        <nav className="hidden lg:flex items-center gap-1 bg-slate-50 dark:bg-white/5 p-1 rounded-xl border border-slate-100 dark:border-white/5">
+        <nav className="hidden lg:flex items-center gap-1 bg-slate-100/50 dark:bg-slate-800/50 backdrop-blur-md p-1.5 rounded-[1.5rem] border border-white/50 dark:border-white/5">
           {desktopLinks.map((link) => {
             const isActive = location.pathname === link.path;
             const Icon = link.icon;
@@ -158,7 +158,7 @@ export default function Header() {
                 {isActive && (
                   <motion.div
                     layoutId="header-nav-pill"
-                    className="absolute inset-0 bg-white dark:bg-white/10 shadow-sm rounded-lg border border-slate-100 dark:border-white/10"
+                    className="absolute inset-0 bg-white dark:bg-slate-700 shadow-sm rounded-2xl border border-white dark:border-white/10"
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
                 )}

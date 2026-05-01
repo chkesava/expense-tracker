@@ -85,7 +85,7 @@ export default function BottomNav() {
 
   return (
     <div className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-0 w-full flex justify-center z-[100] px-3 sm:px-4 pointer-events-none md:hidden animate-in fade-in slide-in-from-bottom-8 duration-700">
-      <nav className="premium-glass rounded-[3rem] px-3 py-2 shadow-2xl pointer-events-auto flex items-center justify-between gap-1 w-full max-w-[480px] transition-all duration-500">
+      <nav className="bento-card px-3 py-2 pointer-events-auto flex items-center justify-between gap-1 w-full max-w-[480px]">
         {/* Left Nav Group */}
         {leftLinks.map(renderLink)}
 

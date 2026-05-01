@@ -34,7 +34,7 @@ const itemVariants: Variants = {
   visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 15 } },
 };
 
-const surfaceClass = "premium-card shine-effect";
+const surfaceClass = "bento-card";
 const softSurfaceClass = "bg-primary/5 dark:bg-white/5 border border-primary/10 dark:border-white/5 transition-all duration-300 rounded-2xl";
 
 export default function Dashboard() {
@@ -47,22 +47,7 @@ export default function Dashboard() {
   const { settings, setDashboardOrder } = useSettings();
   const navigate = useNavigate();
 
-  const CATEGORY_DEFS = [
-    { id: "pulse", label: "Pulse", icon: Zap, color: "text-primary dark:text-primary", bg: "bg-primary/10 dark:bg-primary/20" },
-    { id: "snap", label: "Snapshot", icon: BarChart3, color: "text-indigo-600 dark:text-indigo-400", bg: "bg-indigo-50 dark:bg-indigo-500/10" },
-    { id: "plan", label: "Planning", icon: Target, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-500/10" },
-    { id: "log", label: "History", icon: HistoryIcon, color: "text-slate-600 dark:text-slate-400", bg: "bg-slate-50 dark:bg-slate-700/20" },
-  ] as const;
 
-  type CategoryId = (typeof CATEGORY_DEFS)[number]["id"];
-  const [activeCategory, setActiveCategory] = useState<CategoryId | "all">("snap");
-
-  const CATEGORY_WIDGETS: Record<CategoryId, string[]> = {
-    pulse: ["magicChat", "audit", "quickAdd", "focus"],
-    snap: ["overview", "topCategories", "insight", "analysisLab"],
-    plan: ["budgetAlerts", "financialGoals", "subscriptions", "gamification"],
-    log: ["recentActivity"],
-  };
 
   const months = useMemo(() => Array.from(new Set(expenses.map((e) => e.month))).sort().reverse(), [expenses]);
   const { globalMonth } = useModals();
@@ -239,30 +224,28 @@ export default function Dashboard() {
       </Link>
     ),
     topCategories: showTopCategories && (
-      <section className={`${surfaceClass} p-6 h-full`}>
-        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4">
-          <span className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-300">T</span>
+      <section className={`${surfaceClass} p-5 h-full flex flex-col`}>
+        <h3 className="text-[13px] font-black uppercase tracking-widest text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4 opacity-80">
+          <BarChart3 size={16} className="text-indigo-500" />
           Top Categories
         </h3>
-        <div className="space-y-3">
+        <div className="flex-1 flex flex-col justify-between gap-2">
           {topCategories.length === 0 ? (
             <p className="text-sm text-slate-400 text-center py-8 italic">No expense data yet</p>
           ) : (
             topCategories.map((item, index) => (
-              <div key={item.category} className={`p-3 rounded-xl ${softSurfaceClass}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-slate-900 text-xs font-bold text-slate-500 dark:text-slate-300 shadow-sm border border-slate-100 dark:border-slate-800">
-                      {index + 1}
-                    </span>
-                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{item.category}</span>
+              <div key={item.category} className="py-2.5 border-b border-slate-100 dark:border-white/5 last:border-0">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black text-slate-400 w-4">{index + 1}.</span>
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{item.category}</span>
                   </div>
-                  <div className="text-sm font-bold text-slate-900 dark:text-white">₹{item.value.toLocaleString()}</div>
+                  <div className="text-sm font-black text-slate-900 dark:text-white">₹{item.value.toLocaleString()}</div>
                 </div>
                 {settings.monthlyBudget > 0 && (
-                  <div className="h-1.5 w-full bg-slate-200/50 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-1 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
                     <div
-                      className={cn("h-full rounded-full opacity-80", getUsageColor((item.value / settings.monthlyBudget) * 100).split(" ")[0])}
+                      className={cn("h-full rounded-full opacity-90", getUsageColor((item.value / settings.monthlyBudget) * 100).split(" ")[0])}
                       style={{ width: `${Math.min(100, (item.value / settings.monthlyBudget) * 100)}%` }}
                     />
                   </div>
@@ -274,49 +257,51 @@ export default function Dashboard() {
       </section>
     ),
     overview: (
-      <div className="premium-card p-8 h-full shine-effect relative overflow-hidden group">
-        <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:scale-110 transition-transform duration-1000">
-           <BarChart3 size={160} className="text-primary" />
+      <div className="bento-card p-6 h-full relative group bg-gradient-to-br from-slate-900 to-indigo-950 text-white border-0 overflow-hidden shadow-2xl shadow-indigo-900/20">
+        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-1000">
+           <BarChart3 size={120} className="text-white" />
         </div>
-        <div className="relative z-10">
+        <div className="relative z-10 flex flex-col h-full justify-between">
         {loading ? (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-4 w-24 bg-white/10" />
+              <Skeleton className="h-4 w-16 bg-white/10" />
             </div>
-            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-32 bg-white/10" />
             <div className="space-y-3">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-8 w-full bg-white/10" />
+              <Skeleton className="h-8 w-full bg-white/10" />
             </div>
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Overview</h3>
-              <span className="text-[10px] font-black bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full">
-                {selectedMonth}
-              </span>
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-300">Overview</h3>
+                <span className="text-[9px] font-black bg-white/10 text-white px-2 py-1 rounded-md uppercase tracking-widest">
+                  {selectedMonth}
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2 mb-8">
+                <span className="text-5xl font-black text-white tracking-tighter">
+                  ₹<NumberTicker value={summary.total} />
+                </span>
+                <span className="text-xs font-black uppercase tracking-widest text-slate-400">Total</span>
+              </div>
             </div>
-            <div className="flex items-baseline gap-2 mb-8">
-              <span className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter">
-                ₹<NumberTicker value={summary.total} />
-              </span>
-              <span className="text-sm font-bold text-slate-400">total spent</span>
-            </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {Object.entries(summary.byCategory).slice(0, 3).map(([cat, amt]) => (
-                <div key={cat} className="space-y-2">
-                  <div className="flex justify-between text-xs font-bold">
-                    <span className="text-slate-600 dark:text-slate-300 uppercase tracking-widest">{cat}</span>
-                    <span className="text-slate-900 dark:text-white">₹{amt.toLocaleString()}</span>
+                <div key={cat} className="space-y-1.5">
+                  <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                    <span className="text-slate-300">{cat}</span>
+                    <span className="text-white">₹{amt.toLocaleString()}</span>
                   </div>
-                  <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
                     <motion.div 
                       initial={{ width: 0 }} 
                       animate={{ width: `${summary.total > 0 ? (amt / summary.total) * 100 : 0}%` }} 
-                      className="h-full bg-blue-600 rounded-full" 
+                      className="h-full bg-white rounded-full" 
                     />
                   </div>
                 </div>
@@ -415,22 +400,24 @@ export default function Dashboard() {
       </section>
     ),
     recentActivity: (
-      <div className="premium-card p-8 h-full shine-effect relative overflow-hidden">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Recent Activity</h3>
-          <button onClick={() => navigate("/expenses")} className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest hover:underline px-2 py-1">View All</button>
+      <div className="bento-card p-6 h-full relative">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-[13px] font-black uppercase tracking-widest text-slate-800 dark:text-slate-100 flex items-center gap-2 opacity-80">
+            <HistoryIcon size={16} className="text-slate-500" />
+            Recent Activity
+          </h3>
+          <button onClick={() => navigate("/expenses")} className="text-[9px] font-black bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 px-2 py-1 rounded-md uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-colors">View All</button>
         </div>
 
-        <div className="space-y-3">
+        <div className="flex flex-col gap-1">
           {loading ? (
             Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-4 p-4">
-                <Skeleton className="h-10 w-10" />
+              <div key={i} className="flex items-center gap-4 py-3">
+                <Skeleton className="h-8 w-8 rounded-lg" />
                 <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="h-3 w-24" />
                 </div>
-                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-3 w-12" />
               </div>
             ))
           ) : filteredExpenses.length === 0 ? (
@@ -439,28 +426,28 @@ export default function Dashboard() {
             filteredExpenses.slice(0, visibleCount).map((expense) => (
               <div 
                 key={expense.id} 
-                className="flex items-center justify-between p-4 rounded-2xl bg-white/50 dark:bg-slate-800/50 border border-white/40 dark:border-slate-700/50 group hover:shadow-lg transition-all"
+                className="flex items-center justify-between py-2.5 border-b border-slate-100 dark:border-white/5 last:border-0 group cursor-pointer hover:opacity-80 transition-opacity"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold group-hover:scale-110 transition-transform">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 dark:text-slate-400 font-bold text-xs group-hover:scale-105 transition-transform">
                     {expense.category[0]}
                   </div>
                   <div>
-                    <div className="font-bold text-slate-900 dark:text-white mb-0.5">{expense.category}</div>
-                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{expense.date}</div>
+                    <div className="font-bold text-sm text-slate-900 dark:text-white leading-tight">{expense.category}</div>
+                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{expense.date}</div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-black text-slate-900 dark:text-white">-₹{expense.amount}</div>
+                  <div className="font-black text-sm text-slate-900 dark:text-white">-₹{expense.amount}</div>
                   {accounts.find(a => a.id === expense.accountId) && (
-                    <div className="text-[9px] font-bold text-blue-500 dark:text-blue-400 uppercase">{accounts.find(a => a.id === expense.accountId)?.name}</div>
+                    <div className="text-[9px] font-bold text-slate-400 uppercase">{accounts.find(a => a.id === expense.accountId)?.name}</div>
                   )}
                 </div>
               </div>
             ))
           )}
           {filteredExpenses.length > visibleCount && !loading && (
-            <button onClick={() => setVisibleCount(v => v + 5)} className="w-full py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors">Load More</button>
+            <button onClick={() => setVisibleCount(v => v + 5)} className="w-full py-3 mt-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-primary transition-colors">Load More</button>
           )}
         </div>
       </div>
@@ -480,156 +467,43 @@ export default function Dashboard() {
       ...knownIds.filter((id) => !savedOrder.includes(id)),
     ];
 
-    if (isReordering || activeCategory === "all") return sortedKnown;
-
-    const categoryWidgets = CATEGORY_WIDGETS[activeCategory];
-    return sortedKnown.filter(id => categoryWidgets.includes(id));
-  }, [settings.dashboardOrder, isReordering, activeCategory]);
+    return sortedKnown;
+  }, [settings.dashboardOrder, isReordering]);
 
   return (
     <>
       <FocusConfigModal isOpen={showFocusConfig} onClose={() => setShowFocusConfig(false)} />
 
-      <motion.div variants={containerVariants} initial="hidden" animate="visible" className="min-h-[100dvh] max-w-7xl mx-auto px-4 md:px-8 pt-20 md:pt-24 pb-32">
-        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl shadow-slate-900/10 dark:shadow-white/10">
-              <LayoutPanelLeft size={18} />
-            </div>
-            <div>
-              <h1 className="text-4xl font-black text-gradient-premium tracking-tight">Dashboard</h1>
-              <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.25em] mt-1 opacity-60">Control Center • {user?.displayName?.split(' ')[0] || 'Member'}</p>
-            </div>
+      <motion.div variants={containerVariants} initial="hidden" animate="visible" className="min-h-[100dvh] max-w-2xl mx-auto px-4 md:px-6 pt-20 md:pt-24 pb-32">
+        <div className="flex items-center justify-between mb-8 px-1">
+          <div>
+            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none">Dashboard</h1>
+            <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1.5 opacity-80">{user?.displayName?.split(' ')[0] || 'Member'} • Control Center</p>
           </div>
-            <button
+          <button
             onClick={() => setIsReordering(!isReordering)}
             className={cn(
-                "w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95",
-                isReordering 
-                ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl" 
-                : "bg-white/80 dark:bg-slate-900/40 text-slate-500 dark:text-slate-300 border border-slate-200 dark:border-white/5 backdrop-blur-md"
+              "flex items-center justify-center w-10 h-10 rounded-full transition-all active:scale-95 shadow-sm",
+              isReordering 
+                ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" 
+                : "bg-white/80 dark:bg-slate-900/40 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/5 backdrop-blur-md hover:bg-slate-100 dark:hover:bg-slate-800"
             )}
-            >
-            {isReordering ? (
-                <>
-                <Check size={14} />
-                <span>Save Layout</span>
-                </>
-            ) : (
-                <span>Edit View</span>
-            )}
-            </button>
+            title="Edit Layout"
+          >
+            {isReordering ? <Check size={18} /> : <LayoutGrid size={18} />}
+          </button>
         </div>
 
-        <div className="md:flex md:items-start md:gap-8 min-h-[600px]">
-          {/* Desktop Dashboard Sidebar */}
-          {!isReordering && (
-            <aside className="hidden md:block sticky top-24 z-10 w-20 shrink-0 lg:w-64 self-start">
-              <div className={cn(surfaceClass, "p-3 shadow-sm flex flex-col gap-1")}>
-                {CATEGORY_DEFS.map((cat) => {
-                  const isActive = activeCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => setActiveCategory(cat.id)}
-                      className={cn(
-                        "flex items-center gap-3 rounded-[1.25rem] px-4 py-3.5 transition-all duration-500 group/item",
-                        isActive 
-                          ? "bg-primary text-white shadow-xl shadow-primary/20 scale-[1.05]" 
-                          : "hover:bg-primary/5 text-slate-500 dark:text-slate-400"
-                      )}
-                    >
-                      <cat.icon className={cn("h-5 w-5 shrink-0 transition-transform duration-500", isActive ? "scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" : "opacity-70 group-hover/item:scale-110")} />
-                      <div className="hidden lg:block text-sm font-black tracking-tight uppercase tracking-[0.05em]">{cat.label}</div>
-                      <div className="hidden lg:block ml-auto">
-                        <div className={cn("w-1.5 h-1.5 rounded-full transition-all duration-500", isActive ? "bg-white scale-100" : "bg-transparent scale-0")} />
-                      </div>
-                    </button>
-                  );
-                })}
-                <div className="h-px bg-slate-100 dark:bg-slate-800 my-2 mx-1" />
-                <button
-                  onClick={() => setIsReordering(true)}
-                  className="flex items-center gap-3 rounded-2xl px-3 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all"
-                >
-                  <LayoutGrid className="h-5 w-5 shrink-0" />
-                  <div className="hidden lg:block text-sm font-black tracking-tight">Rearrange</div>
-                </button>
-              </div>
-            </aside>
-          )}
+        <div className="min-h-[600px]">
 
-          <div className="flex-1 min-w-0">
-            {/* Mobile Category Switcher (Top Segmented Control) */}
-            {!isReordering && (
-              <div className="md:hidden mb-10 overflow-hidden">
-            <div className="premium-glass p-1.5 rounded-[2.5rem] flex items-center relative border border-white/10">
-              {CATEGORY_DEFS.map((cat) => {
-                const isActive = activeCategory === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => setActiveCategory(cat.id)}
-                    className={cn(
-                      "relative z-10 flex flex-col items-center justify-center gap-1 flex-1 py-3 transition-all duration-500",
-                      isActive ? "text-primary scale-110" : "text-slate-500 opacity-60"
-                    )}
-                  >
-                    {isActive && (
-                      <motion.div
-                        layoutId="activeCategoryPill"
-                        className="absolute inset-0 bg-white dark:bg-white/5 rounded-[2rem] shadow-xl z-[-1] border border-white/20"
-                        transition={{ type: "spring", bounce: 0.3, duration: 0.8 }}
-                      />
-                    )}
-                    <cat.icon size={20} className={cn(isActive && "drop-shadow-[0_0_8px_rgba(var(--primary),0.4)]")} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">{cat.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-              </div>
-            )}
-
-            {/* Contextual Header */}
-            {!isReordering && (
-              <div className="mb-8 px-1">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeCategory}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    className="flex flex-col gap-1"
-                  >
-                    <div className="flex items-center gap-2">
-                       <h2 className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white capitalize">
-                        {activeCategory === "all" ? "Manage Layout" : CATEGORY_DEFS.find(c => c.id === activeCategory)?.label}
-                      </h2>
-                      {activeCategory !== "all" && (
-                        <div className={cn("px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-widest", CATEGORY_DEFS.find(c => c.id === activeCategory)?.bg, CATEGORY_DEFS.find(c => c.id === activeCategory)?.color)}>
-                          {CATEGORY_WIDGETS[activeCategory as CategoryId].length} Items
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                      {activeCategory === "pulse" && "Ready to take action on your finances."}
-                      {activeCategory === "snap" && "Your financial landscape at a glance."}
-                      {activeCategory === "plan" && "Tracking goals and future commitments."}
-                      {activeCategory === "log" && "A record of your recent spending activity."}
-                    </p>
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            )}
 
             <Reorder.Group
               axis="y"
               values={currentOrder}
               onReorder={setDashboardOrder}
               className={cn(
-                "grid gap-6 transition-all duration-500",
-                isReordering ? "grid-cols-1 max-w-2xl mx-auto" : "md:grid-cols-2 lg:grid-cols-2"
+                "grid gap-4 sm:gap-6 transition-all duration-500",
+                "grid-cols-1 md:grid-cols-2"
               )}
             >
               <AnimatePresence initial={false} mode="popLayout">
@@ -648,7 +522,7 @@ export default function Dashboard() {
                       dragListener={isReordering}
                       className={cn(
                         "relative group h-full",
-                        !isReordering && (id === "overview" || id === "recentActivity" || id === "magicChat") && "md:col-span-2"
+                        (id === "overview" || id === "recentActivity" || id === "magicChat") && "md:col-span-2"
                       )}
                     >
                       {isReordering && (
@@ -667,7 +541,6 @@ export default function Dashboard() {
                 })}
               </AnimatePresence>
             </Reorder.Group>
-          </div>
         </div>
       </motion.div>
     </>

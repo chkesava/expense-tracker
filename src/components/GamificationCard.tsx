@@ -41,8 +41,8 @@ export default function GamificationCard() {
             <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/0 to-white/40 opacity-50 pointer-events-none" />
 
             <div className={cn(
-                "relative premium-glass",
-                "rounded-[1.9rem] p-8 text-white shadow-2xl border border-white/20",
+                "relative bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900",
+                "rounded-[1.9rem] p-8 text-white shadow-2xl border border-white/10",
                 "overflow-hidden"
             )}>
 
