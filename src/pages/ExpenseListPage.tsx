@@ -32,8 +32,13 @@ import {
   ArrowDownRight,
   MoreVertical,
   Edit2,
-  Trash2
+  Trash2,
+  FileText,
+  Loader2,
+  Share2
 } from "lucide-react";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
 
 import PageHeader from "../components/layout/PageHeader";
 import BulkActionBar from "../components/BulkActionBar";
@@ -94,6 +99,8 @@ export default function ExpenseListPage() {
   // --- DATA STATE ---
   const [importRows, setImportRows] = useState<any[]>([]);
   const [isImporting, setIsImporting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [reportType, setReportType] = useState<"pdf" | "csv">("pdf");
   const [defaultImportAccountId, setDefaultImportAccountId] = useState("");
 
   // --- COMMON UI STATE ---
@@ -238,6 +245,70 @@ export default function ExpenseListPage() {
     }
   };
 
+  const generateReport = async () => {
+    setIsGenerating(true);
+    try {
+        // Aesthetic delay for the "Wow" factor animation
+        await new Promise(r => setTimeout(r, 2500));
+
+        if (reportType === "csv") {
+            exportExpensesToCSV(expenses, `Vault_Report_${selectedMonth}.csv`);
+        } else {
+            const doc = new jsPDF();
+            
+            // Add Header
+            doc.setFontSize(22);
+            doc.setTextColor(79, 70, 229); // Electric Indigo
+            doc.text("VAULT FINANCIAL REPORT", 14, 22);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+            doc.text(`Period: ${selectedMonth}`, 14, 35);
+            
+            // Stats Summary
+            const totalExp = expenses.reduce((s, e) => s + e.amount, 0);
+            const totalInc = incomes.reduce((s, i) => s + i.amount, 0);
+            
+            doc.setFontSize(12);
+            doc.setTextColor(0);
+            doc.text(`Total Income: ₹${totalInc.toLocaleString()}`, 14, 50);
+            doc.text(`Total Expenses: ₹${totalExp.toLocaleString()}`, 14, 57);
+            doc.text(`Net Savings: ₹${(totalInc - totalExp).toLocaleString()}`, 14, 64);
+
+            // Table
+            const tableData = expenses.map(e => [
+                e.date, 
+                e.category, 
+                e.note || "-", 
+                `₹${e.amount.toLocaleString()}`
+            ]);
+
+            (doc as any).autoTable({
+                startY: 75,
+                head: [['Date', 'Category', 'Note', 'Amount']],
+                body: tableData,
+                theme: 'grid',
+                headStyles: { 
+                    fillColor: [79, 70, 229],
+                    fontSize: 10,
+                    fontStyle: 'bold'
+                },
+                styles: { fontSize: 9 },
+                alternateRowStyles: { fillColor: [245, 247, 250] }
+            });
+
+            doc.save(`Vault_Report_${selectedMonth}.pdf`);
+        }
+        toast.success("Report Generated Successfully!");
+    } catch (err) {
+        console.error(err);
+        toast.error("Failed to generate report");
+    } finally {
+        setIsGenerating(false);
+    }
+  };
+
   // --- COMMON LOGIC ---
   const toggleSelection = (id: string) => {
     setSelectedIds(prev => {
@@ -339,7 +410,7 @@ export default function ExpenseListPage() {
                                     isSelected={selectedIds.has(e.id!)} 
                                     onSelect={() => toggleSelection(e.id!)}
                                     onEdit={() => setEditingExpense(e)}
-                                    onDelete={() => setDeleteTarget(e.id!)}
+                                    onDelete={() => setDeleteTarget({ id: e.id!, type: "expense" })}
                                />
                                ))
                            )}
@@ -505,16 +576,93 @@ export default function ExpenseListPage() {
                             </select>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="space-y-6">
+                            <div className="bento-card p-8 bg-slate-900 text-white border-none relative overflow-hidden">
+                                {/* Decorative Background Elements */}
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-16 -mt-16" />
+                                <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl -ml-12 -mb-12" />
+
+                                <div className="relative z-10">
+                                    <div className="flex items-center justify-between mb-8">
+                                        <div>
+                                            <h4 className="font-black text-xs uppercase tracking-[0.2em] text-blue-400 mb-1">Vault Intelligence</h4>
+                                            <h3 className="text-xl font-black tracking-tight">Generate Financial Report</h3>
+                                        </div>
+                                        <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-xl">
+                                            <FileText className="text-white" size={24} />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-2 mb-8">
+                                        <button 
+                                            onClick={() => setReportType("pdf")}
+                                            className={cn(
+                                                "flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                                reportType === "pdf" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10"
+                                            )}
+                                        >
+                                            PDF Document
+                                        </button>
+                                        <button 
+                                            onClick={() => setReportType("csv")}
+                                            className={cn(
+                                                "flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                                reportType === "csv" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10"
+                                            )}
+                                        >
+                                            CSV Spreadsheet
+                                        </button>
+                                    </div>
+
+                                    <button 
+                                        onClick={generateReport}
+                                        disabled={isGenerating}
+                                        className="w-full relative group h-16 rounded-[2rem] bg-gradient-to-r from-blue-600 to-indigo-600 font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 overflow-hidden"
+                                    >
+                                        <AnimatePresence mode="wait">
+                                            {isGenerating ? (
+                                                <motion.div 
+                                                    key="loading"
+                                                    initial={{ y: 20, opacity: 0 }}
+                                                    animate={{ y: 0, opacity: 1 }}
+                                                    exit={{ y: -20, opacity: 0 }}
+                                                    className="flex items-center justify-center gap-3"
+                                                >
+                                                    <Loader2 className="animate-spin" size={18} />
+                                                    <span>Crafting Report...</span>
+                                                </motion.div>
+                                            ) : (
+                                                <motion.div 
+                                                    key="ready"
+                                                    initial={{ y: 20, opacity: 0 }}
+                                                    animate={{ y: 0, opacity: 1 }}
+                                                    exit={{ y: -20, opacity: 0 }}
+                                                    className="flex items-center justify-center gap-3"
+                                                >
+                                                    <Share2 size={18} />
+                                                    <span>Generate {reportType.toUpperCase()}</span>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                        
+                                        {/* Shimmer Effect */}
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite] pointer-events-none" />
+                                    </button>
+                                </div>
+                            </div>
+
                              <button 
-                                onClick={() => exportExpensesToCSV(expenses, "backup.csv")}
-                                className="flex w-full items-center justify-between p-6 rounded-3xl bg-slate-900 text-white hover:bg-slate-800 transition-colors"
+                                onClick={() => exportExpensesToCSV(expenses, `Vault_Backup_${new Date().toISOString().split('T')[0]}.csv`)}
+                                className="flex w-full items-center justify-between p-6 rounded-[2.5rem] bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 transition-all group"
                             >
                                 <div className="text-left">
-                                    <h4 className="font-black text-sm uppercase tracking-widest">Full Backup</h4>
-                                    <p className="text-[10px] text-slate-400">Download all {expenses.length} records</p>
+                                    <h4 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-400 group-hover:text-slate-600 transition-colors">Data Management</h4>
+                                    <h3 className="font-black text-sm uppercase tracking-widest mt-1">Full System Backup</h3>
+                                    <p className="text-[10px] text-slate-400 mt-1">Export all {expenses.length} records</p>
                                 </div>
-                                <Download size={24} />
+                                <div className="h-12 w-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center group-hover:bg-slate-900 group-hover:text-white transition-all">
+                                    <Download size={20} />
+                                </div>
                             </button>
                             {importRows.length > 0 && (
                                 <button 

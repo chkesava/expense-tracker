@@ -109,10 +109,10 @@ export default function ExpenseForm({
   }, [note, rules, editingExpense, categoryTouched]);
 
   const currentMonth = new Date().toISOString().slice(0, 7);
-  const isLocked = settings.lockPastMonths && (
+  const isLocked = !!(settings.lockPastMonths && (
     (editingExpense && editingExpense.month !== currentMonth) || 
     (editingIncome && editingIncome.month !== currentMonth)
-  );
+  ));
 
   const submit = async () => {
     if (!user || !amount || !date) return;

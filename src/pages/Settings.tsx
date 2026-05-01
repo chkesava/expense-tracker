@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, writeBatch } from "firebase/firestore";
-import { Brush, Database, Folder, LayoutGrid, LogOut, SlidersHorizontal, Trash2, User, WalletCards } from "lucide-react";
+import { Brush, Database, Folder, LayoutGrid, LogOut, SlidersHorizontal, Trash2, User, WalletCards, FileText, Loader2, Share2 } from "lucide-react";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
+
 import { toast } from "react-toastify";
 
 import useSettings from "../hooks/useSettings";
@@ -159,6 +162,10 @@ export default function SettingsPage() {
 
   const allCategoryOptions = useMemo(() => [...CATEGORIES, ...categories.map((c) => c.name)], [categories]);
 
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [reportType, setReportType] = useState<"pdf" | "csv">("pdf");
+
+
   useEffect(() => {
     async function fetchProfile() {
       if (!user?.uid) return;
@@ -238,6 +245,47 @@ export default function SettingsPage() {
       toast.error("Failed to logout");
     }
   };
+
+  const generateReport = async () => {
+    setIsGenerating(true);
+    try {
+      await new Promise((r) => setTimeout(r, 2000));
+      if (reportType === "csv") {
+        const year = settings.exportYear;
+        const filtered = expenses.filter((e) => (e.month ?? "").startsWith(String(year)));
+        exportExpensesToCSV(filtered, `Vault_Report_${year}.csv`);
+      } else {
+        const doc = new jsPDF();
+        doc.setFontSize(22);
+        doc.setTextColor(79, 70, 229);
+        doc.text("VAULT FINANCIAL REPORT", 14, 22);
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+        const totalExp = expenses.reduce((s, e) => s + e.amount, 0);
+        doc.setFontSize(12);
+        doc.setTextColor(0);
+        doc.text(`Total Expenses: ₹${totalExp.toLocaleString()}`, 14, 50);
+        const tableData = expenses.slice(0, 500).map((e) => [e.date, e.category, e.note || "-", `₹${e.amount.toLocaleString()}`]);
+        (doc as any).autoTable({
+          startY: 65,
+          head: [["Date", "Category", "Note", "Amount"]],
+          body: tableData,
+          theme: "grid",
+          headStyles: { fillColor: [79, 70, 229], fontSize: 10 },
+          styles: { fontSize: 9 },
+        });
+        doc.save(`Vault_Report_${new Date().toISOString().split("T")[0]}.pdf`);
+      }
+      toast.success("Report Generated!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Generation failed");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
 
   const sections = useMemo(
     () => {
@@ -747,6 +795,39 @@ export default function SettingsPage() {
 
             {active === "data" && (
               <SettingsCard title="Data" subtitle="Export, import and safety." icon={Database}>
+                {/* Vault Intelligence PDF/CSV Section */}
+                <div className="bento-card relative mb-6 overflow-hidden rounded-3xl bg-slate-900 p-6 text-white">
+                  <div className="absolute right-0 top-0 -mr-16 -mt-16 h-32 w-32 rounded-full bg-blue-500/10 blur-3xl" />
+                  <div className="relative z-10">
+                    <div className="mb-4 flex justify-between">
+                      <div>
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-400">Intelligence</h4>
+                        <h3 className="text-lg font-black">Financial Reports</h3>
+                      </div>
+                      <FileText size={20} className="text-white/20" />
+                    </div>
+                    <div className="mb-4 flex gap-2">
+                      {(["pdf", "csv"] as const).map((t) => (
+                        <button
+                          key={t}
+                          onClick={() => setReportType(t)}
+                          className={cn("flex-1 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all", reportType === t ? "bg-blue-600 shadow-lg shadow-blue-600/20" : "bg-white/5 hover:bg-white/10")}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={generateReport}
+                      disabled={isGenerating}
+                      className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-900/20 transition-all active:scale-[0.98] disabled:opacity-50"
+                    >
+                      {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Share2 className="h-3.5 w-3.5" />}
+                      {isGenerating ? "Processing..." : "Download Report"}
+                    </button>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500 ml-1">Export</div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]">
