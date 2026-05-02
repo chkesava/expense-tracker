@@ -101,3 +101,20 @@ export const getDayOfWeekDistribution = (expenses: Expense[]) => {
 
   return Object.entries(map).map(([name, amount]) => ({ name, amount }));
 };
+
+/**
+ * Calculates cumulative spending over time for the range
+ */
+export const getCumulativeSpendingSeries = (expenses: Expense[], start: string, end: string) => {
+  const daily = getDailySpendingSeries(expenses, start, end);
+  let cumulative = 0;
+  
+  return daily.map(d => {
+    cumulative += d.amount;
+    return {
+      ...d,
+      cumulative
+    };
+  });
+};
+

@@ -28,7 +28,8 @@ import {
     getWeekendVsWeekdaySplit, 
     getTopVendors, 
     getAnomalies,
-    getDayOfWeekDistribution
+    getDayOfWeekDistribution,
+    getCumulativeSpendingSeries
 } from "../utils/rangeAnalytics";
 import {
   AreaChart,
@@ -123,6 +124,7 @@ export default function AnalysisLab({ hideHeader }: { hideHeader?: boolean }) {
     const vendors = getTopVendors(filteredExpenses);
     const anomalies = getAnomalies(filteredExpenses);
     const dayDist = getDayOfWeekDistribution(filteredExpenses);
+    const cumulativeData = getCumulativeSpendingSeries(filteredExpenses, startDate, endDate);
     
     // Category Pie Data
     const catMap: Record<string, number> = {};
@@ -133,19 +135,50 @@ export default function AnalysisLab({ hideHeader }: { hideHeader?: boolean }) {
         .sort((a, b) => b[1] - a[1])
         .map(([name, value]) => ({ name, value }));
 
+    // Monthly Data (for long ranges)
+    const monthMap: Record<string, number> = {};
+    filteredExpenses.forEach(e => {
+        const m = e.month;
+        monthMap[m] = (monthMap[m] || 0) + e.amount;
+    });
+    const monthlyData = Object.entries(monthMap)
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([name, amount]) => ({ name, amount }));
+
+    // Account Allocation Data
+    const accMap: Record<string, number> = {};
+    filteredExpenses.forEach(e => {
+        const acc = accounts.find(a => a.id === e.accountId);
+        const name = acc?.name || "Unknown Account";
+        accMap[name] = (accMap[name] || 0) + e.amount;
+    });
+    const accountData = Object.entries(accMap)
+        .sort((a, b) => b[1] - a[1])
+        .map(([name, value]) => ({ name, value }));
+
+    // Forecast Logic
+    const isCurrentMonthActive = endDate.startsWith(new Date().toISOString().slice(0, 7));
+    const daysPassed = new Date().getDate();
+    const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+    const projectedSpend = isCurrentMonthActive ? (total / daysPassed) * daysInMonth : null;
+
     return { 
         total, 
         count, 
         avgDaily: total / dayDiff,
         avgTrans: count > 0 ? total / count : 0,
         trendData, 
+        cumulativeData,
+        monthlyData,
         behavioral, 
         vendors, 
         anomalies, 
         dayDist,
-        pieData
+        pieData,
+        accountData,
+        projectedSpend
     };
-  }, [filteredExpenses, startDate, endDate]);
+  }, [filteredExpenses, startDate, endDate, accounts]);
 
   const clearFilters = () => {
     setSelectedCategory("");
@@ -341,15 +374,121 @@ export default function AnalysisLab({ hideHeader }: { hideHeader?: boolean }) {
                             <Pie data={analytics.pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={85} paddingAngle={5}>
                                 {analytics.pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                             </Pie>
-                            <Tooltip />
+                            <Tooltip contentStyle={{ borderRadius: '16px', border: 'none' }} />
                         </RePieChart>
                     </ResponsiveContainer>
                 </div>
             </div>
           </div>
 
+          {/* New Layer: Cumulative & Accounts */}
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            <div className="rounded-[2rem] border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
+                <h3 className="mb-6 flex items-center justify-between">
+                    <span className="text-sm font-bold">Burn Trajectory</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Cumulative Spend</span>
+                </h3>
+                <div className="h-64 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={analytics.cumulativeData}>
+                            <defs>
+                                <linearGradient id="colorCumulative" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.5} />
+                            <XAxis dataKey="date" hide />
+                            <YAxis hide />
+                            <Tooltip contentStyle={{ borderRadius: '16px', border: 'none' }} />
+                            <Area type="stepAfter" dataKey="cumulative" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorCumulative)" />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            <div className="rounded-[2rem] border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
+                <h3 className="mb-6 flex items-center justify-between">
+                    <span className="text-sm font-bold">Monthly Velocity</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Periodic Comparison</span>
+                </h3>
+                <div className="h-64 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={analytics.monthlyData}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.5} />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+                            <YAxis hide />
+                            <Tooltip contentStyle={{ borderRadius: '16px', border: 'none' }} cursor={{ fill: '#f8fafc' }} />
+                            <Bar dataKey="amount" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+          </div>
+
+          <div className="rounded-[2rem] border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
+              <h3 className="mb-6 flex items-center justify-between">
+                  <span className="text-sm font-bold">Account Allocation</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">By Volume</span>
+              </h3>
+              <div className="h-48 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={analytics.accountData} layout="vertical">
+                          <XAxis type="number" hide />
+                          <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} width={100} />
+                          <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '16px', border: 'none' }} />
+                          <Bar dataKey="value" radius={[0, 10, 10, 0]} barSize={24}>
+                              {analytics.accountData.map((_, i) => <Cell key={i} fill={COLORS[(i + 2) % COLORS.length]} />)}
+                          </Bar>
+                      </BarChart>
+                  </ResponsiveContainer>
+              </div>
+          </div>
+
+          {/* Forecast & Strategy Layer */}
+          {analytics.projectedSpend && (
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+               <div className="lg:col-span-2 rounded-[2.5rem] bg-gradient-to-br from-slate-900 to-slate-800 p-8 text-white relative overflow-hidden shadow-2xl">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -mr-32 -mt-32" />
+                  <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                     <div className="text-center md:text-left">
+                        <h4 className="text-blue-400 text-xs font-black uppercase tracking-[0.3em] mb-2">Predictive Intelligence</h4>
+                        <h3 className="text-3xl font-black mb-4">Financial Forecast</h3>
+                        <p className="text-slate-400 text-sm max-w-md">Based on your current daily velocity of <span className="text-white font-bold">₹{Math.round(analytics.avgDaily).toLocaleString()}</span>, you are on track to end the period with a total spend of:</p>
+                     </div>
+                     <div className="flex flex-col items-center justify-center p-8 bg-white/5 rounded-[2.5rem] backdrop-blur-xl border border-white/10 min-w-[240px]">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Projected Total</span>
+                        <span className="text-5xl font-black tracking-tightest">₹{Math.round(analytics.projectedSpend).toLocaleString()}</span>
+                        <div className={cn(
+                            "mt-4 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
+                            analytics.projectedSpend > analytics.total * 1.2 ? "bg-rose-500/20 text-rose-400" : "bg-emerald-500/20 text-emerald-400"
+                        )}>
+                            {analytics.projectedSpend > analytics.total * 1.2 ? "High Alert Velocity" : "Stable Trajectory"}
+                        </div>
+                     </div>
+                  </div>
+               </div>
+
+               <div className="rounded-[2.5rem] border border-blue-100 dark:border-blue-900/30 bg-blue-50/50 dark:bg-blue-900/5 p-8 flex flex-col justify-center text-center">
+                  <div className="mx-auto h-16 w-16 rounded-[2rem] bg-blue-600 flex items-center justify-center mb-6 shadow-xl shadow-blue-600/20">
+                     <Activity size={32} className="text-white" />
+                  </div>
+                  <h4 className="text-sm font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-2">Savings Pulse</h4>
+                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-6">Efficiency of your current spending cycle</p>
+                  <div className="relative h-4 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                     <motion.div 
+                        initial={{ width: 0 }} 
+                        animate={{ width: `${Math.min(100, (1 - (analytics.total / (analytics.projectedSpend || 1))) * 100)}%` }} 
+                        className="h-full bg-blue-600" 
+                     />
+                  </div>
+                  <span className="mt-3 text-[10px] font-black uppercase text-blue-600">Dynamic Headroom</span>
+               </div>
+            </div>
+          )}
+
           {/* Third Layer: Behavioral */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-[2rem] border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
                 <h4 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Behavioral Split</h4>
                 <div className="flex items-end justify-between gap-4 h-32 mb-4">
@@ -392,8 +531,23 @@ export default function AnalysisLab({ hideHeader }: { hideHeader?: boolean }) {
             </div>
 
             <div className="rounded-[2rem] border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
+                <h4 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Top Vendors</h4>
+                <div className="space-y-3 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
+                    {analytics.vendors.map((v, i) => (
+                        <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                            <div className="flex items-center gap-2 min-w-0">
+                                <div className="h-6 w-6 rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center text-[8px] font-black uppercase shrink-0">{v.note[0]}</div>
+                                <div className="text-[10px] font-bold truncate">{v.note}</div>
+                            </div>
+                            <div className="text-[10px] font-black text-slate-600 dark:text-slate-300">₹{v.total.toLocaleString()}</div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <div className="rounded-[2rem] border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/85">
                 <h4 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Anomalies</h4>
-                <div className="space-y-3 max-h-32 overflow-y-auto">
+                <div className="space-y-3 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
                     {analytics.anomalies.map((a, i) => (
                         <div key={i} className="flex items-center gap-3 p-2 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-800">
                             <AlertCircle size={14} className="text-rose-500" />

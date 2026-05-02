@@ -482,7 +482,9 @@ export default function Dashboard() {
                 <div className="text-right">
                   <div className="font-black text-sm text-slate-900 dark:text-white"><Amount value={expense.amount} prefix="-₹" /></div>
                   {accounts.find(a => a.id === expense.accountId) && (
-                    <div className="text-[9px] font-bold text-slate-400 uppercase">{accounts.find(a => a.id === expense.accountId)?.name}</div>
+                    <Badge variant="ghost" className="mt-1 px-1.5 py-0 text-[8px] bg-slate-50 dark:bg-white/5 text-slate-400 border-0">
+                      {accounts.find(a => a.id === expense.accountId)?.name}
+                    </Badge>
                   )}
                 </div>
               </div>
