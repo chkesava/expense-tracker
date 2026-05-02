@@ -1,26 +1,21 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Activity,
   BarChart3,
   Calendar,
   Home,
-  LogOut,
   Plus,
-  RefreshCw,
   Settings,
   Shield,
   Wallet,
   Users,
-  Search,
-  Eye,
   EyeOff
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import useOnline from "../hooks/useOnline";
 import { useGamification } from "../hooks/useGamification";
-import { useTheme } from "../hooks/useTheme";
 import { useUserRole } from "../hooks/useUserRole";
 import { useModals } from "../hooks/useModals";
 import { useVaults } from "../hooks/useVaults";
@@ -41,13 +36,11 @@ function formatMonthLabel(month: string, short = false) {
 }
 
 export default function Header() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const { isOnline } = useOnline();
   const { stats } = useGamification();
   const { isAdmin } = useUserRole();
-  const { theme } = useTheme();
   const { setIsMonthDrawerOpen, setIsAddExpenseOpen, globalMonth } = useModals();
   const { expenses } = useExpenses();
   const { settings, setGhostMode } = useSettings();
@@ -72,26 +65,6 @@ export default function Header() {
   const storySlides = useStoryGenerator(filteredExpenses, selectedMonth, expenses);
 
   const [showStory, setShowStory] = useState(false);
-  const [open, setOpen] = useState(false);
-  const popupRef = useRef<HTMLDivElement | null>(null);
-  const btnRef = useRef<HTMLButtonElement | null>(null);
-
-  useEffect(() => {
-    function onDoc(event: MouseEvent) {
-      if (!popupRef.current || !btnRef.current) return;
-      const target = event.target as Node;
-      if (!popupRef.current.contains(target) && !btnRef.current.contains(target)) {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener("click", onDoc);
-    return () => document.removeEventListener("click", onDoc);
-  }, []);
-
-  useEffect(() => {
-    setOpen(false);
-  }, [location.pathname]);
 
   return (
     <>
@@ -226,68 +199,25 @@ export default function Header() {
 
           <div className="relative shrink-0">
             <button
-              ref={btnRef}
-              onClick={() => setOpen((v) => !v)}
+              onClick={() => setShowStory(true)}
               className="focus:outline-none"
+              aria-label="Open your monthly story"
+              title="Monthly story"
             >
-              <Avatar src={user?.photoURL} name={user?.displayName || "User"} size={36} />
+              <span
+                className={cn(
+                  "relative grid place-items-center rounded-full p-[2px]",
+                  storySlides.length > 0
+                    ? "bg-gradient-to-tr from-fuchsia-500 via-rose-500 to-amber-400"
+                    : "bg-border opacity-70"
+                )}
+              >
+                <span className="rounded-full bg-card p-[2px]">
+                  <Avatar src={user?.photoURL} name={user?.displayName || "User"} size={36} />
+                </span>
+              </span>
             </button>
           </div>
-
-          <AnimatePresence>
-            {open && (
-              <motion.div
-                ref={popupRef}
-                initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                transition={{ duration: 0.2 }}
-                className="absolute right-0 top-14 w-64 p-2 bg-white/80 dark:bg-slate-950/90 backdrop-blur-2xl border border-white/60 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden z-[60]"
-              >
-                <div className="p-3 mb-2 flex items-center gap-3">
-                  <Avatar src={user?.photoURL} name={user?.displayName || "User"} size={48} className="shadow-sm" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-bold text-slate-800 dark:text-slate-100 truncate text-[15px]">
-                      {user?.displayName || "Guest User"}
-                    </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</div>
-                  </div>
-                </div>
-
-                <div className="h-px bg-slate-200/50 dark:bg-slate-800 mx-2 mb-2" />
-
-                <div className="space-y-1">
-
-                  <button
-                    onClick={() => navigate("/settings")}
-                    className="w-full flex items-center gap-3 p-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-900 hover:text-blue-600 transition-colors"
-                  >
-                    <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-300">
-                      <Settings size={16} />
-                    </span>
-                    Settings
-                  </button>
-
-                  <button
-                    onClick={async () => {
-                      try {
-                        await logout();
-                        navigate("/");
-                      } catch (error) {
-                        console.error(error);
-                      }
-                    }}
-                    className="w-full flex items-center gap-3 p-2 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                  >
-                    <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500">
-                      <LogOut size={16} />
-                    </span>
-                    Sign Out
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
       </motion.header>
     </>

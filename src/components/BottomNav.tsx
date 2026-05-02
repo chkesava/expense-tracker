@@ -1,15 +1,11 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "../lib/utils";
 import { motion } from "framer-motion";
-import { useUserRole } from "../hooks/useUserRole";
-import useSettings from "../hooks/useSettings";
 import { useModals } from "../hooks/useModals";
-import { BarChart3, Home, Plus, Settings, Wallet, Users, RefreshCw, Search } from "lucide-react";
+import { BarChart3, Home, Plus, Wallet, Users } from "lucide-react";
 
 export default function BottomNav() {
   const location = useLocation();
-  const { isAdmin } = useUserRole();
-  const { settings } = useSettings();
   const { setIsAddExpenseOpen } = useModals();
 
   const allLinks = [
@@ -78,7 +74,7 @@ export default function BottomNav() {
   const ActionIcon = actionLink.icon;
 
   return (
-    <div className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-0 w-full flex justify-center z-[100] px-3 sm:px-4 pointer-events-none md:hidden animate-in fade-in slide-in-from-bottom-8 duration-700">
+    <div className="mobile-action-dock fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-0 w-full flex justify-center z-[100] px-3 sm:px-4 pointer-events-none md:hidden animate-in fade-in slide-in-from-bottom-8 duration-700">
       <nav className="bento-card px-3 py-2 pointer-events-auto flex items-center justify-between gap-1 w-full max-w-[480px]">
         {/* Left Nav Group */}
         {leftLinks.map(renderLink)}
