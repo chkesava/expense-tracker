@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Target, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useFocusMode } from '../../hooks/useFocusMode';
+import { Badge } from '../common/Badge';
 import { cn } from '../../lib/utils'; // Assuming utils exists, if not I'll fix
 
 export default function FocusWidget({ onOpenConfig }: { onOpenConfig: () => void }) {
@@ -24,13 +25,9 @@ export default function FocusWidget({ onOpenConfig }: { onOpenConfig: () => void
             >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16 blur-2xl group-hover:bg-white/20 transition-all" />
 
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="absolute top-4 right-4 z-20 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg shadow-pink-500/40 animate-pulse"
-                >
+                <Badge variant="neon" isRibbon className="top-0">
                     NEW
-                </motion.div>
+                </Badge>
 
                 <div className="flex justify-between items-center relative z-10">
                     <div>

@@ -13,15 +13,6 @@ type Settings = {
   monthlyBudget: number;
   timezone: string;
   upiId: string;
-  bottomNavTabs: {
-    home: boolean;
-    expenses: boolean;
-    split: boolean;
-    subscriptions: boolean;
-    analytics: boolean;
-    analysis: boolean;
-    settings: boolean;
-  };
   dashboardWidgets: {
     subscriptions: boolean;
     focus: boolean;
@@ -42,15 +33,6 @@ export const DEFAULTS: Settings = {
   monthlyBudget: 0,
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   upiId: "",
-  bottomNavTabs: {
-    home: true,
-    expenses: true,
-    split: true,
-    subscriptions: true,
-    analytics: true,
-    analysis: true,
-    settings: true,
-  },
   dashboardWidgets: {
     subscriptions: true,
     focus: true,
@@ -73,7 +55,6 @@ type SettingsContextType = {
   setMonthlyBudget: (val: number) => void;
   setTimezone: (val: string) => void;
   setUpiId: (val: string) => void;
-  toggleBottomNavTab: (key: keyof Settings["bottomNavTabs"]) => void;
   toggleDashboardWidget: (key: keyof Settings["dashboardWidgets"]) => void;
   setDashboardOrder: (order: string[]) => void;
   setNavigationStyle: (val: Settings["navigationStyle"]) => void;
@@ -102,10 +83,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setSettings({
           ...DEFAULTS,
           ...data,
-          bottomNavTabs: {
-            ...DEFAULTS.bottomNavTabs,
-            ...(data.bottomNavTabs || {}),
-          },
           dashboardWidgets: {
             ...DEFAULTS.dashboardWidgets,
             ...(data.dashboardWidgets || {}),
@@ -151,10 +128,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const setTimezone = (val: string) => updateSettings({ timezone: val });
   const setUpiId = (val: string) => updateSettings({ upiId: val });
   
-  const toggleBottomNavTab = (key: keyof Settings["bottomNavTabs"]) => {
-    const newTabs = { ...settings.bottomNavTabs, [key]: !settings.bottomNavTabs[key] };
-    updateSettings({ bottomNavTabs: newTabs });
-  };
 
   const toggleDashboardWidget = (key: keyof Settings["dashboardWidgets"]) => {
     const newWidgets = { ...settings.dashboardWidgets, [key]: !settings.dashboardWidgets[key] };
@@ -178,7 +151,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setMonthlyBudget,
         setTimezone,
         setUpiId,
-        toggleBottomNavTab,
         toggleDashboardWidget,
         setDashboardOrder,
         setNavigationStyle,

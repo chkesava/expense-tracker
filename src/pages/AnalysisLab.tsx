@@ -47,7 +47,7 @@ import {
 import { COLORS } from "../utils/chartColors";
 import PageHeader from "../components/layout/PageHeader";
 
-export default function AnalysisLab() {
+export default function AnalysisLab({ hideHeader }: { hideHeader?: boolean }) {
   const { expenses, loading } = useExpenses();
   const { accounts } = useAccounts();
   const { categories: userCategories } = useCategories();
@@ -158,36 +158,41 @@ export default function AnalysisLab() {
     <motion.main
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="mx-auto max-w-7xl space-y-8 px-4 pb-32 pt-24"
+      className={cn(
+        "mx-auto max-w-7xl space-y-8 px-4 pb-32",
+        !hideHeader && "pt-24"
+      )}
     >
-      <PageHeader 
-        title="Analysis Lab" 
-        subtitle="Universal financial searching and anomaly detection."
-        icon={<Search className="text-blue-600" size={24} />}
-        rightElement={
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={cn(
-                "flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-bold transition-all",
-                showFilters 
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30" 
-                  : "bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400"
-              )}
-            >
-              <Filter size={16} />
-              <span>Filters</span>
-            </button>
-            <button
-              onClick={() => exportExpensesToCSV(filteredExpenses, "lab-export.csv")}
-              className="hidden sm:flex items-center gap-2 rounded-2xl px-4 py-2 bg-slate-900 dark:bg-slate-800 text-white text-sm font-bold shadow-lg"
-            >
-              <Download size={16} />
-              <span>Export</span>
-            </button>
-          </div>
-        }
-      />
+      {!hideHeader && (
+        <PageHeader 
+          title="Analysis Lab" 
+          subtitle="Advanced search and financial data mining."
+          icon={<Search size={24} />}
+          rightElement={
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={cn(
+                  "flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-bold transition-all",
+                  showFilters 
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30" 
+                    : "bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400"
+                )}
+              >
+                <Filter size={16} />
+                <span>Filters</span>
+              </button>
+              <button
+                onClick={() => exportExpensesToCSV(filteredExpenses, "lab-export.csv")}
+                className="hidden sm:flex items-center gap-2 rounded-2xl px-4 py-2 bg-slate-900 dark:bg-slate-800 text-white text-sm font-bold shadow-lg"
+              >
+                <Download size={16} />
+                <span>Export</span>
+              </button>
+            </div>
+          }
+        />
+      )}
 
       <div className="flex flex-col gap-8 lg:flex-row">
         {/* Left Sidebar: Controls */}

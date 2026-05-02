@@ -47,6 +47,7 @@ import Modal from "../components/common/Modal";
 import ExpenseForm from "../components/ExpenseForm";
 import { Skeleton } from "../components/common/Skeleton";
 import Amount from "../components/common/Amount";
+import { Badge } from "../components/common/Badge";
 
 import type { Income } from "../types/expense";
 import { CATEGORIES } from "../types/expense";
@@ -62,7 +63,7 @@ import AuditControls from "../components/audit/AuditControls";
 
 type ExpensesTab = "history" | "income" | "audit" | "data";
 
-export default function ExpenseListPage() {
+export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }) {
   const { settings } = useSettings();
   const { expenses, loading: expensesLoading } = useExpenses();
   const { incomes, loading: incomesLoading } = useIncomes();
@@ -356,15 +357,24 @@ export default function ExpenseListPage() {
   ];
 
   return (
-    <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-4xl px-4 pb-32 pt-24">
-      <PageHeader 
-        title="Expenses Hub" 
-        subtitle="Manage, audit, and import your finance data."
-        icon={<CheckCircle2 size={24} />}
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
+    <motion.main
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className={cn(
+        "mx-auto min-h-[100dvh] max-w-6xl px-4 pb-32 md:px-6",
+        !hideHeader && "pt-24"
+      )}
+    >
+      {!hideHeader && (
+        <PageHeader 
+          title="Journal" 
+          subtitle="Precision tracking and ledger management."
+          icon={<History size={24} />}
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as ExpensesTab)}
+        />
+      )}
 
       <AnimatePresence mode="wait">
         <motion.div key={activeTab} initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}>
@@ -398,23 +408,77 @@ export default function ExpenseListPage() {
                   </div>
 
                   {/* Expense Items */}
-                  <div className="bento-card min-h-[400px]">
+                  <div className="bento-card min-h-[400px] overflow-hidden">
                     {loading ? <Skeleton className="h-full w-full" /> : (
                         <div className="divide-y divide-slate-100 dark:divide-slate-800">
                            {[...today, ...yesterday, ...earlier].length === 0 ? (
                                <div className="py-20 text-center text-slate-400 italic">No matches found</div>
                            ) : (
-                               [...today, ...yesterday, ...earlier].map(e => (
-                               <ExpenseRow 
-                                    key={e.id} 
-                                    expense={e} 
-                                    accounts={accounts} 
-                                    isSelected={selectedIds.has(e.id!)} 
-                                    onSelect={() => toggleSelection(e.id!)}
-                                    onEdit={() => setEditingExpense(e)}
-                                    onDelete={() => setDeleteTarget({ id: e.id!, type: "expense" })}
-                               />
-                               ))
+                               <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                   {today.length > 0 && (
+                                       <div className="bg-slate-50/50 dark:bg-white/2">
+                                           <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5">
+                                               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">Today</span>
+                                               <Badge variant="ghost" className="bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-0">
+                                                   Total: <Amount value={today.reduce((acc, curr) => acc + curr.amount, 0)} />
+                                               </Badge>
+                                           </div>
+                                           {today.map(e => (
+                                               <ExpenseRow 
+                                                    key={e.id} 
+                                                    expense={e} 
+                                                    accounts={accounts} 
+                                                    isSelected={selectedIds.has(e.id!)} 
+                                                    onSelect={() => toggleSelection(e.id!)}
+                                                    onEdit={() => setEditingExpense(e)}
+                                                    onDelete={() => setDeleteTarget({ id: e.id!, type: "expense" })}
+                                               />
+                                           ))}
+                                       </div>
+                                   )}
+                                   {yesterday.length > 0 && (
+                                       <div className="bg-slate-50/50 dark:bg-white/2">
+                                           <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5">
+                                               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Yesterday</span>
+                                               <Badge variant="ghost" className="bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-0">
+                                                   Total: <Amount value={yesterday.reduce((acc, curr) => acc + curr.amount, 0)} />
+                                               </Badge>
+                                           </div>
+                                           {yesterday.map(e => (
+                                               <ExpenseRow 
+                                                    key={e.id} 
+                                                    expense={e} 
+                                                    accounts={accounts} 
+                                                    isSelected={selectedIds.has(e.id!)} 
+                                                    onSelect={() => toggleSelection(e.id!)}
+                                                    onEdit={() => setEditingExpense(e)}
+                                                    onDelete={() => setDeleteTarget({ id: e.id!, type: "expense" })}
+                                               />
+                                           ))}
+                                       </div>
+                                   )}
+                                   {earlier.length > 0 && (
+                                       <div className="bg-slate-50/50 dark:bg-white/2">
+                                           <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5">
+                                               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Earlier</span>
+                                               <Badge variant="ghost" className="bg-slate-50 dark:bg-white/2 text-slate-400 border-0">
+                                                   Total: <Amount value={earlier.reduce((acc, curr) => acc + curr.amount, 0)} />
+                                               </Badge>
+                                           </div>
+                                           {earlier.map(e => (
+                                               <ExpenseRow 
+                                                    key={e.id} 
+                                                    expense={e} 
+                                                    accounts={accounts} 
+                                                    isSelected={selectedIds.has(e.id!)} 
+                                                    onSelect={() => toggleSelection(e.id!)}
+                                                    onEdit={() => setEditingExpense(e)}
+                                                    onDelete={() => setDeleteTarget({ id: e.id!, type: "expense" })}
+                                               />
+                                           ))}
+                                       </div>
+                                   )}
+                               </div>
                            )}
                         </div>
                     )}
@@ -471,21 +535,71 @@ export default function ExpenseListPage() {
                   </div>
 
                   {/* Income Items */}
-                  <div className="bento-card min-h-[400px]">
+                  <div className="bento-card min-h-[400px] overflow-hidden">
                     {loading ? <Skeleton className="h-full w-full" /> : (
                         <div className="divide-y divide-slate-100 dark:divide-slate-800">
                            {[...iToday, ...iYesterday, ...iEarlier].length === 0 ? (
                                <div className="py-20 text-center text-slate-400 italic">No income matches found</div>
                            ) : (
-                               [...iToday, ...iYesterday, ...iEarlier].map(i => (
-                               <IncomeRow 
-                                    key={i.id} 
-                                    income={i} 
-                                    accounts={accounts} 
-                                    onEdit={() => setEditingIncome(i)}
-                                    onDelete={() => setDeleteTarget({ id: i.id!, type: "income" })}
-                               />
-                               ))
+                               <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                   {iToday.length > 0 && (
+                                       <div className="bg-emerald-50/10 dark:bg-emerald-500/5">
+                                           <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5">
+                                               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">Today</span>
+                                               <Badge variant="ghost" className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-0">
+                                                   Total: <Amount value={iToday.reduce((acc, curr) => acc + curr.amount, 0)} />
+                                               </Badge>
+                                           </div>
+                                           {iToday.map(i => (
+                                               <IncomeRow 
+                                                    key={i.id} 
+                                                    income={i} 
+                                                    accounts={accounts} 
+                                                    onEdit={() => setEditingIncome(i)}
+                                                    onDelete={() => setDeleteTarget({ id: i.id!, type: "income" })}
+                                               />
+                                           ))}
+                                       </div>
+                                   )}
+                                   {iYesterday.length > 0 && (
+                                       <div className="bg-emerald-50/10 dark:bg-emerald-500/5">
+                                           <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5">
+                                               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Yesterday</span>
+                                               <Badge variant="ghost" className="bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-0">
+                                                   Total: <Amount value={iYesterday.reduce((acc, curr) => acc + curr.amount, 0)} />
+                                               </Badge>
+                                           </div>
+                                           {iYesterday.map(i => (
+                                               <IncomeRow 
+                                                    key={i.id} 
+                                                    income={i} 
+                                                    accounts={accounts} 
+                                                    onEdit={() => setEditingIncome(i)}
+                                                    onDelete={() => setDeleteTarget({ id: i.id!, type: "income" })}
+                                               />
+                                           ))}
+                                       </div>
+                                   )}
+                                   {iEarlier.length > 0 && (
+                                       <div className="bg-emerald-50/10 dark:bg-emerald-500/5">
+                                           <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5">
+                                               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Earlier</span>
+                                               <Badge variant="ghost" className="bg-slate-50 dark:bg-white/2 text-slate-400 border-0">
+                                                   Total: <Amount value={iEarlier.reduce((acc, curr) => acc + curr.amount, 0)} />
+                                               </Badge>
+                                           </div>
+                                           {iEarlier.map(i => (
+                                               <IncomeRow 
+                                                    key={i.id} 
+                                                    income={i} 
+                                                    accounts={accounts} 
+                                                    onEdit={() => setEditingIncome(i)}
+                                                    onDelete={() => setDeleteTarget({ id: i.id!, type: "income" })}
+                                               />
+                                           ))}
+                                       </div>
+                                   )}
+                               </div>
                            )}
                         </div>
                     )}
@@ -769,9 +883,9 @@ function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete 
         >
             {/* Account Ribbon Tag */}
             {acc && (
-                <div className="absolute top-0 right-12 px-3 py-1 bg-rose-500/10 dark:bg-rose-500/20 rounded-b-xl border-x border-b border-rose-500/20 backdrop-blur-md">
-                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-rose-600 dark:text-rose-400">{acc.name}</span>
-                </div>
+                <Badge variant="danger" isRibbon className="right-12 px-2.5 py-0.5 text-[7px]">
+                    {acc.name}
+                </Badge>
             )}
 
             {/* Three Dots Menu Button */}
@@ -838,7 +952,7 @@ function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete 
                     </div>
                 </div>
                 <div className="text-right shrink-0 self-center pr-8 sm:pr-0">
-                    <div className="text-xl font-black text-slate-900 dark:text-white tracking-tighter"><Amount value={expense.amount} /></div>
+                    <div className="text-xl font-black text-slate-900 dark:text-white tracking-tightest group-hover:scale-105 transition-transform"><Amount value={expense.amount} /></div>
                 </div>
             </div>
         </div>
@@ -853,9 +967,9 @@ function IncomeRow({ income, accounts, onEdit, onDelete }: any) {
         <div className="group relative flex flex-col p-5 transition-all hover:bg-slate-50/80 dark:hover:bg-white/5 border-b border-slate-50 dark:border-white/5 last:border-0 cursor-pointer">
             {/* Account Ribbon Tag */}
             {acc && (
-                <div className="absolute top-0 right-12 px-3 py-1 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-b-xl border-x border-b border-emerald-500/20 backdrop-blur-md">
-                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">{acc.name}</span>
-                </div>
+                <Badge variant="success" isRibbon className="right-12 px-2.5 py-0.5 text-[7px]">
+                    {acc.name}
+                </Badge>
             )}
 
             {/* Three Dots Menu Button */}

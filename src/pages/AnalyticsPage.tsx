@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { cn } from "../lib/utils";
 import { useExpenses } from "../hooks/useExpenses";
 import { groupByCategory, groupByMonth } from "../utils/analytics";
 import { groupByDay } from "../utils/groupByDay";
@@ -21,7 +22,7 @@ import PageHeader from "../components/layout/PageHeader";
 
 type AnalyticsTab = "overview" | "distribution" | "trends";
 
-export default function AnalyticsPage() {
+export default function AnalyticsPage({ hideHeader }: { hideHeader?: boolean }) {
   const { expenses, loading } = useExpenses();
   const { accounts } = useAccounts();
   const [activeTab, setActiveTab] = useState<AnalyticsTab>("overview");
@@ -50,16 +51,21 @@ export default function AnalyticsPage() {
     <motion.main
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="mx-auto min-h-[100dvh] max-w-6xl px-4 pb-32 pt-24 md:px-6"
+      className={cn(
+        "mx-auto min-h-[100dvh] max-w-6xl px-4 pb-32 md:px-6",
+        !hideHeader && "pt-24"
+      )}
     >
-      <PageHeader 
-        title="Analytics" 
-        subtitle="Visual insights and spending performance."
-        icon={<BarChart3 size={24} />}
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
+      {!hideHeader && (
+        <PageHeader 
+          title="Analytics" 
+          subtitle="Visual insights and spending performance."
+          icon={<BarChart3 size={24} />}
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+      )}
 
       <AnimatePresence mode="wait">
         <motion.div

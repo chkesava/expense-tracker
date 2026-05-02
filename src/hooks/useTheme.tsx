@@ -1,6 +1,15 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
-type Theme = "light" | "dark" | "midnight-olive" | "vintage-parchment" | "sakura-bloom";
+type Theme = 
+  | "light" 
+  | "dark" 
+  | "midnight" 
+  | "midnight-olive" 
+  | "vintage-parchment" 
+  | "sakura-bloom" 
+  | "cyberpunk" 
+  | "nordic" 
+  | "deep-sea";
 
 type ThemeContextType = {
   theme: Theme;
@@ -21,13 +30,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const root = document.documentElement;
     // Remove all possible theme classes
-    root.classList.remove("light", "dark", "theme-midnight-olive", "theme-vintage-parchment", "theme-sakura-bloom");
+    const themeClasses = [
+      "light", "dark", "theme-midnight", "theme-midnight-olive", 
+      "theme-vintage-parchment", "theme-sakura-bloom", 
+      "theme-cyberpunk", "theme-nordic", "theme-deep-sea"
+    ];
+    root.classList.remove(...themeClasses);
     
     // Add the appropriate class
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else if (theme === "light") {
-      root.classList.add("light");
+    if (theme === "dark" || theme === "light") {
+      root.classList.add(theme);
     } else {
       root.classList.add(`theme-${theme}`);
     }

@@ -25,6 +25,7 @@ import { cn } from "../lib/utils";
 import MagicChatEntry from "../components/MagicChatEntry";
 import NumberTicker from "../components/common/NumberTicker";
 import Amount from "../components/common/Amount";
+import { Badge } from "../components/common/Badge";
 
 
 const containerVariants: Variants = {
@@ -298,9 +299,9 @@ export default function Dashboard() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-300">Overview</h3>
-                <span className="text-[9px] font-black bg-white/10 text-white px-2 py-1 rounded-md uppercase tracking-widest">
+                <Badge variant="ghost" className="bg-white/10 text-white border-0 py-1">
                   {selectedMonth}
-                </span>
+                </Badge>
               </div>
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="space-y-1">
@@ -400,9 +401,9 @@ export default function Dashboard() {
                     <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{budget.category}</div>
                     <div className="text-xs font-medium text-slate-500 dark:text-slate-400"><Amount value={budget.spent} /> of <Amount value={budget.amount} /></div>
                   </div>
-                  <div className={cn("text-xs font-extrabold uppercase tracking-[0.2em]", budget.level === "danger" ? "text-red-600 dark:text-red-300" : "text-amber-600 dark:text-amber-300")}>
+                  <Badge variant={budget.level === "danger" ? "danger" : "warning"} className="px-2 py-0.5 text-[9px]">
                     {budget.percent}%
-                  </div>
+                  </Badge>
                 </div>
               </div>
             ))
@@ -427,7 +428,9 @@ export default function Dashboard() {
                     <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{goal.name}</div>
                     <div className="text-xs font-medium text-slate-500 dark:text-slate-400"><Amount value={goal.currentAmount} /> of <Amount value={goal.targetAmount} /></div>
                   </div>
-                  <div className="text-xs font-extrabold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-300">{goal.progress}%</div>
+                  <Badge variant="success" className="px-2 py-0.5 text-[9px]">
+                    {goal.progress}%
+                  </Badge>
                 </div>
                 <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                   <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" style={{ width: `${goal.progress}%` }} />

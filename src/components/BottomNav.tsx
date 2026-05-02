@@ -14,19 +14,13 @@ export default function BottomNav() {
 
   const allLinks = [
     { id: "home", path: "/dashboard", label: "Home", icon: Home },
-    { id: "expenses", path: "/expenses", label: "Expenses", icon: Wallet },
+    { id: "ledger", path: "/ledger", label: "Ledger", icon: Wallet },
     { id: "add", path: "#add", label: "Add", icon: Plus, isAction: true },
-    { id: "split", path: "/split", label: "Split", icon: Users },
-    { id: "subscriptions", path: "/subscriptions", label: "Subs", icon: RefreshCw },
-    { id: "analytics", path: "/analytics", label: "Stats", icon: BarChart3 },
-    { id: "analysis", path: "/analysis", label: "Search", icon: Search },
-    { id: "settings", path: "/settings", label: "Settings", icon: Settings },
+    { id: "vaults", path: "/vaults", label: "Vaults", icon: Users },
+    { id: "insights", path: "/insights", label: "Insights", icon: BarChart3 },
   ];
 
-  // Filter navigation links (excluding the action)
-  const navLinks = allLinks.filter(link => 
-    !link.isAction && (settings.bottomNavTabs as any)[link.id] !== false
-  );
+  const navLinks = allLinks.filter(link => !link.isAction);
 
   // Split links into two groups for centering the Plus button
   const mid = Math.ceil(navLinks.length / 2);
@@ -44,13 +38,13 @@ export default function BottomNav() {
         to={link.path}
         className={({ isActive }) => cn(
           "relative flex flex-col items-center justify-center py-2 px-1 flex-1 min-w-0 transition-all duration-500",
-          isActive ? "text-primary" : "text-slate-400 dark:text-slate-500"
+          isActive ? "text-primary" : "text-muted-foreground"
         )}
       >
         {isActive && (
           <motion.div
             layoutId="bottom-nav-active-bg"
-            className="absolute inset-0 bg-primary/5 dark:bg-primary/10 rounded-[1.5rem] -z-10"
+            className="absolute inset-0 bg-primary/10 rounded-[1.5rem] -z-10"
             initial={false}
             transition={{ type: "spring", bounce: 0.3, duration: 0.8 }}
           />
@@ -60,7 +54,7 @@ export default function BottomNav() {
           strokeWidth={isActive ? 2.5 : 2}
           className={cn(
             "transition-all duration-500",
-            isActive ? "scale-110 drop-shadow-[0_0_12px_rgba(var(--primary),0.4)]" : "scale-100"
+            isActive ? "scale-110 drop-shadow-[0_0_12px_hsl(var(--primary)/0.4)]" : "scale-100"
           )} 
         />
         <span className={cn(
@@ -73,7 +67,7 @@ export default function BottomNav() {
         {isActive && (
           <motion.div
             layoutId="bottom-nav-indicator"
-            className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.6)]"
+            className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.6)]"
             transition={{ type: "spring", bounce: 0.3, duration: 0.8 }}
           />
         )}

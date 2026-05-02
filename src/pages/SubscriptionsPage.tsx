@@ -25,9 +25,9 @@ import PageHeader from "../components/layout/PageHeader";
 import Amount from "../components/common/Amount";
 
 
-type SubTab = "recurring" | "travel" | "stats";
+type SubTab = "recurring" | "stats";
 
-export default function SubscriptionsPage() {
+export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean }) {
   const navigate = useNavigate();
   const { subscriptions, loading, addSubscription, updateSubscription, deleteSubscription } = useSubscriptions();
   const { trips, loading: tripsLoading } = useTrips();
@@ -94,20 +94,27 @@ export default function SubscriptionsPage() {
 
   const tabs = [
     { id: "recurring", label: "Recurring", icon: <Repeat size={16} /> },
-    { id: "travel", label: "Travel", icon: <Plane size={16} /> },
     { id: "stats", label: "Stats", icon: <Activity size={16} /> },
   ];
 
   return (
-    <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-4xl px-4 pb-32 pt-24">
-      <PageHeader 
-        title="Planning Hub" 
-        subtitle="Manage subscriptions and travel budgets."
-        icon={<Calendar size={24} />}
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        rightElement={
+    <motion.main
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className={cn(
+        "mx-auto max-w-4xl px-4 pb-32",
+        !hideHeader && "pt-24"
+      )}
+    >
+      {!hideHeader && (
+        <PageHeader 
+          title="Planning Hub" 
+          subtitle="Manage subscriptions and travel budgets."
+          icon={<Calendar size={24} />}
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          rightElement={
             <button
                 onClick={() => {
                   if (activeTab === "recurring") {
@@ -123,14 +130,38 @@ export default function SubscriptionsPage() {
                 <Plus size={18} />
                 <span>New {activeTab === "recurring" ? "Bill" : "Trip"}</span>
             </button>
-        }
-      />
+          }
+        />
+      )}
 
       <AnimatePresence mode="wait">
         <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
             
             {activeTab === "recurring" && (
                 <div className="space-y-4">
+                    {hideHeader && (
+                      <button
+                        onClick={() => {
+                          setEditingSub(null);
+                          setFormData(INITIAL_FORM_DATA);
+                          setIsAddingSub(true);
+                        }}
+                        className="w-full flex items-center justify-between p-6 bg-blue-600 text-white rounded-[2rem] shadow-xl shadow-blue-500/20 active:scale-[0.98] transition-all group"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                            <Plus size={24} />
+                          </div>
+                          <div className="text-left">
+                            <div className="text-lg font-black tracking-tight">Add New Recurring</div>
+                            <div className="text-[10px] font-bold opacity-70 uppercase tracking-widest">Subscription, EMI, or Bill</div>
+                          </div>
+                        </div>
+                        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                          <ChevronRight size={20} />
+                        </div>
+                      </button>
+                    )}
                     {loading ? <Skeleton className="h-48 w-full" /> : (
                         subscriptions.length === 0 ? (
                             <div className="py-20 text-center text-slate-400 bg-white/40 dark:bg-slate-900/40 rounded-[2.5rem] border border-dashed border-white/60 dark:border-slate-800/60">
@@ -153,38 +184,6 @@ export default function SubscriptionsPage() {
                 </div>
             )}
 
-            {activeTab === "travel" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {tripsLoading ? <Skeleton className="h-48 w-full" /> : (
-                        trips.length === 0 ? (
-                            <div className="col-span-full py-20 text-center text-slate-400 bg-white/40 dark:bg-slate-900/40 rounded-[2.5rem] border border-dashed border-white/60 dark:border-slate-800/60">
-                                <Plane size={48} className="mx-auto mb-4 opacity-20" />
-                                <p className="font-bold">No upcoming trips</p>
-                            </div>
-                        ) : (
-                            trips.map(trip => (
-                                <div key={trip.id} onClick={() => navigate(`/travel/${trip.id}`)} className="bg-white dark:bg-slate-900 shadow-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-all group">
-                                    <div className="flex justify-between items-start mb-6">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                                                <Plane size={18} />
-                                            </div>
-                                            <h3 className="text-xl font-bold tracking-tight">{trip.destination}</h3>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-lg font-black tracking-tighter"><Amount value={trip.spentAmount} /></div>
-                                            <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Budget: <Amount value={trip.totalBudget} /></div>
-                                        </div>
-                                    </div>
-                                    <div className="w-full h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-                                        <div className={cn("h-full transition-all duration-1000", (trip.spentAmount/trip.totalBudget) > 1 ? "bg-rose-500" : "bg-blue-600")} style={{ width: `${Math.min((trip.spentAmount/trip.totalBudget)*100, 100)}%` }} />
-                                    </div>
-                                </div>
-                            ))
-                        )
-                    )}
-                </div>
-            )}
 
             {activeTab === "stats" && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

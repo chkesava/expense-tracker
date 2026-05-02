@@ -41,19 +41,8 @@ const TIMEZONES = [
 ];
 
 type SectionId = "profile" | "general" | "personalize" | "manage" | "accounts" | "dev" | "data";
-
-type BottomTabId = "home" | "expenses" | "split" | "subscriptions" | "analytics" | "analysis" | "settings";
 type WidgetId = "subscriptions" | "focus" | "gamification" | "topCategories";
 
-const BOTTOM_TAB_DEFS: ReadonlyArray<{ id: BottomTabId; label: string; desc: string }> = [
-  { id: "home", label: "Home", desc: "Dashboard & quick add" },
-  { id: "expenses", label: "Expenses", desc: "Full expense list" },
-  { id: "split", label: "Split", desc: "Shared costs" },
-  { id: "subscriptions", label: "Subscriptions", desc: "Recurring payments" },
-  { id: "analytics", label: "Analytics", desc: "Charts & insights" },
-  { id: "analysis", label: "Analysis", desc: "Advanced search" },
-  { id: "settings", label: "Settings", desc: "Configuration" },
-];
 
 const WIDGET_DEFS: ReadonlyArray<{ id: WidgetId; label: string; desc: string }> = [
   { id: "subscriptions", label: "Subscriptions", desc: "Recurring payments" },
@@ -63,10 +52,10 @@ const WIDGET_DEFS: ReadonlyArray<{ id: WidgetId; label: string; desc: string }> 
 ];
 
 const surfaceClass =
-  "bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/60 dark:border-slate-800 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-colors";
+  "bg-card/80 backdrop-blur-xl border border-border rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all";
 
 const fieldClass =
-  "min-h-11 w-full rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500";
+  "min-h-11 w-full rounded-xl bg-muted/50 border border-border px-3 py-2.5 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all";
 
 function SettingsCard({ title, subtitle, icon: Icon, children }: { title: string; subtitle?: string; icon: React.ComponentType<{ className?: string }>; children: React.ReactNode }) {
   return (
@@ -119,7 +108,6 @@ export default function SettingsPage() {
     setMonthlyBudget,
     setTimezone,
     setUpiId,
-    toggleBottomNavTab,
     toggleDashboardWidget,
     setNavigationStyle,
   } = useSettings();
@@ -357,10 +345,10 @@ export default function SettingsPage() {
 
   const pill = (isActive: boolean) =>
     cn(
-      "flex items-center gap-2 rounded-2xl px-3 py-2 text-sm font-black transition-colors",
+      "flex items-center gap-2 rounded-2xl px-3 py-2 text-sm font-black transition-all",
       isActive
-        ? "bg-slate-900 text-white shadow-sm dark:bg-white dark:text-slate-900"
-        : "bg-white/70 text-slate-600 hover:bg-white dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-900"
+        ? "bg-foreground text-background shadow-sm"
+        : "bg-card/70 text-muted-foreground hover:bg-card"
     );
 
   return (
@@ -390,7 +378,7 @@ export default function SettingsPage() {
                     <button
                       key={s.id}
                       onClick={() => setActive(s.id)}
-                      className={cn("w-full rounded-2xl px-3 py-2 text-left transition-colors", isActive ? "bg-blue-600 text-white shadow-sm" : "hover:bg-slate-100 dark:hover:bg-slate-800/60")}
+                      className={cn("w-full rounded-2xl px-3 py-2 text-left transition-all", isActive ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-muted/60")}
                     >
                       <div className="flex items-center gap-2">
                         <s.icon className={cn("h-4 w-4", isActive ? "text-white" : "text-slate-500 dark:text-slate-400")} />
@@ -511,19 +499,6 @@ export default function SettingsPage() {
                   </select>
                 </SettingsRow>
 
-                <details className="rounded-2xl border border-slate-100/80 bg-white/60 p-4 dark:border-slate-800 dark:bg-slate-950/30">
-                  <summary className="cursor-pointer list-none">
-                    <div className="text-sm font-black text-slate-900 dark:text-slate-100">Mobile tabs</div>
-                    <div className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">Toggle which tabs appear in bottom navigation.</div>
-                  </summary>
-                  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {BOTTOM_TAB_DEFS.map((tab) => (
-                      <SettingsRow key={tab.id} title={tab.label} description={tab.desc}>
-                        <Toggle checked={settings.bottomNavTabs?.[tab.id] ?? true} onChange={() => toggleBottomNavTab(tab.id as any)} />
-                      </SettingsRow>
-                    ))}
-                  </div>
-                </details>
 
                 <details className="rounded-2xl border border-slate-100/80 bg-white/60 p-4 dark:border-slate-800 dark:bg-slate-950/30">
                   <summary className="cursor-pointer list-none">

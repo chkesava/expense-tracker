@@ -23,10 +23,11 @@ import { useGamification } from "../hooks/useGamification";
 import { useTheme } from "../hooks/useTheme";
 import { useUserRole } from "../hooks/useUserRole";
 import { useModals } from "../hooks/useModals";
+import { useVaults } from "../hooks/useVaults";
+import Avatar from "./Avatar";
 import { useExpenses } from "../hooks/useExpenses";
 import { useStoryGenerator } from "../hooks/useStoryGenerator";
 import useSettings from "../hooks/useSettings";
-import Avatar from "./Avatar";
 import StoryViewer from "./story/StoryViewer";
 import { cn } from "../lib/utils";
 
@@ -53,11 +54,9 @@ export default function Header() {
 
   const desktopLinks = [
     { path: "/dashboard", label: "Home", icon: Home },
-    { path: "/expenses", label: "Expenses", icon: Wallet },
-    { path: "/split", label: "Split", icon: Users },
-    { path: "/subscriptions", label: "Subs", icon: RefreshCw },
-    { path: "/analytics", label: "Analytics", icon: BarChart3 },
-    { path: "/analysis", label: "Analysis", icon: Search },
+    { path: "/ledger", label: "Ledger", icon: Wallet },
+    { path: "/vaults", label: "Vaults", icon: Users },
+    { path: "/insights", label: "Insights", icon: BarChart3 },
     ...(isAdmin ? [{ path: "/admin", label: "Admin", icon: Shield }] : []),
   ];
 
@@ -103,7 +102,7 @@ export default function Header() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         className={cn(
-          "fixed top-3 left-3 right-3 sm:top-5 sm:left-5 sm:right-5 max-w-7xl mx-auto z-50 px-4 py-3 flex items-center justify-between gap-3 sm:gap-4",
+          "fixed top-2 left-2 right-2 sm:top-5 sm:left-5 sm:right-5 max-w-7xl mx-auto z-50 px-2.5 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4",
           "bento-card transition-all duration-500"
         )}
       >
@@ -114,10 +113,10 @@ export default function Header() {
             onClick={() => navigate("/dashboard")}
             className="inline-flex items-center gap-2.5"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xl shadow-slate-900/10">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-foreground text-background shadow-xl shadow-foreground/10">
               <Activity size={18} />
             </div>
-            <span className="text-2xl font-black tracking-tighter text-gradient-premium">
+            <span className="text-xl sm:text-2xl font-black tracking-tighter text-gradient-premium">
               Vault
             </span>
           </motion.button>
@@ -125,12 +124,12 @@ export default function Header() {
           <div
             onClick={() => setGhostMode(!settings.ghostMode)}
             className={cn(
-              "hidden min-[360px]:inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] shadow-sm ring-1 transition-all duration-300 cursor-pointer hover:bg-white dark:hover:bg-slate-900",
+              "hidden min-[360px]:inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] shadow-sm ring-1 transition-all duration-300 cursor-pointer hover:bg-muted/50",
               settings.ghostMode
-                ? "bg-blue-500/10 text-blue-600 ring-blue-500/40"
+                ? "bg-primary/10 text-primary ring-primary/40"
                 : isOnline
-                  ? "bg-emerald-500/10 text-emerald-600 ring-emerald-200/70 dark:ring-emerald-500/20"
-                  : "bg-red-500/10 text-red-600 ring-red-200/70 dark:ring-red-500/20"
+                  ? "bg-emerald-500/10 text-emerald-600 ring-emerald-500/20"
+                  : "bg-red-500/10 text-red-600 ring-red-500/20"
             )}
             title={settings.ghostMode ? "Ghost Mode Active - Amounts blurred" : isOnline ? "Connected to database" : "Working offline"}
           >
@@ -149,7 +148,7 @@ export default function Header() {
                 />
               </span>
             )}
-            <span>{settings.ghostMode ? "Ghost" : isOnline ? "Online" : "Offline"}</span>
+             <span className="hidden sm:inline">{settings.ghostMode ? "Ghost" : isOnline ? "Online" : "Offline"}</span>
           </div>
         </div>
 
@@ -163,13 +162,13 @@ export default function Header() {
                 onClick={() => navigate(link.path)}
                 className={cn(
                   "relative px-4 py-1.5 rounded-full text-sm font-semibold transition-colors duration-200 flex items-center gap-2",
-                  isActive ? "text-blue-600" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-100"
+                  isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {isActive && (
                   <motion.div
                     layoutId="header-nav-pill"
-                    className="absolute inset-0 bg-white dark:bg-slate-700 shadow-sm rounded-2xl border border-white dark:border-white/10"
+                    className="absolute inset-0 bg-background shadow-sm rounded-2xl border border-border"
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
                 )}
@@ -180,12 +179,13 @@ export default function Header() {
           })}
         </nav>
 
-        <div className="flex shrink-0 items-center justify-end gap-2 relative">
+        <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2 relative">
+          <VaultMemberIndicator />
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => setIsMonthDrawerOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 px-2.5 py-1.5 sm:px-3 sm:py-1.5 text-slate-600 dark:text-slate-200 shadow-sm hover:shadow-md transition-all"
+            className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full border border-border bg-card/90 px-2 py-1.5 sm:px-3 sm:py-1.5 text-foreground shadow-sm hover:shadow-md transition-all"
             aria-label="Choose month"
           >
             <Calendar size={12} />
@@ -215,33 +215,24 @@ export default function Header() {
           )}
 
           <motion.button
-            ref={btnRef}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => setOpen((value) => !value)}
-            className="hidden md:inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-2 text-slate-600 dark:text-slate-200 shadow-sm hover:shadow-md transition-all"
-            aria-label="Open account menu"
+            onClick={() => navigate("/settings")}
+            className="flex items-center justify-center rounded-xl border border-border bg-card p-2 text-foreground shadow-sm hover:shadow-md transition-all"
+            aria-label="Open settings"
           >
             <Settings size={18} />
           </motion.button>
 
-          <motion.button
-            whileHover={{ scale: storySlides.length ? 1.05 : 1.02 }}
-            whileTap={{ scale: 0.96 }}
-            onClick={() => storySlides.length > 0 && setShowStory(true)}
-            className={cn(
-              "relative rounded-full p-[3px] transition-all shrink-0",
-              storySlides.length
-                ? "bg-[conic-gradient(from_180deg_at_50%_50%,#06b6d4_0deg,#3b82f6_120deg,#14b8a6_240deg,#06b6d4_360deg)] shadow-[0_0_0_3px_rgba(14,165,233,0.12)]"
-                : "bg-slate-200 dark:bg-slate-700"
-            )}
-            aria-label={storySlides.length ? "Open monthly status" : "Monthly status unavailable"}
-            disabled={storySlides.length === 0}
-          >
-            <div className="rounded-full bg-white dark:bg-slate-950 p-0.5">
+          <div className="relative shrink-0">
+            <button
+              ref={btnRef}
+              onClick={() => setOpen((v) => !v)}
+              className="focus:outline-none"
+            >
               <Avatar src={user?.photoURL} name={user?.displayName || "User"} size={36} />
-            </div>
-          </motion.button>
+            </button>
+          </div>
 
           <AnimatePresence>
             {open && (
@@ -251,7 +242,7 @@ export default function Header() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
                 transition={{ duration: 0.2 }}
-                className="absolute right-12 top-14 w-64 p-2 bg-white/80 dark:bg-slate-950/90 backdrop-blur-2xl border border-white/60 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden z-[60]"
+                className="absolute right-0 top-14 w-64 p-2 bg-white/80 dark:bg-slate-950/90 backdrop-blur-2xl border border-white/60 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden z-[60]"
               >
                 <div className="p-3 mb-2 flex items-center gap-3">
                   <Avatar src={user?.photoURL} name={user?.displayName || "User"} size={48} className="shadow-sm" />
@@ -300,5 +291,37 @@ export default function Header() {
         </div>
       </motion.header>
     </>
+  );
+}
+function VaultMemberIndicator() {
+  const location = useLocation();
+  const { vaults } = useVaults();
+  
+  const vaultId = location.pathname.match(/\/vaults\/([^/]+)/)?.[1];
+  const vault = vaults.find(v => v.id === vaultId);
+  
+  if (!vault) return null;
+  
+  return (
+    <motion.div 
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="hidden sm:flex items-center gap-1.5 px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700"
+    >
+      <div className="flex -space-x-2">
+        {vault.memberIds.slice(0, 3).map((id, i) => (
+          <Avatar key={id} size={20} name={`M ${i}`} className="border-2 border-white dark:border-slate-800" />
+        ))}
+        {vault.memberIds.length > 3 && (
+          <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[8px] font-bold border-2 border-white dark:border-slate-800">
+            +{vault.memberIds.length - 3}
+          </div>
+        )}
+      </div>
+      <div className="flex flex-col">
+        <span className="text-[8px] font-black uppercase tracking-tighter text-blue-600 dark:text-blue-400">Joint Access</span>
+        <span className="text-[7px] font-bold text-slate-400 truncate max-w-[60px]">{vault.name}</span>
+      </div>
+    </motion.div>
   );
 }

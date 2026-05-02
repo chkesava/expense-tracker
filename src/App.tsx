@@ -22,6 +22,11 @@ import SplitDetailPage from "./pages/SplitDetailPage";
 import CreateTripWizard from "./pages/CreateTripWizard";
 import TripDetailPage from "./pages/TripDetailPage";
 import NotFound from "./pages/NotFound";
+import LedgerHub from "./pages/LedgerHub";
+import InsightsHub from "./pages/InsightsHub";
+import VaultsPage from "./pages/VaultsPage";
+import VaultDetailPage from "./pages/VaultDetailPage";
+
 import { useSubscriptions } from "./hooks/useSubscriptions";
 import { useTheme } from "./hooks/useTheme";
 import { ModalProvider, useModals } from "./hooks/useModals";
@@ -106,16 +111,23 @@ function AppRoutes() {
             <Routes location={location} key={location.pathname}>
               <Route path="/" element={<Navigate to={`/${settings.defaultView || 'dashboard'}`} replace />} />
               <Route path="/add" element={<AddExpense />} />
-              <Route path="/expenses" element={<ExpenseListPage />} />
-              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/ledger" element={<LedgerHub />} />
+              <Route path="/insights" element={<InsightsHub />} />
+              <Route path="/vaults" element={<VaultsPage />} />
+              <Route path="/vaults/:vaultId" element={<VaultDetailPage />} />
+
+              {/* Legacy redirects */}
+              <Route path="/expenses" element={<Navigate to="/ledger?tab=expenses" replace />} />
+              <Route path="/split" element={<Navigate to="/ledger?tab=splits" replace />} />
+              <Route path="/subscriptions" element={<Navigate to="/ledger?tab=subscriptions" replace />} />
+              <Route path="/analytics" element={<Navigate to="/insights?tab=analytics" replace />} />
+              <Route path="/analysis" element={<Navigate to="/insights?tab=search" replace />} />
+
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/subscriptions" element={<SubscriptionsPage />} />
-              <Route path="/split" element={<SplitPage />} />
               <Route path="/split/:id" element={<SplitDetailPage />} />
               <Route path="/travel/new" element={<CreateTripWizard />} />
               <Route path="/travel/:tripId" element={<TripDetailPage />} />
-              <Route path="/analysis" element={<AnalysisLab />} />
               {import.meta.env.DEV && (
                 <Route path="/seed" element={<SeedDataPage />} />
               )}

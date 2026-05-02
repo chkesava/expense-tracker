@@ -32,7 +32,7 @@ import type { UserProfile } from "../hooks/useUsers";
 
 type SplitTab = "activity" | "management";
 
-export default function SplitPage() {
+export default function SplitPage({ hideHeader }: { hideHeader?: boolean }) {
   const { splits, loading, createSplit } = useSplits();
   const { user } = useAuth();
   const location = useLocation();
@@ -109,15 +109,24 @@ export default function SplitPage() {
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-blue-600" /></div>;
 
   return (
-    <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-4xl mx-auto px-4 pt-24 pb-32">
-      <PageHeader 
-        title="Split Hub" 
-        subtitle="Manage shared expenses and balances."
-        icon={<Users size={24} />}
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
+    <motion.main
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className={cn(
+        "mx-auto max-w-4xl px-4 pb-32",
+        !hideHeader && "pt-24"
+      )}
+    >
+      {!hideHeader && (
+        <PageHeader 
+          title="Group Hub" 
+          subtitle="Manage collaborative splits and shared IOUs."
+          icon={<Users size={24} />}
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+      )}
 
       <AnimatePresence mode="wait">
         <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>

@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useGamification } from "../hooks/useGamification";
 import { LEVEL_THRESHOLDS } from "../types/stats";
 import { cn } from "../lib/utils";
+import { Badge } from "./common/Badge";
 
 export default function GamificationCard() {
     const { stats, loading } = useGamification();
@@ -30,13 +31,9 @@ export default function GamificationCard() {
             transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
             className="relative overflow-hidden rounded-[2rem] p-1 mb-6"
         >
-            <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="absolute top-0 right-4 z-50 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-b-lg shadow-lg shadow-pink-500/40 animate-pulse"
-            >
+            <Badge variant="neon" isRibbon>
                 NEW
-            </motion.div>
+            </Badge>
             {/* Animated Border Gradient */}
             <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/0 to-white/40 opacity-50 pointer-events-none" />
 
@@ -117,9 +114,9 @@ export default function GamificationCard() {
                         <div className="text-[10px] uppercase tracking-wider text-blue-200 font-semibold">Active Shield</div>
 
                         {lastMonthStats && (
-                            <div className="absolute -top-2 -right-2 bg-blue-500/80 text-[9px] px-1.5 py-0.5 rounded-full border border-white/20">
+                            <Badge variant="primary" className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[8px] rounded-full">
                                 Last Best: {lastMonthStats.maxShields}
-                            </div>
+                            </Badge>
                         )}
                     </motion.div>
 
@@ -133,9 +130,9 @@ export default function GamificationCard() {
                         <div className="text-[10px] uppercase tracking-wider text-orange-200 font-semibold">Spending Spree</div>
 
                         {lastMonthStats && (
-                            <div className="absolute -top-2 -right-2 bg-orange-500/80 text-[9px] px-1.5 py-0.5 rounded-full border border-white/20">
+                            <Badge variant="warning" className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[8px] rounded-full">
                                 Last High: {lastMonthStats.maxFires}
-                            </div>
+                            </Badge>
                         )}
                     </motion.div>
                 </div>
