@@ -1,21 +1,22 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { BarChart3, Search } from "lucide-react";
+import { BarChart3, Search, CalendarDays } from "lucide-react";
 import PageHeader from "../components/layout/PageHeader";
 import AnalyticsPage from "./AnalyticsPage";
 import AnalysisLab from "./AnalysisLab";
+import YearlyAnalytics from "./YearlyAnalytics";
 
-type InsightsTab = "analytics" | "search";
+type InsightsTab = "analytics" | "yearly" | "search";
 
 export default function InsightsHub() {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const [activeTab, setActiveTab] = useState<InsightsTab>(() => {
     const searchParams = new URLSearchParams(location.search);
     const tab = searchParams.get("tab") as InsightsTab;
-    if (tab && ["analytics", "search"].includes(tab)) return tab;
+    if (tab && ["analytics", "yearly", "search"].includes(tab)) return tab;
     return "analytics";
   });
 
@@ -27,7 +28,8 @@ export default function InsightsHub() {
 
   const tabs = [
     { id: "analytics", label: "Performance", icon: <BarChart3 size={16} /> },
-    { id: "search", label: "Discovery", icon: <Search size={16} /> },
+    { id: "yearly",    label: "Yearly",      icon: <CalendarDays size={16} /> },
+    { id: "search",    label: "Discovery",   icon: <Search size={16} /> },
   ];
 
   return (
@@ -36,8 +38,8 @@ export default function InsightsHub() {
       animate={{ opacity: 1 }}
       className="mx-auto max-w-6xl px-4 pb-32 pt-24 md:px-6"
     >
-      <PageHeader 
-        title="Insights Hub" 
+      <PageHeader
+        title="Insights Hub"
         subtitle="Advanced financial analytics and discovery."
         icon={<BarChart3 size={24} />}
         tabs={tabs}
@@ -54,7 +56,8 @@ export default function InsightsHub() {
           transition={{ duration: 0.2 }}
         >
           {activeTab === "analytics" && <AnalyticsPage hideHeader />}
-          {activeTab === "search" && <AnalysisLab hideHeader />}
+          {activeTab === "yearly"    && <YearlyAnalytics />}
+          {activeTab === "search"    && <AnalysisLab hideHeader />}
         </motion.div>
       </AnimatePresence>
     </motion.main>

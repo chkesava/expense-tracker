@@ -36,27 +36,38 @@ export default function Modal({ isOpen, onClose, title, children, className }: M
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+        /* On mobile: align to top so bottom nav doesn't cover the modal */
+        <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center sm:p-6">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-slate-950/40 backdrop-blur-md"
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
           />
 
           {/* Modal Content */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 100, rotateX: 15 }}
-            animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 100, rotateX: 15 }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            initial={{ opacity: 0, y: "100%" }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
             className={cn(
-              "relative w-full max-w-lg premium-glass rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90dvh] border border-white/20",
+              // Mobile: full-width sheet from bottom with rounded top corners
+              // Desktop: centered card with full rounded corners
+              "relative w-full sm:max-w-lg premium-glass shadow-2xl overflow-hidden flex flex-col border border-white/20",
+              "rounded-t-[2rem] sm:rounded-[2rem]",
+              // Height: on mobile leave space for bottom nav (~80px) + safe area
+              "max-h-[85dvh] sm:max-h-[90dvh]",
               className
             )}
           >
+            {/* Drag handle — mobile only */}
+            <div className="flex justify-center pt-3 pb-1 sm:hidden">
+              <div className="w-10 h-1 rounded-full bg-white/20" />
+            </div>
+
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
               {title && (
@@ -72,8 +83,8 @@ export default function Modal({ isOpen, onClose, title, children, className }: M
               </button>
             </div>
 
-            {/* Body */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar">
+            {/* Body — scrollable, with bottom padding so content clears nav */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-8 pb-6 sm:pb-8 custom-scrollbar">
               {children}
             </div>
           </motion.div>

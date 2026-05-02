@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { 
   collection, 
   query, 
@@ -7,8 +7,7 @@ import {
   addDoc, 
   serverTimestamp,
   doc,
-  updateDoc,
-  deleteDoc
+  updateDoc
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "./useAuth";
@@ -22,9 +21,11 @@ export function useVaults() {
 
   useEffect(() => {
     if (!user) {
-      setVaults([]);
-      setLoading(false);
-      return;
+      const id = requestAnimationFrame(() => {
+        setVaults([]);
+        setLoading(false);
+      });
+      return () => cancelAnimationFrame(id);
     }
 
     const q = query(

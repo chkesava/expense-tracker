@@ -22,7 +22,7 @@ export default function DailyTrend({
 
   return (
     <div style={{ width: "100%", height: 220 }}>
-      <ResponsiveContainer>
+      <ResponsiveContainer width="100%" height={220}>
         <LineChart data={data}>
           <XAxis
             dataKey="date"

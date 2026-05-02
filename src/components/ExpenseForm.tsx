@@ -34,7 +34,7 @@ export default function ExpenseForm({
   const { settings } = useSettings();
   const { addXP } = useGamification(); 
 
-  const [type, setType] = useState<"expense" | "income">("expense");
+  const [type, setType] = useState<"expense" | "income" | "vault">("expense");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState("");
   const [category, setCategory] = useState<string>(settings.defaultCategory || "Food");
@@ -45,25 +45,12 @@ export default function ExpenseForm({
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categoryTouched, setCategoryTouched] = useState(false);
-  const [matchedRule, setMatchedRule] = useState<string | null>(null);
 
   const { accounts } = useAccounts();
   const { categories: userCategories } = useCategories();
   const { rules } = useCategorizationRules();
   const { trips, syncTripSpentAmount } = useTrips();
   const { vaults } = useVaults();
-
-  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
-
-  useEffect(() => {
-    const handleStatus = () => setIsOnline(navigator.onLine);
-    window.addEventListener("online", handleStatus);
-    window.addEventListener("offline", handleStatus);
-    return () => {
-      window.removeEventListener("online", handleStatus);
-      window.removeEventListener("offline", handleStatus);
-    };
-  }, []);
 
   useEffect(() => {
     if (editingExpense) {
@@ -89,28 +76,25 @@ export default function ExpenseForm({
       if (last) setCategory(last);
       setDate(new Date().toISOString().slice(0, 10));
       setCategoryTouched(false);
-      const state = location.state as any;
+      const state = location.state as { tripId?: string } | null;
       setTripId(state?.tripId ?? null);
     }
-  }, [editingExpense, editingIncome]);
+  }, [editingExpense, editingIncome, location.state]);
 
   useEffect(() => {
     if (editingExpense || categoryTouched) return;
 
     const normalizedNote = note.trim().toLowerCase();
     if (!normalizedNote) {
-      setMatchedRule(null);
       return;
     }
 
     const match = rules.find((rule) => normalizedNote.includes(rule.keyword.toLowerCase()));
     if (!match) {
-      setMatchedRule(null);
       return;
     }
 
     setCategory(match.category);
-    setMatchedRule(match.keyword);
   }, [note, rules, editingExpense, categoryTouched]);
 
   const currentMonth = new Date().toISOString().slice(0, 7);
@@ -126,9 +110,39 @@ export default function ExpenseForm({
     setIsSubmitting(true);
     try {
       const month = date.slice(0, 7);
+
+      if (type === "vault") {
+        if (!vaultId) {
+          toast.error("Choose a vault");
+          return;
+        }
+        const vault = vaults.find((v) => v.id === vaultId);
+        if (!vault) {
+          toast.error("Vault not found");
+          return;
+        }
+
+        await addDoc(collection(db, "vaults", vaultId, "expenses"), {
+          vaultId,
+          amount: Number(amount),
+          category,
+          note,
+          date,
+          createdAt: serverTimestamp(),
+          createdBy: user.uid,
+          paidBy: user.uid,
+          splitBetween: vault.memberIds,
+        });
+
+        toast.success("Added to vault");
+        if (onSuccess) onSuccess();
+        else navigate(`/vaults/${vaultId}`);
+        return;
+      }
+
       const collectionName = type === "expense" ? "expenses" : "incomes";
 
-      const data: any = {
+      const data: Record<string, unknown> = {
         amount: Number(amount),
         date,
         note,
@@ -160,8 +174,8 @@ export default function ExpenseForm({
         if (type === "expense") addXP(10);
 
         if (type === "expense" && shouldSuggestSplit(Number(amount), note)) {
-          toast.info(
-            ({ closeToast }) => (
+            toast.info(
+            ({ closeToast }: { closeToast?: () => void }) => (
               <SplitSuggestionToast 
                 amount={Number(amount)} 
                 note={note} 
@@ -216,6 +230,24 @@ export default function ExpenseForm({
         </button>
         <button
           type="button"
+          onClick={() => {
+            setType("vault");
+            if (!vaultId && vaults[0]?.id) setVaultId(vaults[0].id);
+          }}
+          className={cn(
+            "flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-1.5",
+            type === "vault"
+              ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm"
+              : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+          )}
+          disabled={vaults.length === 0}
+          title={vaults.length === 0 ? "Join or create a vault first" : "Add directly to a vault"}
+        >
+          <Users size={12} />
+          Vault
+        </button>
+        <button
+          type="button"
           onClick={() => setType("income")}
           className={cn(
             "flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
@@ -233,7 +265,7 @@ export default function ExpenseForm({
         <div className="relative group">
           <span className={cn(
             "absolute left-4 top-1/2 -translate-y-1/2 font-black text-xl z-10 transition-colors",
-            type === "expense" ? "text-rose-500" : "text-emerald-500"
+            type === "expense" ? "text-rose-500" : type === "vault" ? "text-blue-600" : "text-emerald-500"
           )}>₹</span>
           <input
             type="number"
@@ -241,7 +273,11 @@ export default function ExpenseForm({
             required
             className={cn(
               "w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-white/10 rounded-2xl py-4 pl-10 pr-4 text-3xl font-black focus:outline-none transition-all placeholder:opacity-20",
-              type === "expense" ? "text-slate-900 dark:text-white focus:border-rose-500" : "text-emerald-700 dark:text-emerald-100 focus:border-emerald-500"
+              type === "expense"
+                ? "text-slate-900 dark:text-white focus:border-rose-500"
+                : type === "vault"
+                  ? "text-slate-900 dark:text-white focus:border-blue-500"
+                  : "text-emerald-700 dark:text-emerald-100 focus:border-emerald-500"
             )}
             placeholder="0"
             value={amount}
@@ -281,23 +317,22 @@ export default function ExpenseForm({
 
         <div className="space-y-1.5">
           <label className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
-            <Tag size={10} /> {type === "expense" ? "Category" : "Source"}
+            <Tag size={10} /> {type === "income" ? "Source" : "Category"}
           </label>
           <div className="relative">
             <select
               className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 appearance-none focus:outline-none focus:border-primary transition-all"
-              value={type === "expense" ? category : source}
+              value={type === "income" ? source : category}
               onChange={e => {
-                if (type === "expense") {
+                if (type !== "income") {
                   setCategoryTouched(true);
-                  setMatchedRule(null);
                   setCategory(e.target.value);
                 } else {
                   setSource(e.target.value);
                 }
               }}
             >
-              {type === "expense" ? (
+              {type !== "income" ? (
                 <>
                   <optgroup label="Default">
                     {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
@@ -350,7 +385,7 @@ export default function ExpenseForm({
 
       {/* Expanded Actions Section */}
       <AnimatePresence>
-        {type === "expense" && (vaults.length > 0 || trips.length > 0) && (
+        {type !== "income" && (vaults.length > 0 || trips.length > 0) && (
             <motion.div 
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
@@ -361,19 +396,21 @@ export default function ExpenseForm({
                 {vaults.length > 0 && (
                     <div className="space-y-2">
                         <label className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                            <Zap size={10} /> Contribute to Vault
+                            <Zap size={10} /> {type === "vault" ? "Choose Vault" : "Contribute to Vault"}
                         </label>
                         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                            <button
-                                type="button"
-                                onClick={() => setVaultId(null)}
-                                className={cn(
-                                    "shrink-0 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all border",
-                                    !vaultId ? "bg-slate-900 text-white border-slate-900" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-white/5 text-slate-500"
-                                )}
-                            >
-                                Personal
-                            </button>
+                            {type !== "vault" && (
+                              <button
+                                  type="button"
+                                  onClick={() => setVaultId(null)}
+                                  className={cn(
+                                      "shrink-0 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all border",
+                                      !vaultId ? "bg-slate-900 text-white border-slate-900" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-white/5 text-slate-500"
+                                  )}
+                              >
+                                  Personal
+                              </button>
+                            )}
                             {vaults.map(v => (
                                 <button
                                     key={v.id}
@@ -393,7 +430,7 @@ export default function ExpenseForm({
                 )}
 
                 {/* Trip Selection */}
-                {(trips.filter(t => t.status === "active").length > 0 || !!tripId) && (
+                {type === "expense" && (trips.filter(t => t.status === "active").length > 0 || !!tripId) && (
                     <div className="space-y-1.5">
                         <label className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
                             <MapPin size={10} /> Link to Trip
@@ -427,7 +464,11 @@ export default function ExpenseForm({
           "w-full py-4 rounded-xl font-black text-[11px] text-white shadow-lg transition-all mt-2 uppercase tracking-[0.2em]",
           isLocked
             ? "bg-slate-400 cursor-not-allowed"
-            : type === "expense" ? "bg-rose-500 shadow-rose-500/20" : "bg-emerald-500 shadow-emerald-500/20"
+            : type === "expense"
+              ? "bg-rose-500 shadow-rose-500/20"
+              : type === "vault"
+                ? "bg-blue-600 shadow-blue-600/20"
+                : "bg-emerald-500 shadow-emerald-500/20"
         )}
       >
         {isLocked ? "🔒 Locked" : isSubmitting ? "Saving..." : (editingExpense || editingIncome ? "Save Changes" : `Add ${type}`)}

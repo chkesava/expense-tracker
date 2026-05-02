@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Users, Plus, Shield, Globe, Lock, ArrowRight, Wallet, Target, Info } from "lucide-react";
 import PageHeader from "../components/layout/PageHeader";
 import { useVaults } from "../hooks/useVaults";
+import { useVaultExpenses } from "../hooks/useVaultExpenses";
 import type { SharedVault } from "../types/vault";
 import Modal from "../components/common/Modal";
 import { cn } from "../lib/utils";
@@ -146,6 +147,11 @@ export default function VaultsPage() {
 
 function VaultCard({ vault }: { vault: SharedVault }) {
     const navigate = useNavigate();
+    const { expenses } = useVaultExpenses(vault.id);
+    
+    const totalSpent = expenses.reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
+    const progress = Math.min(100, vault.budget > 0 ? (totalSpent / vault.budget) * 100 : 0);
+
     return (
         <motion.div 
             whileHover={{ y: -5 }}
@@ -177,11 +183,11 @@ function VaultCard({ vault }: { vault: SharedVault }) {
                             <Amount value={vault.budget} />
                         </div>
                     </div>
-                    <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden relative">
                         <motion.div 
                             initial={{ width: 0 }}
-                            animate={{ width: "45%" }} // Will be dynamic later
-                            className="h-full rounded-full"
+                            animate={{ width: `${progress}%` }}
+                            className="h-full rounded-full absolute left-0 top-0"
                             style={{ backgroundColor: vault.themeColor }}
                         />
                     </div>
