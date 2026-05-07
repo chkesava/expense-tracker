@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, writeBatch } from "firebase/firestore";
-import { Brush, Database, Folder, LayoutGrid, LogOut, SlidersHorizontal, Trash2, User, WalletCards, FileText, Loader2, Share2 } from "lucide-react";
+import { Brush, Database, Folder, LayoutGrid, LogOut, SlidersHorizontal, Trash2, User, WalletCards, FileText, Loader2, Share2, Shield } from "lucide-react";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 
@@ -40,7 +40,7 @@ const TIMEZONES = [
   "Pacific/Auckland",
 ];
 
-type SectionId = "profile" | "general" | "personalize" | "manage" | "accounts" | "dev" | "data";
+type SectionId = "profile" | "general" | "personalize" | "manage" | "accounts" | "dev" | "data" | "privacy";
 type WidgetId = "subscriptions" | "focus" | "gamification" | "topCategories";
 
 
@@ -110,6 +110,10 @@ export default function SettingsPage() {
     setUpiId,
     toggleDashboardWidget,
     setNavigationStyle,
+    setPrivacyPin,
+    setLockOnInactivity,
+    setInactivityTimeout,
+    setLockOnAppSwitch,
   } = useSettings();
   const { user, logout } = useAuth();
   const { expenses } = useExpenses();
@@ -154,6 +158,7 @@ export default function SettingsPage() {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [reportType, setReportType] = useState<"pdf" | "csv">("pdf");
+  const [pinInput, setPinInput] = useState("");
 
 
   useEffect(() => {
@@ -285,6 +290,7 @@ export default function SettingsPage() {
       { id: "personalize" as const, label: "Personalize", icon: Brush },
       { id: "manage" as const, label: "Manage", icon: LayoutGrid },
       { id: "accounts" as const, label: "Accounts", icon: WalletCards },
+      { id: "privacy" as const, label: "Privacy", icon: Shield },
       ...(import.meta.env.DEV ? [{ id: "dev" as const, label: "Dev Tools", icon: Folder }] : []),
       { id: "data" as const, label: "Data", icon: Database },
       ];
@@ -770,6 +776,85 @@ export default function SettingsPage() {
                     ))}
                   </div>
                 </details>
+              </SettingsCard>
+            )}
+
+            {active === "privacy" && (
+              <SettingsCard title="Privacy" subtitle="Secure your financial data." icon={Shield}>
+                <SettingsRow title="App Lock PIN" description="Protect the app with a 4-digit code.">
+                  <div className="flex items-center gap-3">
+                    {settings.privacyPin ? (
+                      <>
+                        <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-sm font-black bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-200/50 dark:border-emerald-500/20">
+                          <Shield className="w-4 h-4" /> Enabled
+                        </div>
+                        <button
+                          onClick={() => {
+                            setPrivacyPin("");
+                            setPinInput("");
+                            toast.success("Privacy PIN removed");
+                          }}
+                          className="px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
+                        >
+                          Remove
+                        </button>
+                      </>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="password"
+                          maxLength={4}
+                          value={pinInput}
+                          onChange={(e) => setPinInput(e.target.value.replace(/\D/g, ''))}
+                          placeholder="4-digit PIN"
+                          className={cn(fieldClass, "w-32 text-center tracking-[0.25em] font-black")}
+                        />
+                        <button
+                          onClick={() => {
+                            if (pinInput.length === 4) {
+                              setPrivacyPin(pinInput);
+                              toast.success("Privacy PIN set successfully");
+                            } else {
+                              toast.error("PIN must be exactly 4 digits");
+                            }
+                          }}
+                          disabled={pinInput.length !== 4}
+                          className="min-h-11 rounded-xl bg-blue-600 px-4 py-2 text-sm font-black text-white hover:bg-blue-700 active:scale-95 disabled:opacity-50 transition-all"
+                        >
+                          Enable
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </SettingsRow>
+
+                {settings.privacyPin && (
+                  <>
+                    <SettingsRow title="Lock on Inactivity" description="Automatically lock the app when you are away.">
+                      <Toggle checked={settings.lockOnInactivity} onChange={(next) => setLockOnInactivity(next)} />
+                    </SettingsRow>
+
+                    {settings.lockOnInactivity && (
+                      <SettingsRow title="Inactivity Timeout" description="How long before the app locks.">
+                        <select
+                          value={settings.inactivityTimeout}
+                          onChange={(e) => setInactivityTimeout(Number(e.target.value))}
+                          className={cn(fieldClass, "w-32 cursor-pointer")}
+                        >
+                          <option value={15}>15 sec</option>
+                          <option value={30}>30 sec</option>
+                          <option value={60}>1 min</option>
+                          <option value={300}>5 min</option>
+                          <option value={600}>10 min</option>
+                        </select>
+                      </SettingsRow>
+                    )}
+
+                    <SettingsRow title="Lock on App Switch" description="Lock immediately when moving to another app or tab.">
+                      <Toggle checked={settings.lockOnAppSwitch} onChange={(next) => setLockOnAppSwitch(next)} />
+                    </SettingsRow>
+                  </>
+                )}
               </SettingsCard>
             )}
 

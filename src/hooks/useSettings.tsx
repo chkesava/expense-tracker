@@ -22,6 +22,10 @@ type Settings = {
   dashboardOrder: string[];
   navigationStyle: "bottom" | "dock";
   ghostMode: boolean;
+  privacyPin: string;
+  lockOnInactivity: boolean;
+  inactivityTimeout: number; // in seconds
+  lockOnAppSwitch: boolean;
 };
 
 export const DEFAULTS: Settings = {
@@ -42,6 +46,10 @@ export const DEFAULTS: Settings = {
   dashboardOrder: ["focus", "gamification", "subscriptions", "topCategories", "overview", "quickAdd", "insight", "budgetAlerts", "financialGoals", "recentActivity"],
   navigationStyle: "bottom",
   ghostMode: false,
+  privacyPin: "",
+  lockOnInactivity: true,
+  inactivityTimeout: 60,
+  lockOnAppSwitch: true,
 };
 
 type SettingsContextType = {
@@ -59,6 +67,10 @@ type SettingsContextType = {
   setDashboardOrder: (order: string[]) => void;
   setNavigationStyle: (val: Settings["navigationStyle"]) => void;
   setGhostMode: (val: boolean) => void;
+  setPrivacyPin: (val: string) => void;
+  setLockOnInactivity: (val: boolean) => void;
+  setInactivityTimeout: (val: number) => void;
+  setLockOnAppSwitch: (val: boolean) => void;
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -137,6 +149,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const setDashboardOrder = (order: string[]) => updateSettings({ dashboardOrder: order });
   const setNavigationStyle = (val: Settings["navigationStyle"]) => updateSettings({ navigationStyle: val });
   const setGhostMode = (val: boolean) => updateSettings({ ghostMode: val });
+  const setPrivacyPin = (val: string) => updateSettings({ privacyPin: val });
+  const setLockOnInactivity = (val: boolean) => updateSettings({ lockOnInactivity: val });
+  const setInactivityTimeout = (val: number) => updateSettings({ inactivityTimeout: val });
+  const setLockOnAppSwitch = (val: boolean) => updateSettings({ lockOnAppSwitch: val });
 
   return (
     <SettingsContext.Provider
@@ -155,6 +171,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setDashboardOrder,
         setNavigationStyle,
         setGhostMode,
+        setPrivacyPin,
+        setLockOnInactivity,
+        setInactivityTimeout,
+        setLockOnAppSwitch,
       }}
     >
       {!loading && children}

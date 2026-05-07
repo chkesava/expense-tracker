@@ -13,6 +13,7 @@ import SeedDataPage from "./pages/SeedData";
 import Header from "./components/Header";
 import MobileActionDock from "./components/MobileActionDock";
 import BottomNav from "./components/BottomNav";
+import PrivacyLock from "./components/PrivacyLock";
 import AnalysisLab from "./pages/AnalysisLab";
 import SettingsPage from "./pages/Settings";
 import SubscriptionsPage from "./pages/SubscriptionsPage";
@@ -72,7 +73,9 @@ function AppContent() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="w-full min-h-[100dvh]"
         >
-          <AppRoutes />
+          <PrivacyLock>
+            <AppRoutes />
+          </PrivacyLock>
         </motion.div>
       )}
     </AnimatePresence>
