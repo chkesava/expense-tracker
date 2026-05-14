@@ -72,8 +72,12 @@ export function useBiometrics() {
       });
 
       return !!assertion;
-    } catch (err) {
-      console.error("Biometric verification failed:", err);
+    } catch (err: any) {
+      if (err.name === "NotAllowedError" || err.name === "AbortError") {
+        console.warn("Biometric verification cancelled or timed out.");
+      } else {
+        console.error("Biometric verification failed:", err);
+      }
       return false;
     }
   }, []);

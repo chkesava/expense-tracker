@@ -29,28 +29,40 @@ export default function PrivacyLock({ children }: { children: ReactNode }) {
     }
   }, [settings.privacyPin]);
 
-  // Auto trigger biometrics
+  // Gesture-based auto-trigger for biometrics
   useEffect(() => {
-    if (isLocked && isRegistered && !hasAttemptedAutoBiometric.current) {
+    if (!isLocked || !isRegistered || hasAttemptedAutoBiometric.current) return;
+
+    const triggerBiometrics = async () => {
+      if (hasAttemptedAutoBiometric.current) return;
       hasAttemptedAutoBiometric.current = true;
-      // We must ignore the promise, as we can't use await directly inside useEffect without a wrapper
-      // But we already have the handleBiometricUnlock function defined later, wait, it's defined later.
-      // I need to define it or just call authenticate and the logic here.
-      authenticate().then(success => {
-        if (success) {
-          setIsLocked(false);
-          setPinInput("");
-          setError(false);
-          sessionStorage.setItem("app_unlocked", "true");
-          sessionStorage.removeItem("app_duress");
-          window.dispatchEvent(new Event("duress_changed"));
-        } else {
-          // just silently fail the auto prompt
-          setError(true);
-          setTimeout(() => setError(false), 500);
-        }
-      });
-    }
+      
+      const success = await authenticate();
+      if (success) {
+        setIsLocked(false);
+        setPinInput("");
+        setError(false);
+        sessionStorage.setItem("app_unlocked", "true");
+        sessionStorage.removeItem("app_duress");
+        window.dispatchEvent(new Event("duress_changed"));
+      }
+      // Remove listeners after attempt
+      cleanup();
+    };
+
+    const cleanup = () => {
+      window.removeEventListener("click", triggerBiometrics);
+      window.removeEventListener("touchstart", triggerBiometrics);
+      window.removeEventListener("keydown", triggerBiometrics);
+    };
+
+    // Browsers require a user gesture to trigger WebAuthn.
+    // We listen for the first interaction to trigger the prompt.
+    window.addEventListener("click", triggerBiometrics);
+    window.addEventListener("touchstart", triggerBiometrics);
+    window.addEventListener("keydown", triggerBiometrics);
+
+    return cleanup;
   }, [isLocked, isRegistered, authenticate]);
 
   // Handle inactivity and blur

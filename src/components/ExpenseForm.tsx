@@ -17,7 +17,10 @@ import { useTrips } from "../hooks/useTrips";
 import { shouldSuggestSplit } from "../utils/proactiveSplits";
 import { SplitSuggestionToast } from "./SplitSuggestionToast";
 import { useVaults } from "../hooks/useVaults";
-import { Users, Calendar, Tag, CreditCard, FileText, MapPin, Zap } from "lucide-react";
+import { Users, Calendar, Tag, CreditCard, FileText, MapPin, Zap, Camera } from "lucide-react";
+import ReceiptScanner from "./ReceiptScanner";
+import type { ParsedExpense } from "../utils/magicParser";
+
 
 export default function ExpenseForm({ 
   editingExpense, 
@@ -80,6 +83,15 @@ export default function ExpenseForm({
       setTripId(state?.tripId ?? null);
     }
   }, [editingExpense, editingIncome, location.state]);
+
+  const handleScanResult = (result: ParsedExpense) => {
+    if (result.amount) setAmount(result.amount.toString());
+    if (result.date) setDate(result.date);
+    if (result.category) setCategory(result.category);
+    if (result.note) setNote(result.note);
+    setCategoryTouched(true);
+  };
+
 
   useEffect(() => {
     if (editingExpense || categoryTouched) return;
@@ -262,7 +274,16 @@ export default function ExpenseForm({
 
       {/* Amount Display */}
       <div className="space-y-3">
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
+            Amount
+          </label>
+          {type === "expense" && (
+            <ReceiptScanner onScanResult={handleScanResult} />
+          )}
+        </div>
         <div className="relative group">
+
           <span className={cn(
             "absolute left-4 top-1/2 -translate-y-1/2 font-black text-xl z-10 transition-colors",
             type === "expense" ? "text-rose-500" : type === "vault" ? "text-blue-600" : "text-emerald-500"
