@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
-import { Lock } from "lucide-react";
+import { Lock, Fingerprint } from "lucide-react";
 import useSettings from "../hooks/useSettings";
+import { useBiometrics } from "../hooks/useBiometrics";
 import { cn } from "../lib/utils";
 
 export default function PrivacyLock({ children }: { children: ReactNode }) {
@@ -10,6 +11,7 @@ export default function PrivacyLock({ children }: { children: ReactNode }) {
   const [pinInput, setPinInput] = useState("");
   const [error, setError] = useState(false);
   const isLockedRef = useRef(false);
+  const { isRegistered, authenticate } = useBiometrics();
 
   // Sync ref with state for event listeners
   useEffect(() => {
@@ -91,6 +93,21 @@ export default function PrivacyLock({ children }: { children: ReactNode }) {
     }
   };
 
+  const handleBiometricUnlock = async () => {
+    const success = await authenticate();
+    if (success) {
+      setIsLocked(false);
+      setPinInput("");
+      setError(false);
+      sessionStorage.setItem("app_unlocked", "true");
+      sessionStorage.removeItem("app_duress");
+      window.dispatchEvent(new Event("duress_changed"));
+    } else {
+      setError(true);
+      setTimeout(() => setError(false), 500);
+    }
+  };
+
   useEffect(() => {
     if (pinInput.length === 4) {
       handleUnlock();
@@ -159,7 +176,16 @@ export default function PrivacyLock({ children }: { children: ReactNode }) {
               {num}
             </button>
           ))}
-          <div />
+          {isRegistered ? (
+            <button
+              onClick={handleBiometricUnlock}
+              className="flex h-16 items-center justify-center rounded-2xl bg-white/5 text-blue-400 hover:bg-blue-500/20 active:scale-95 transition-all"
+            >
+              <Fingerprint className="h-6 w-6" />
+            </button>
+          ) : (
+            <div />
+          )}
           <button
             onClick={() => handlePinClick("0")}
             className="flex h-16 items-center justify-center rounded-2xl bg-white/5 text-2xl font-black text-white hover:bg-white/10 active:scale-95 transition-all"

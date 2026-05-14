@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, writeBatch } from "firebase/firestore";
-import { Brush, Database, Folder, LayoutGrid, LogOut, SlidersHorizontal, Trash2, User, WalletCards, FileText, Loader2, Share2, Shield } from "lucide-react";
+import { Brush, Database, Folder, LayoutGrid, LogOut, SlidersHorizontal, Trash2, User, WalletCards, FileText, Loader2, Share2, Shield, Fingerprint } from "lucide-react";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 
@@ -23,6 +23,7 @@ import { clearDemoWorkspaceForUser, seedDemoWorkspaceForUser } from "../utils/se
 import { db } from "../firebase";
 import Avatar from "../components/Avatar";
 import Amount from "../components/common/Amount";
+import { useBiometrics } from "../hooks/useBiometrics";
 
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import { cn } from "../lib/utils";
@@ -119,6 +120,7 @@ export default function SettingsPage() {
   const { user, logout } = useAuth();
   const { expenses } = useExpenses();
   const { theme, setTheme } = useTheme();
+  const { isSupported, isRegistered, register, unregister } = useBiometrics();
 
   const { categories, addCategory, deleteCategory } = useCategories();
   const { accountTypes, addAccountType, deleteAccountType } = useAccountTypes();
@@ -878,6 +880,45 @@ export default function SettingsPage() {
                     )}
                   </div>
                 </SettingsRow>
+
+                {settings.privacyPin && (
+                  <SettingsRow title="Biometric Unlock" description="Use Fingerprint or Face ID to unlock the app without your PIN.">
+                    <div className="flex items-center gap-3">
+                      {!isSupported ? (
+                        <div className="text-xs font-medium text-slate-500 italic">Not supported on this device.</div>
+                      ) : isRegistered ? (
+                        <>
+                          <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 text-sm font-black bg-blue-50 dark:bg-blue-500/10 px-3 py-1.5 rounded-lg border border-blue-200/50 dark:border-blue-500/20">
+                            <Fingerprint className="w-4 h-4" /> Configured
+                          </div>
+                          <button
+                            onClick={() => {
+                              unregister();
+                              toast.success("Biometric unlock removed");
+                            }}
+                            className="px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
+                          >
+                            Remove
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={async () => {
+                            const success = await register();
+                            if (success) {
+                              toast.success("Biometric unlock enabled!");
+                            } else {
+                              toast.error("Failed to setup biometrics");
+                            }
+                          }}
+                          className="min-h-11 rounded-xl bg-blue-600 px-4 py-2 text-sm font-black text-white hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2"
+                        >
+                          <Fingerprint className="w-4 h-4" /> Enable Biometrics
+                        </button>
+                      )}
+                    </div>
+                  </SettingsRow>
+                )}
 
                 {settings.privacyPin && (
                   <>
