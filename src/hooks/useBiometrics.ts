@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 export function useBiometrics() {
   const [isSupported, setIsSupported] = useState(false);
@@ -15,7 +15,7 @@ export function useBiometrics() {
     setIsRegistered(!!storedId);
   }, []);
 
-  const register = async (): Promise<boolean> => {
+  const register = useCallback(async (): Promise<boolean> => {
     try {
       const challenge = new Uint8Array(32);
       window.crypto.getRandomValues(challenge);
@@ -50,9 +50,9 @@ export function useBiometrics() {
       console.error("Biometric registration failed:", err);
       return false;
     }
-  };
+  }, []);
 
-  const authenticate = async (): Promise<boolean> => {
+  const authenticate = useCallback(async (): Promise<boolean> => {
     try {
       const storedId = localStorage.getItem("vault_biometric_id");
       if (!storedId) return false;
@@ -76,7 +76,7 @@ export function useBiometrics() {
       console.error("Biometric verification failed:", err);
       return false;
     }
-  };
+  }, []);
 
   const unregister = () => {
     localStorage.removeItem("vault_biometric_id");

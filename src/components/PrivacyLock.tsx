@@ -12,10 +12,14 @@ export default function PrivacyLock({ children }: { children: ReactNode }) {
   const [error, setError] = useState(false);
   const isLockedRef = useRef(false);
   const { isRegistered, authenticate } = useBiometrics();
+  const hasAttemptedAutoBiometric = useRef(false);
 
   // Sync ref with state for event listeners
   useEffect(() => {
     isLockedRef.current = isLocked;
+    if (!isLocked) {
+      hasAttemptedAutoBiometric.current = false;
+    }
   }, [isLocked]);
 
   // Initialize lock state
@@ -24,6 +28,30 @@ export default function PrivacyLock({ children }: { children: ReactNode }) {
       setIsLocked(true);
     }
   }, [settings.privacyPin]);
+
+  // Auto trigger biometrics
+  useEffect(() => {
+    if (isLocked && isRegistered && !hasAttemptedAutoBiometric.current) {
+      hasAttemptedAutoBiometric.current = true;
+      // We must ignore the promise, as we can't use await directly inside useEffect without a wrapper
+      // But we already have the handleBiometricUnlock function defined later, wait, it's defined later.
+      // I need to define it or just call authenticate and the logic here.
+      authenticate().then(success => {
+        if (success) {
+          setIsLocked(false);
+          setPinInput("");
+          setError(false);
+          sessionStorage.setItem("app_unlocked", "true");
+          sessionStorage.removeItem("app_duress");
+          window.dispatchEvent(new Event("duress_changed"));
+        } else {
+          // just silently fail the auto prompt
+          setError(true);
+          setTimeout(() => setError(false), 500);
+        }
+      });
+    }
+  }, [isLocked, isRegistered, authenticate]);
 
   // Handle inactivity and blur
   useEffect(() => {
