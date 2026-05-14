@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useMemo, type ReactNode } from "react";
 import { 
     GoogleAuthProvider, 
     signInWithPopup, 
@@ -13,6 +13,7 @@ import { auth } from "../firebase";
 
 interface AuthContextType {
     user: User | null;
+    realUser: User | null;
     loading: boolean;
     login: () => Promise<void>;
     loginWithEmail: (email: string, password: string) => Promise<void>;
@@ -26,6 +27,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isDuress, setIsDuress] = useState(() => sessionStorage.getItem("app_duress") === "true");
+
+    useEffect(() => {
+        const handleDuress = () => setIsDuress(sessionStorage.getItem("app_duress") === "true");
+        window.addEventListener("duress_changed", handleDuress);
+        return () => window.removeEventListener("duress_changed", handleDuress);
+    }, []);
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((currentUser) => {
@@ -82,8 +90,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const effectiveUser = useMemo(() => {
+        if (!user) return null;
+        if (isDuress) {
+            const duressUser = Object.create(user);
+            Object.defineProperty(duressUser, 'uid', {
+                get: () => user.uid + "_duress",
+                enumerable: true
+            });
+            return duressUser;
+        }
+        return user;
+    }, [user, isDuress]);
+
     return (
-        <AuthContext.Provider value={{ user, loading, login, loginWithEmail, signUpWithEmail, resetPassword, logout }}>
+        <AuthContext.Provider value={{ user: effectiveUser, realUser: user, loading, login, loginWithEmail, signUpWithEmail, resetPassword, logout }}>
             {!loading && children}
         </AuthContext.Provider>
     );

@@ -23,6 +23,7 @@ type Settings = {
   navigationStyle: "bottom" | "dock";
   ghostMode: boolean;
   privacyPin: string;
+  fakePin: string;
   lockOnInactivity: boolean;
   inactivityTimeout: number; // in seconds
   lockOnAppSwitch: boolean;
@@ -47,6 +48,7 @@ export const DEFAULTS: Settings = {
   navigationStyle: "bottom",
   ghostMode: false,
   privacyPin: "",
+  fakePin: "",
   lockOnInactivity: true,
   inactivityTimeout: 60,
   lockOnAppSwitch: true,
@@ -68,6 +70,7 @@ type SettingsContextType = {
   setNavigationStyle: (val: Settings["navigationStyle"]) => void;
   setGhostMode: (val: boolean) => void;
   setPrivacyPin: (val: string) => void;
+  setFakePin: (val: string) => void;
   setLockOnInactivity: (val: boolean) => void;
   setInactivityTimeout: (val: number) => void;
   setLockOnAppSwitch: (val: boolean) => void;
@@ -76,19 +79,19 @@ type SettingsContextType = {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { realUser } = useAuth();
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
   const [loading, setLoading] = useState(true);
 
   // Load settings from Firestore
   useEffect(() => {
-    if (!user) {
+    if (!realUser) {
       setSettings(DEFAULTS);
       setLoading(false);
       return;
     }
 
-    const ref = doc(db, "users", user.uid);
+    const ref = doc(db, "users", realUser.uid);
     const unsub = onSnapshot(ref, (snap) => {
       if (snap.exists()) {
         const data = snap.data();
@@ -110,7 +113,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsub();
-  }, [user]);
+  }, [realUser]);
 
   useEffect(() => {
     if (settings.ghostMode) {
@@ -121,10 +124,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [settings.ghostMode]);
 
   const updateSettings = async (updates: Partial<Settings>) => {
-    if (!user) return;
+    if (!realUser) return;
     setSettings((prev) => ({ ...prev, ...updates }));
     try {
-      const ref = doc(db, "users", user.uid);
+      const ref = doc(db, "users", realUser.uid);
       await setDoc(ref, updates, { merge: true });
     } catch (err) {
       console.error("Failed to save settings", err);
@@ -150,6 +153,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const setNavigationStyle = (val: Settings["navigationStyle"]) => updateSettings({ navigationStyle: val });
   const setGhostMode = (val: boolean) => updateSettings({ ghostMode: val });
   const setPrivacyPin = (val: string) => updateSettings({ privacyPin: val });
+  const setFakePin = (val: string) => updateSettings({ fakePin: val });
   const setLockOnInactivity = (val: boolean) => updateSettings({ lockOnInactivity: val });
   const setInactivityTimeout = (val: number) => updateSettings({ inactivityTimeout: val });
   const setLockOnAppSwitch = (val: boolean) => updateSettings({ lockOnAppSwitch: val });
@@ -172,6 +176,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setNavigationStyle,
         setGhostMode,
         setPrivacyPin,
+        setFakePin,
         setLockOnInactivity,
         setInactivityTimeout,
         setLockOnAppSwitch,

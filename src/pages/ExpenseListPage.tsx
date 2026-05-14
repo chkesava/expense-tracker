@@ -110,6 +110,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
     const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: "expense" | "income" } | null>(null);
     const [editingExpense, setEditingExpense] = useState<any | null>(null);
     const [editingIncome, setEditingIncome] = useState<any | null>(null);
+    const [viewingTransaction, setViewingTransaction] = useState<{ data: any, type: "expense" | "income" } | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isSelectionMode, setIsSelectionMode] = useState(false);
 
@@ -450,14 +451,14 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                     </div>
 
                                     {loading ? <Skeleton className="h-full w-full" /> : (
-                                        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                        <div className="flex flex-col pb-4">
                                             {searchedExpenses.length === 0 ? (
                                                 <div className="py-20 text-center text-slate-400 italic text-sm">No transactions found for this period</div>
                                             ) : (
-                                                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                                <div className="flex flex-col">
                                                     {today.length > 0 && (
-                                                        <div className="bg-blue-50/10 dark:bg-blue-500/5">
-                                                            <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5">
+                                                        <div className="bg-blue-50/10 dark:bg-blue-500/5 pb-2">
+                                                            <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5 mb-2">
                                                                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">Today</span>
                                                                 <Badge variant="ghost" className="bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-0">
                                                                     Total: <Amount value={today.reduce((acc, curr) => acc + curr.amount, 0)} />
@@ -469,7 +470,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                     expense={e}
                                                                     accounts={accounts}
                                                                     isSelected={selectedIds.has(e.id!)}
-                                                                    onSelect={() => isSelectionMode && toggleSelection(e.id!)}
+                                                                    onSelect={() => isSelectionMode ? toggleSelection(e.id!) : setViewingTransaction({ data: e, type: "expense" })}
                                                                     onEdit={() => setEditingExpense(e)}
                                                                     onDelete={() => setDeleteTarget({ id: e.id!, type: "expense" })}
                                                                 />
@@ -477,8 +478,8 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                         </div>
                                                     )}
                                                     {yesterday.length > 0 && (
-                                                        <div className="bg-slate-50/10 dark:bg-white/2">
-                                                            <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5">
+                                                        <div className="bg-slate-50/10 dark:bg-white/2 pb-2">
+                                                            <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5 mb-2">
                                                                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Yesterday</span>
                                                                 <Badge variant="ghost" className="bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-0">
                                                                     Total: <Amount value={yesterday.reduce((acc, curr) => acc + curr.amount, 0)} />
@@ -490,7 +491,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                     expense={e}
                                                                     accounts={accounts}
                                                                     isSelected={selectedIds.has(e.id!)}
-                                                                    onSelect={() => isSelectionMode && toggleSelection(e.id!)}
+                                                                    onSelect={() => isSelectionMode ? toggleSelection(e.id!) : setViewingTransaction({ data: e, type: "expense" })}
                                                                     onEdit={() => setEditingExpense(e)}
                                                                     onDelete={() => setDeleteTarget({ id: e.id!, type: "expense" })}
                                                                 />
@@ -498,8 +499,8 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                         </div>
                                                     )}
                                                     {earlier.length > 0 && (
-                                                        <div className="bg-slate-50/50 dark:bg-white/2">
-                                                            <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5">
+                                                        <div className="bg-slate-50/50 dark:bg-white/2 pb-2">
+                                                            <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5 mb-2">
                                                                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Earlier</span>
                                                                 <Badge variant="ghost" className="bg-slate-50 dark:bg-white/2 text-slate-400 border-0">
                                                                     Total: <Amount value={earlier.reduce((acc, curr) => acc + curr.amount, 0)} />
@@ -511,7 +512,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                     expense={e}
                                                                     accounts={accounts}
                                                                     isSelected={selectedIds.has(e.id!)}
-                                                                    onSelect={() => isSelectionMode && toggleSelection(e.id!)}
+                                                                    onSelect={() => isSelectionMode ? toggleSelection(e.id!) : setViewingTransaction({ data: e, type: "expense" })}
                                                                     onEdit={() => setEditingExpense(e)}
                                                                     onDelete={() => setDeleteTarget({ id: e.id!, type: "expense" })}
                                                                 />
@@ -569,14 +570,14 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                     <div className="bento-card min-h-[400px] overflow-hidden">
                                         {loading ? <Skeleton className="h-full w-full" /> : (
 
-                                            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                            <div className="flex flex-col pb-4">
                                                 {[...iToday, ...iYesterday, ...iEarlier].length === 0 ? (
                                                     <div className="py-20 text-center text-slate-400 italic">No income matches found</div>
                                                 ) : (
-                                                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                                    <div className="flex flex-col">
                                                         {iToday.length > 0 && (
-                                                            <div className="bg-emerald-50/10 dark:bg-emerald-500/5">
-                                                                <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5">
+                                                            <div className="bg-emerald-50/10 dark:bg-emerald-500/5 pb-2">
+                                                                <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5 mb-2">
                                                                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">Today</span>
                                                                     <Badge variant="ghost" className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-0">
                                                                         Total: <Amount value={iToday.reduce((acc, curr) => acc + curr.amount, 0)} />
@@ -587,6 +588,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                         key={i.id}
                                                                         income={i}
                                                                         accounts={accounts}
+                                                                        onSelect={() => isSelectionMode ? toggleSelection(i.id!) : setViewingTransaction({ data: i, type: "income" })}
                                                                         onEdit={() => setEditingIncome(i)}
                                                                         onDelete={() => setDeleteTarget({ id: i.id!, type: "income" })}
                                                                     />
@@ -594,8 +596,8 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                             </div>
                                                         )}
                                                         {iYesterday.length > 0 && (
-                                                            <div className="bg-emerald-50/10 dark:bg-emerald-500/5">
-                                                                <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5">
+                                                            <div className="bg-emerald-50/10 dark:bg-emerald-500/5 pb-2">
+                                                                <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5 mb-2">
                                                                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Yesterday</span>
                                                                     <Badge variant="ghost" className="bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-0">
                                                                         Total: <Amount value={iYesterday.reduce((acc, curr) => acc + curr.amount, 0)} />
@@ -606,6 +608,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                         key={i.id}
                                                                         income={i}
                                                                         accounts={accounts}
+                                                                        onSelect={() => isSelectionMode ? toggleSelection(i.id!) : setViewingTransaction({ data: i, type: "income" })}
                                                                         onEdit={() => setEditingIncome(i)}
                                                                         onDelete={() => setDeleteTarget({ id: i.id!, type: "income" })}
                                                                     />
@@ -613,8 +616,8 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                             </div>
                                                         )}
                                                         {iEarlier.length > 0 && (
-                                                            <div className="bg-emerald-50/10 dark:bg-emerald-500/5">
-                                                                <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5">
+                                                            <div className="bg-emerald-50/10 dark:bg-emerald-500/5 pb-2">
+                                                                <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5 mb-2">
                                                                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Earlier</span>
                                                                     <Badge variant="ghost" className="bg-slate-50 dark:bg-white/2 text-slate-400 border-0">
                                                                         Total: <Amount value={iEarlier.reduce((acc, curr) => acc + curr.amount, 0)} />
@@ -625,6 +628,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                         key={i.id}
                                                                         income={i}
                                                                         accounts={accounts}
+                                                                        onSelect={() => isSelectionMode ? toggleSelection(i.id!) : setViewingTransaction({ data: i, type: "income" })}
                                                                         onEdit={() => setEditingIncome(i)}
                                                                         onDelete={() => setDeleteTarget({ id: i.id!, type: "income" })}
                                                                     />
@@ -848,6 +852,67 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                 />
             </Modal>
 
+            {/* TRANSACTION DETAILS MODAL */}
+            <Modal isOpen={!!viewingTransaction} onClose={() => setViewingTransaction(null)} title="Transaction Details">
+                {viewingTransaction && (
+                    <div className="space-y-6">
+                        <div className="text-center p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800">
+                            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Amount</div>
+                            <div className={cn("text-4xl font-black", viewingTransaction.type === 'expense' ? "text-slate-900 dark:text-white" : "text-emerald-600")}>
+                                <Amount value={viewingTransaction.data.amount} prefix={viewingTransaction.type === 'income' ? "+₹" : "₹"} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Type</span>
+                                <span className="text-sm font-black uppercase">{viewingTransaction.type}</span>
+                            </div>
+                            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Category</span>
+                                <span className="text-sm font-bold">{viewingTransaction.type === 'expense' ? viewingTransaction.data.category : viewingTransaction.data.source}</span>
+                            </div>
+                            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Date</span>
+                                <span className="text-sm font-bold">{viewingTransaction.data.date}</span>
+                            </div>
+                            {viewingTransaction.data.note && (
+                                <div className="flex flex-col gap-1 border-b border-slate-100 dark:border-slate-800 pb-3">
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Note</span>
+                                    <span className="text-sm italic">{viewingTransaction.data.note}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Account</span>
+                                <span className="text-sm font-bold">{accounts.find(a => a.id === viewingTransaction.data.accountId)?.name || "Unknown"}</span>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2 pt-4">
+                            <button
+                                onClick={() => {
+                                    if (viewingTransaction.type === 'expense') setEditingExpense(viewingTransaction.data);
+                                    else setEditingIncome(viewingTransaction.data);
+                                    setViewingTransaction(null);
+                                }}
+                                className="flex-1 py-3 bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                            >
+                                <Edit2 size={14} /> Edit
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setDeleteTarget({ id: viewingTransaction.data.id, type: viewingTransaction.type });
+                                    setViewingTransaction(null);
+                                }}
+                                className="flex-1 py-3 bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                            >
+                                <Trash2 size={14} /> Delete
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </Modal>
+
             {/* CATEGORY PICKER FOR AUDIT */}
             <AnimatePresence>
                 {showCategoryPicker && (
@@ -884,22 +949,24 @@ function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete 
         <div
             onClick={onSelect}
             className={cn(
-                "group relative flex flex-col p-5 transition-all cursor-pointer border-b border-slate-50 dark:border-white/5 last:border-0",
-                isSelected ? "bg-blue-50/50 dark:bg-blue-500/5 ring-1 ring-inset ring-blue-500/20 shadow-inner" : "hover:bg-slate-50/80 dark:hover:bg-white/5"
+                "group relative flex flex-col p-4 sm:p-5 mx-3 my-2 sm:mx-5 sm:my-3 transition-all cursor-pointer rounded-3xl border",
+                isSelected ? "bg-blue-50/80 dark:bg-blue-500/10 ring-2 ring-inset ring-blue-500 border-transparent shadow-md" : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-lg hover:border-slate-200 dark:hover:border-slate-700"
             )}
         >
-            {/* Account Ribbon Tag */}
+            {/* Account Tag Inline (Replaces Ribbon) */}
             {acc && (
-                <Badge variant="danger" isRibbon className="right-12 px-2.5 py-0.5 text-[7px]">
-                    {acc.name}
-                </Badge>
+                <div className="absolute top-0 right-6 -translate-y-1/2">
+                    <span className="bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">
+                        {acc.name}
+                    </span>
+                </div>
             )}
 
             {/* Three Dots Menu Button */}
-            <div className="absolute top-4 right-4">
+            <div className="absolute top-3 right-3">
                 <button
                     onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-                    className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 transition-colors"
+                    className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition-colors"
                 >
                     <MoreVertical size={16} />
                 </button>
@@ -938,27 +1005,27 @@ function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete 
                 </AnimatePresence>
             </div>
 
-            <div className="flex items-start justify-between gap-4 pt-3">
-                <div className="flex items-center gap-5 min-w-0">
+            <div className="flex items-center justify-between gap-4 pt-1">
+                <div className="flex items-center gap-4 min-w-0 flex-1">
                     <div className={cn(
                         "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-black uppercase transition-all duration-300 shadow-sm",
-                        isSelected ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "bg-slate-100 dark:bg-white/5 text-slate-500 group-hover:scale-110"
+                        isSelected ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "bg-slate-100 dark:bg-slate-800 text-slate-500 group-hover:scale-110"
                     )}>
                         {expense.category[0]}
                     </div>
-                    <div className="min-w-0 flex flex-col gap-0.5">
-                        <div className="font-bold text-[16px] text-slate-900 dark:text-white tracking-tight group-hover:text-rose-600 transition-colors truncate pr-16">{expense.category}</div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest bg-slate-100 dark:bg-white/5 px-1.5 py-0.5 rounded-md">{expense.date}</span>
+                    <div className="min-w-0 flex flex-col gap-0.5 flex-1">
+                        <div className="font-bold text-[16px] text-slate-900 dark:text-white tracking-tight group-hover:text-rose-600 transition-colors truncate">{expense.category}</div>
+                        <div className="flex items-center gap-2 overflow-hidden">
+                            <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-md shrink-0">{expense.date}</span>
                             {expense.note && (
-                                <span className="text-[11px] text-slate-400 dark:text-slate-500 italic font-medium truncate max-w-[100px] sm:max-w-none">
+                                <span className="text-[11px] text-slate-400 dark:text-slate-500 italic font-medium truncate">
                                     {expense.note}
                                 </span>
                             )}
                         </div>
                     </div>
                 </div>
-                <div className="text-right shrink-0 self-center pr-8 sm:pr-0">
+                <div className="text-right shrink-0 self-center pl-2">
                     <div className="text-xl font-black text-slate-900 dark:text-white tracking-tightest group-hover:scale-105 transition-transform"><Amount value={expense.amount} /></div>
                 </div>
             </div>
@@ -966,24 +1033,26 @@ function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete 
     );
 }
 
-function IncomeRow({ income, accounts, onEdit, onDelete }: any) {
+function IncomeRow({ income, accounts, onEdit, onDelete, onSelect }: any) {
     const acc = accounts.find((a: any) => a.id === income.accountId);
     const [showMenu, setShowMenu] = useState(false);
 
     return (
-        <div className="group relative flex flex-col p-5 transition-all hover:bg-slate-50/80 dark:hover:bg-white/5 border-b border-slate-50 dark:border-white/5 last:border-0 cursor-pointer">
-            {/* Account Ribbon Tag */}
+        <div onClick={onSelect} className="group relative flex flex-col p-4 sm:p-5 mx-3 my-2 sm:mx-5 sm:my-3 transition-all cursor-pointer rounded-3xl border bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-lg hover:border-slate-200 dark:hover:border-slate-700">
+            {/* Account Tag Inline (Replaces Ribbon) */}
             {acc && (
-                <Badge variant="success" isRibbon className="right-12 px-2.5 py-0.5 text-[7px]">
-                    {acc.name}
-                </Badge>
+                <div className="absolute top-0 right-6 -translate-y-1/2">
+                    <span className="bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">
+                        {acc.name}
+                    </span>
+                </div>
             )}
 
             {/* Three Dots Menu Button */}
-            <div className="absolute top-4 right-4">
+            <div className="absolute top-3 right-3">
                 <button
                     onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-                    className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 transition-colors"
+                    className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition-colors"
                 >
                     <MoreVertical size={16} />
                 </button>
@@ -1022,24 +1091,24 @@ function IncomeRow({ income, accounts, onEdit, onDelete }: any) {
                 </AnimatePresence>
             </div>
 
-            <div className="flex items-start justify-between gap-4 pt-3">
-                <div className="flex items-center gap-5 min-w-0">
+            <div className="flex items-center justify-between gap-4 pt-1">
+                <div className="flex items-center gap-4 min-w-0 flex-1">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm font-black uppercase group-hover:scale-110 transition-transform shadow-sm">
                         {income.source[0]}
                     </div>
-                    <div className="min-w-0 flex flex-col gap-0.5">
-                        <div className="font-bold text-[16px] text-slate-900 dark:text-white tracking-tight group-hover:text-emerald-600 transition-colors truncate pr-16">{income.source}</div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest bg-slate-100 dark:bg-white/5 px-1.5 py-0.5 rounded-md">{income.date}</span>
+                    <div className="min-w-0 flex flex-col gap-0.5 flex-1">
+                        <div className="font-bold text-[16px] text-slate-900 dark:text-white tracking-tight group-hover:text-emerald-600 transition-colors truncate">{income.source}</div>
+                        <div className="flex items-center gap-2 overflow-hidden">
+                            <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-md shrink-0">{income.date}</span>
                             {income.note && (
-                                <span className="text-[11px] text-slate-400 dark:text-slate-500 italic font-medium truncate max-w-[100px] sm:max-w-none">
+                                <span className="text-[11px] text-slate-400 dark:text-slate-500 italic font-medium truncate">
                                     {income.note}
                                 </span>
                             )}
                         </div>
                     </div>
                 </div>
-                <div className="text-right shrink-0 self-center pr-8 sm:pr-0">
+                <div className="text-right shrink-0 self-center pl-2">
                     <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 tracking-tighter"><Amount value={income.amount} prefix="+₹" /></div>
                 </div>
             </div>

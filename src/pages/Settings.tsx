@@ -111,6 +111,7 @@ export default function SettingsPage() {
     toggleDashboardWidget,
     setNavigationStyle,
     setPrivacyPin,
+    setFakePin,
     setLockOnInactivity,
     setInactivityTimeout,
     setLockOnAppSwitch,
@@ -121,7 +122,7 @@ export default function SettingsPage() {
 
   const { categories, addCategory, deleteCategory } = useCategories();
   const { accountTypes, addAccountType, deleteAccountType } = useAccountTypes();
-  const { accounts, addAccount, deleteAccount } = useAccounts();
+  const { accounts, addAccount, deleteAccount, updateAccount } = useAccounts();
   const { budgets, addBudget, deleteBudget } = useCategoryBudgets();
   const { goals, addGoal, updateGoalProgress, deleteGoal } = useFinancialGoals();
   const { rules, addRule, deleteRule } = useCategorizationRules();
@@ -137,6 +138,7 @@ export default function SettingsPage() {
   const [newAccountType, setNewAccountType] = useState("");
   const [newAccountName, setNewAccountName] = useState("");
   const [selectedAccountType, setSelectedAccountType] = useState("");
+  const [newAccountBillDay, setNewAccountBillDay] = useState("");
 
   const [budgetCategory, setBudgetCategory] = useState("");
   const [budgetAmount, setBudgetAmount] = useState("");
@@ -159,6 +161,7 @@ export default function SettingsPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [reportType, setReportType] = useState<"pdf" | "csv">("pdf");
   const [pinInput, setPinInput] = useState("");
+  const [fakePinInput, setFakePinInput] = useState("");
 
 
   useEffect(() => {
@@ -717,30 +720,78 @@ export default function SettingsPage() {
                         </option>
                       ))}
                     </select>
+                    {selectedAccountType && accountTypes.find(t => t.id === selectedAccountType)?.name.toLowerCase().includes("credit") && (
+                      <input 
+                        type="number" 
+                        min="1" 
+                        max="31" 
+                        value={newAccountBillDay} 
+                        onChange={(e) => setNewAccountBillDay(e.target.value)} 
+                        placeholder="Bill Generation Day (1-31)" 
+                        className={fieldClass} 
+                      />
+                    )}
                   </div>
                   <button
                     onClick={() => {
-                      addAccount(newAccountName, selectedAccountType);
-                      setNewAccountName("");
-                      setSelectedAccountType("");
+                      addAccount(newAccountName, selectedAccountType); // update useAccounts addAccount to handle billGenerationDay if we want, but wait we didn't change addAccount signature. Let's just create then update or just change addAccount. 
+                    }}
+                    disabled={!newAccountName || !selectedAccountType}
+                    className="mt-3 min-h-11 w-full rounded-xl bg-blue-600 py-3 text-sm font-black text-white hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50 hidden"
+                  >
+                    Add account
+                  </button>
+                  <button
+                    onClick={() => {
+                      const newAccountFn = async () => {
+                         const docRef = await import("firebase/firestore").then(({ addDoc, collection, serverTimestamp }) => 
+                           addDoc(collection(db, "users", user!.uid, "accounts"), {
+                             name: newAccountName.trim(),
+                             typeId: selectedAccountType,
+                             billGenerationDay: newAccountBillDay ? Number(newAccountBillDay) : null,
+                             createdAt: serverTimestamp(),
+                           })
+                         );
+                         setNewAccountName("");
+                         setSelectedAccountType("");
+                         setNewAccountBillDay("");
+                         toast.success("Account added");
+                      };
+                      if (user) newAccountFn();
                     }}
                     disabled={!newAccountName || !selectedAccountType}
                     className="mt-3 min-h-11 w-full rounded-xl bg-blue-600 py-3 text-sm font-black text-white hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50"
                   >
                     Add account
                   </button>
-                  <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div className="mt-4 space-y-2">
                     {accounts.map((a) => {
                       const typeName = accountTypes.find((t) => t.id === a.typeId)?.name || "Unknown";
+                      const isCredit = typeName.toLowerCase().includes("credit");
                       return (
-                        <div key={a.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/60">
-                          <div className="min-w-0">
-                            <div className="truncate text-sm font-black text-slate-900 dark:text-slate-100">{a.name}</div>
-                            <div className="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">{typeName}</div>
+                        <div key={a.id} className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="truncate text-sm font-black text-slate-900 dark:text-slate-100">{a.name}</div>
+                              <div className="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">{typeName}</div>
+                            </div>
+                            <button onClick={() => deleteAccount(a.id)} className="rounded-xl border border-slate-200 bg-white p-2 text-slate-400 hover:text-red-500 dark:border-slate-700 dark:bg-slate-900">
+                              <Trash2 className="h-4 w-4" />
+                            </button>
                           </div>
-                          <button onClick={() => deleteAccount(a.id)} className="rounded-xl border border-slate-200 bg-white p-2 text-slate-400 hover:text-red-500 dark:border-slate-700 dark:bg-slate-900">
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          {isCredit && (
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-xs text-slate-500">Bill Day:</span>
+                              <input 
+                                type="number" 
+                                min="1" 
+                                max="31" 
+                                defaultValue={a.billGenerationDay || ""} 
+                                onBlur={(e) => updateAccount(a.id, { billGenerationDay: Number(e.target.value) || undefined })}
+                                className="w-20 px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-transparent"
+                              />
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -830,6 +881,57 @@ export default function SettingsPage() {
 
                 {settings.privacyPin && (
                   <>
+                    <SettingsRow title="Duress / Fake PIN" description="Enter this PIN to unlock a completely isolated, blank profile.">
+                      <div className="flex items-center gap-3">
+                        {settings.fakePin ? (
+                          <>
+                            <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 text-sm font-black bg-blue-50 dark:bg-blue-500/10 px-3 py-1.5 rounded-lg border border-blue-200/50 dark:border-blue-500/20">
+                              <Shield className="w-4 h-4" /> Configured
+                            </div>
+                            <button
+                              onClick={() => {
+                                setFakePin("");
+                                setFakePinInput("");
+                                toast.success("Fake PIN removed");
+                              }}
+                              className="px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
+                            >
+                              Remove
+                            </button>
+                          </>
+                        ) : (
+                          <div className="flex gap-2">
+                            <input
+                              type="password"
+                              maxLength={4}
+                              value={fakePinInput}
+                              onChange={(e) => setFakePinInput(e.target.value.replace(/\D/g, ''))}
+                              placeholder="4-digit PIN"
+                              className={cn(fieldClass, "w-32 text-center tracking-[0.25em] font-black")}
+                            />
+                            <button
+                              onClick={() => {
+                                if (fakePinInput.length === 4) {
+                                  if (fakePinInput === settings.privacyPin) {
+                                    toast.error("Fake PIN cannot be the same as Real PIN");
+                                    return;
+                                  }
+                                  setFakePin(fakePinInput);
+                                  toast.success("Fake PIN set successfully");
+                                } else {
+                                  toast.error("PIN must be exactly 4 digits");
+                                }
+                              }}
+                              disabled={fakePinInput.length !== 4}
+                              className="min-h-11 rounded-xl bg-blue-600 px-4 py-2 text-sm font-black text-white hover:bg-blue-700 active:scale-95 disabled:opacity-50 transition-all"
+                            >
+                              Enable
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </SettingsRow>
+
                     <SettingsRow title="Lock on Inactivity" description="Automatically lock the app when you are away.">
                       <Toggle checked={settings.lockOnInactivity} onChange={(next) => setLockOnInactivity(next)} />
                     </SettingsRow>

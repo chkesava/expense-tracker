@@ -42,6 +42,7 @@ export interface Account {
   id: string;
   name: string;
   typeId: string;
+  billGenerationDay?: number; // Added for Credit Card billing cycles
   createdAt?: unknown;
 }
 

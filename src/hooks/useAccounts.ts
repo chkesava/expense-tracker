@@ -58,5 +58,18 @@ export const useAccounts = () => {
     }
   };
 
-  return { accounts, loading, addAccount, deleteAccount };
+  const updateAccount = async (id: string, updates: Partial<Account>) => {
+    if (!user) return;
+    try {
+      const { id: _, createdAt, ...validUpdates } = updates as any;
+      const { updateDoc } = await import("firebase/firestore");
+      await updateDoc(doc(db, "users", user.uid, "accounts", id), validUpdates);
+      toast.success("Account updated");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update account");
+    }
+  };
+
+  return { accounts, loading, addAccount, updateAccount, deleteAccount };
 };

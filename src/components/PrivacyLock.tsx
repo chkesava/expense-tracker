@@ -75,6 +75,15 @@ export default function PrivacyLock({ children }: { children: ReactNode }) {
       setPinInput("");
       setError(false);
       sessionStorage.setItem("app_unlocked", "true");
+      sessionStorage.removeItem("app_duress");
+      window.dispatchEvent(new Event("duress_changed"));
+    } else if (settings.fakePin && pinInput === settings.fakePin) {
+      setIsLocked(false);
+      setPinInput("");
+      setError(false);
+      sessionStorage.setItem("app_unlocked", "true");
+      sessionStorage.setItem("app_duress", "true");
+      window.dispatchEvent(new Event("duress_changed"));
     } else {
       setError(true);
       setTimeout(() => setError(false), 500);

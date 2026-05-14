@@ -5,10 +5,11 @@ import ExpenseListPage from "./ExpenseListPage";
 import SplitPage from "./SplitPage";
 import SubscriptionsPage from "./SubscriptionsPage";
 import TripsPage from "./TripsPage";
-import { Wallet, Users, RefreshCw, Plane } from "lucide-react";
+import CardsPage from "./CardsPage";
+import { Wallet, Users, RefreshCw, Plane, CreditCard } from "lucide-react";
 import PageHeader from "../components/layout/PageHeader";
 
-type LedgerTab = "expenses" | "splits" | "subscriptions" | "travel";
+type LedgerTab = "expenses" | "splits" | "subscriptions" | "travel" | "cards";
 
 export default function LedgerHub() {
   const location = useLocation();
@@ -17,7 +18,7 @@ export default function LedgerHub() {
   const [activeTab, setActiveTab] = useState<LedgerTab>(() => {
     const searchParams = new URLSearchParams(location.search);
     const tab = searchParams.get("tab") as LedgerTab;
-    if (tab && ["expenses", "splits", "subscriptions", "travel"].includes(tab)) return tab;
+    if (tab && ["expenses", "splits", "subscriptions", "travel", "cards"].includes(tab)) return tab;
     return "expenses";
   });
 
@@ -32,6 +33,7 @@ export default function LedgerHub() {
     { id: "splits", label: "Splits", icon: <Users size={16} /> },
     { id: "subscriptions", label: "Recurring", icon: <RefreshCw size={16} /> },
     { id: "travel", label: "Travel", icon: <Plane size={16} /> },
+    { id: "cards", label: "Cards", icon: <CreditCard size={16} /> },
   ];
 
   return (
@@ -61,6 +63,7 @@ export default function LedgerHub() {
           {activeTab === "splits" && <SplitPage hideHeader />}
           {activeTab === "subscriptions" && <SubscriptionsPage hideHeader />}
           {activeTab === "travel" && <TripsPage hideHeader />}
+          {activeTab === "cards" && <CardsPage hideHeader />}
         </motion.div>
       </AnimatePresence>
     </motion.main>
