@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate, useParams, matchPath } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Loader2, Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
@@ -12,42 +12,50 @@ import type { PaymentRequest } from "../types/paymentRequest";
 import type { QrStyleId } from "../utils/qrStyles";
 import { getStoredQrStyleId } from "../utils/qrStyles";
 import AuraBackground from "../components/layout/AuraBackground";
+import { getPaymentSlugFromLocation } from "../utils/paymentRequestPath";
 
 export default function PaymentRequestPage() {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug: routeSlug } = useParams<{ slug: string }>();
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { updateQrStyle, deletePaymentRequest } = usePaymentRequests();
 
+  const slug = getPaymentSlugFromLocation(location.pathname, routeSlug);
+
   const [request, setRequest] = useState<PaymentRequest | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [qrStyleId, setQrStyleId] = useState<QrStyleId>(getStoredQrStyleId);
 
   const isOwner = !!user && request?.createdBy === user.uid;
   const paymentSlug = request?.slug ?? slug ?? "";
 
   useEffect(() => {
-    if (slug && matchPath("/pay/:slug", location.pathname)) {
-      navigate(`/payment/${slug}`, { replace: true });
-    }
-  }, [slug, location.pathname, navigate]);
-
-  useEffect(() => {
     if (!slug) {
       setLoading(false);
+      setLoadError("Invalid payment link.");
       return;
     }
     setLoading(true);
+    setLoadError(null);
     fetchPaymentRequestBySlug(slug)
       .then((data) => {
         setRequest(data);
+        if (!data) setLoadError("This payment page does not exist or was deleted.");
         if (data?.qrStyleId) setQrStyleId(data.qrStyleId);
         if (data) {
           document.title = `Pay ₹${data.amount} — ${data.payeeName}`;
         }
       })
-      .catch(() => toast.error("Could not load payment page"))
+      .catch((err: { code?: string }) => {
+        console.error(err);
+        if (err?.code === "permission-denied") {
+          setLoadError("Cannot load payment page. Publish Firestore rules for paymentRequests.");
+        } else {
+          setLoadError("Could not load payment page. Check your connection and try again.");
+        }
+      })
       .finally(() => setLoading(false));
   }, [slug]);
 
@@ -133,10 +141,20 @@ export default function PaymentRequestPage() {
     return (
       <div className="mx-auto max-w-md px-4 py-24 text-center">
         <p className="font-bold text-foreground">Payment page not found</p>
-        {user && (
+        {loadError && (
+          <p className="mt-2 text-sm text-muted-foreground">{loadError}</p>
+        )}
+        {slug && (
+          <p className="mt-1 font-mono text-xs text-muted-foreground">/payment/{slug}</p>
+        )}
+        {user ? (
           <Link to="/ledger?tab=collect" className="mt-4 inline-block text-sm font-bold text-primary">
             Back to Collect
           </Link>
+        ) : (
+          <p className="mt-4 text-xs text-muted-foreground">
+            Ask the sender to share a new link from the app.
+          </p>
         )}
       </div>
     );

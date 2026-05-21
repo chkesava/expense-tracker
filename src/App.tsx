@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation, matchPath } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
 import { ToastContainer } from "react-toastify";
@@ -45,21 +45,18 @@ import AdminUserDetail from "./admin/pages/AdminUserDetail";
 import AdminRouteGuard from "./guards/AdminRouteGuard";
 import AuthPage from "./pages/AuthPage";
 
+function PaySlugRedirect() {
+  const { slug } = useParams<{ slug: string }>();
+  return <Navigate to={`/payment/${slug}`} replace />;
+}
+
 function AppContent() {
   const { user } = useAuth();
-  const location = useLocation();
   const { processSubscriptions } = useSubscriptions();
-  const isPublicPayPage =
-    !!matchPath("/payment/:slug", location.pathname) ||
-    !!matchPath("/pay/:slug", location.pathname);
 
   useEffect(() => {
     if (user) processSubscriptions();
   }, [processSubscriptions, user]);
-
-  if (isPublicPayPage) {
-    return <PaymentRequestPage />;
-  }
 
   return (
     <AnimatePresence mode="wait">
@@ -167,7 +164,11 @@ export default function App() {
         <SettingsProvider>
           <ModalProvider>
             <CelebrationProvider>
-              <AppContent />
+              <Routes>
+                <Route path="/payment/:slug" element={<PaymentRequestPage />} />
+                <Route path="/pay/:slug" element={<PaySlugRedirect />} />
+                <Route path="*" element={<AppContent />} />
+              </Routes>
             </CelebrationProvider>
           </ModalProvider>
         </SettingsProvider>
