@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, matchPath } from "react-router-dom";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
 import { ToastContainer } from "react-toastify";
@@ -28,7 +28,7 @@ import AccountDetailPage from "./pages/AccountDetailPage";
 import InsightsHub from "./pages/InsightsHub";
 import VaultsPage from "./pages/VaultsPage";
 import VaultDetailPage from "./pages/VaultDetailPage";
-import CollectPaymentPage from "./pages/CollectPaymentPage";
+import PaymentRequestPage from "./pages/PaymentRequestPage";
 
 import { useSubscriptions } from "./hooks/useSubscriptions";
 import { useTheme } from "./hooks/useTheme";
@@ -47,12 +47,19 @@ import AuthPage from "./pages/AuthPage";
 
 function AppContent() {
   const { user } = useAuth();
+  const location = useLocation();
   const { processSubscriptions } = useSubscriptions();
+  const isPublicPayPage =
+    !!matchPath("/payment/:slug", location.pathname) ||
+    !!matchPath("/pay/:slug", location.pathname);
 
-  // Auto-process subscriptions on app load (when this component mounts)
   useEffect(() => {
-    processSubscriptions();
-  }, [processSubscriptions]);
+    if (user) processSubscriptions();
+  }, [processSubscriptions, user]);
+
+  if (isPublicPayPage) {
+    return <PaymentRequestPage />;
+  }
 
   return (
     <AnimatePresence mode="wait">
@@ -131,7 +138,7 @@ function AppRoutes() {
 
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/collect" element={<CollectPaymentPage />} />
+              <Route path="/collect" element={<Navigate to="/ledger?tab=collect" replace />} />
               <Route path="/split/:id" element={<SplitDetailPage />} />
               <Route path="/travel/new" element={<CreateTripWizard />} />
               <Route path="/travel/:tripId" element={<TripDetailPage />} />

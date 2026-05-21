@@ -488,13 +488,13 @@ export default function SettingsPage() {
                   <input value={settings.upiId || ""} onChange={(e) => setUpiId(e.target.value)} className={fieldClass} placeholder="name@bank" />
                 </SettingsRow>
 
-                <SettingsRow title="Collect payment" description="QR / UPI link only — not added to expenses or income.">
+                <SettingsRow title="Collect payment" description="Saved payment pages with QR — Ledger → Collect.">
                   <Link
-                    to="/collect"
+                    to="/ledger?tab=collect"
                     className="inline-flex items-center justify-center gap-2 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm font-black text-primary transition hover:bg-primary/10"
                   >
                     <QrCode size={16} />
-                    Request UPI
+                    Open Collect
                   </Link>
                 </SettingsRow>
 

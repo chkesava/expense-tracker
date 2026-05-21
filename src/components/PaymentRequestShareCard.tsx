@@ -18,10 +18,14 @@ type PaymentRequestShareCardProps = {
   upiLink: string;
   qrStyleId: QrStyleId;
   onQrStyleChange: (id: QrStyleId) => void;
+  /** Copies the public payment page URL (with QR), not the raw UPI deep link */
   onCopyLink: () => void;
+  onCopyUpiLink?: () => void;
   onOpenUpi: () => void;
   onShare?: () => void;
-  onEditAmount: () => void;
+  onEditAmount?: () => void;
+  readOnly?: boolean;
+  sharePageUrl?: string;
 };
 
 function maskUpiId(upiId: string): string {
@@ -40,9 +44,12 @@ export default function PaymentRequestShareCard({
   qrStyleId,
   onQrStyleChange,
   onCopyLink,
+  onCopyUpiLink,
   onOpenUpi,
   onShare,
   onEditAmount,
+  readOnly = false,
+  sharePageUrl,
 }: PaymentRequestShareCardProps) {
   const qrStyle = getQrStyle(qrStyleId);
 
@@ -114,9 +121,16 @@ export default function PaymentRequestShareCard({
           ))}
         </div>
 
-        <div className="mt-5">
-          <QrStylePicker value={qrStyleId} onChange={handleStyleChange} />
-        </div>
+        {!readOnly && (
+          <div className="mt-5">
+            <QrStylePicker value={qrStyleId} onChange={handleStyleChange} />
+          </div>
+        )}
+        {sharePageUrl && (
+          <p className="mt-4 truncate rounded-xl bg-slate-50 px-3 py-2 text-[10px] font-mono text-slate-500">
+            {sharePageUrl}
+          </p>
+        )}
       </div>
 
       {/* Actions */}
@@ -133,7 +147,7 @@ export default function PaymentRequestShareCard({
             className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-3.5 text-sm font-black text-slate-800 shadow-sm transition active:scale-[0.98]"
           >
             <Copy size={16} />
-            Copy link
+            Copy page link
           </button>
           {onShare ? (
             <button
@@ -163,17 +177,29 @@ export default function PaymentRequestShareCard({
             className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition active:scale-[0.98]"
           >
             <Smartphone size={16} />
-            {isMobile() ? "Open in UPI app" : "Copy payment link"}
+            {isMobile() ? "Open in UPI app" : "Open UPI deep link"}
           </button>
         )}
 
-        <button
-          type="button"
-          onClick={onEditAmount}
-          className="w-full py-2 text-xs font-bold text-slate-400 hover:text-slate-600"
-        >
-          Change amount or note
-        </button>
+        {onCopyUpiLink && (
+          <button
+            type="button"
+            onClick={onCopyUpiLink}
+            className="w-full py-2 text-xs font-bold text-slate-400 hover:text-slate-600"
+          >
+            Copy UPI app link (advanced)
+          </button>
+        )}
+
+        {onEditAmount && (
+          <button
+            type="button"
+            onClick={onEditAmount}
+            className="w-full py-2 text-xs font-bold text-slate-400 hover:text-slate-600"
+          >
+            Change amount or note
+          </button>
+        )}
       </div>
     </motion.div>
   );
