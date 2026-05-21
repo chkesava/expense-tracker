@@ -264,6 +264,32 @@
   --ring: 165 90% 45%;
 }
 
+/* Custom Glass 3D Atmosphere */
+.theme-glass-3d {
+  --background: 339 60% 8%;
+  --foreground: 339 20% 92%;
+  --card: 339 50% 12%;
+  --card-foreground: 339 15% 95%;
+  --popover: 339 55% 10%;
+  --popover-foreground: 339 15% 92%;
+  --primary: 339 80% 55%;
+  --primary-foreground: 339 80% 98%;
+  --secondary: 339 40% 18%;
+  --secondary-foreground: 339 20% 88%;
+  --muted: 339 35% 16%;
+  --muted-foreground: 339 15% 60%;
+  --accent: 205 60% 45%;
+  --accent-foreground: 205 20% 95%;
+  --destructive: 0 70% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 339 30% 22%;
+  --input: 339 30% 22%;
+  --ring: 339 80% 55%;
+  --glass-bg: hsl(339 80% 5% / 0.2);
+  --glass-border: hsl(339 40% 40% / 0.25);
+  --glass-shadow: 0 8px 9px 14px -2.5px hsl(205 20% 10% / 0.2);
+}
+
 
 @layer base {
   * {
@@ -563,6 +589,124 @@
     box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
   }
 
+  /* Glass 3D surface effect */
+  .glass3d {
+    --filter-glass3d: blur(32px) brightness(0.85) saturate(2.5);
+    --color-glass3d: hsl(339 80% 5% / 0.2);
+    --noise-glass3d: url("https://www.transparenttextures.com/patterns/black-orchid.png");
+
+    position: relative;
+    z-index: 4;
+    box-shadow:
+      0 0 0.75px hsl(205 20% 10% / 0.2),
+      0.7px 0.8px 1.2px -0.4px hsl(205 20% 10% / 0.1),
+      1.3px 1.5px 2.2px -0.8px hsl(205 20% 10% / 0.1),
+      2.3px 2.6px 3.9px -1.2px hsl(205 20% 10% / 0.1),
+      3.9px 4.4px 6.6px -1.7px hsl(205 20% 10% / 0.1),
+      6.5px 7.2px 10.9px -2.1px hsl(205 20% 10% / 0.1),
+      8px 9px 14px -2.5px hsl(205 20% 10% / 0.2);
+  }
+
+  .glass3d::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    overflow: hidden;
+    z-index: 3;
+
+    -webkit-backdrop-filter: var(--filter-glass3d);
+    backdrop-filter: var(--filter-glass3d);
+    background-color: var(--color-glass3d);
+    background-image: var(--noise-glass3d);
+    background-size: 100px;
+    background-repeat: repeat;
+  }
+
+  .glass3d::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    overflow: hidden;
+    z-index: 5;
+
+    box-shadow:
+      inset 2px 2px 1px -3px hsl(205 20% 90% / 0.8),
+      inset 4px 4px 2px -6px hsl(205 20% 90% / 0.3),
+      inset 1.5px 1.5px 1.5px -0.75px hsl(205 20% 90% / 0.15),
+      inset 1.5px 1.5px 0.25px hsl(205 20% 90% / 0.03),
+      inset 0 0 0.25px 0.5px hsl(205 20% 90% / 0.03);
+  }
+
+  .glass3d > * {
+    position: relative;
+    z-index: 6;
+  }
+
+  .theme-glass-3d .bento-card,
+  .theme-glass-3d .premium-glass,
+  .theme-glass-3d .premium-card {
+    position: relative;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-color: hsl(var(--border) / 0.5);
+    box-shadow:
+      0 0 0.75px hsl(205 20% 10% / 0.2),
+      0.7px 0.8px 1.2px -0.4px hsl(205 20% 10% / 0.1),
+      1.3px 1.5px 2.2px -0.8px hsl(205 20% 10% / 0.1),
+      2.3px 2.6px 3.9px -1.2px hsl(205 20% 10% / 0.1),
+      3.9px 4.4px 6.6px -1.7px hsl(205 20% 10% / 0.1),
+      6.5px 7.2px 10.9px -2.1px hsl(205 20% 10% / 0.1),
+      8px 9px 14px -2.5px hsl(205 20% 10% / 0.2);
+  }
+
+  .theme-glass-3d .bento-card::before,
+  .theme-glass-3d .premium-glass::before,
+  .theme-glass-3d .premium-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    overflow: hidden;
+    z-index: 3;
+    -webkit-backdrop-filter: blur(32px) brightness(0.85) saturate(2.5);
+    backdrop-filter: blur(32px) brightness(0.85) saturate(2.5);
+    background-color: hsl(339 80% 5% / 0.2);
+    background-image: url("https://www.transparenttextures.com/patterns/black-orchid.png");
+    background-size: 100px;
+    background-repeat: repeat;
+  }
+
+  .theme-glass-3d .bento-card::after,
+  .theme-glass-3d .premium-glass::after,
+  .theme-glass-3d .premium-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    overflow: hidden;
+    z-index: 5;
+    box-shadow:
+      inset 2px 2px 1px -3px hsl(205 20% 90% / 0.8),
+      inset 4px 4px 2px -6px hsl(205 20% 90% / 0.3),
+      inset 1.5px 1.5px 1.5px -0.75px hsl(205 20% 90% / 0.15),
+      inset 1.5px 1.5px 0.25px hsl(205 20% 90% / 0.03),
+      inset 0 0 0.25px 0.5px hsl(205 20% 90% / 0.03);
+  }
+
+  .theme-glass-3d .bento-card > *,
+  .theme-glass-3d .premium-glass > *,
+  .theme-glass-3d .premium-card > * {
+    position: relative;
+    z-index: 6;
+  }
+
   .premium-card {
     @apply rounded-[2rem] border border-border bg-card/90 backdrop-blur-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500;
   }
@@ -572,7 +716,11 @@
   }
 
   .bento-card {
-    @apply rounded-[2rem] border border-border bg-card/80 backdrop-blur-2xl shadow-xl transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 overflow-hidden relative;
+    @apply rounded-[2rem] border border-border bg-card/80 backdrop-blur-2xl shadow-xl transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 relative;
+  }
+
+  .theme-glass-3d .bento-card {
+    overflow: visible;
   }
 
   .text-gradient-premium {
@@ -613,6 +761,11 @@
   .privacy-blur {
     transition: filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
+}
+
+/* Custom Glass 3D page backdrop */
+html.theme-glass-3d body {
+  background: hsl(339 60% 8%);
 }
 
 /* Texture overlay for Vintage Parchment */

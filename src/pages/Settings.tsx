@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, writeBatch } from "firebase/firestore";
-import { Brush, Database, Folder, LayoutGrid, LogOut, SlidersHorizontal, Trash2, User, WalletCards, FileText, Loader2, Share2, Shield, Fingerprint } from "lucide-react";
+import { Brush, Database, Folder, LayoutGrid, LogOut, SlidersHorizontal, Trash2, User, WalletCards, FileText, Loader2, Share2, Shield, Fingerprint, QrCode } from "lucide-react";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 
@@ -27,6 +27,7 @@ import { useBiometrics } from "../hooks/useBiometrics";
 
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import { cn } from "../lib/utils";
+import { getAccountKind, isBankAccount, isCreditAccount } from "../utils/accountKind";
 
 const TIMEZONES = [
   "UTC",
@@ -141,6 +142,11 @@ export default function SettingsPage() {
   const [newAccountName, setNewAccountName] = useState("");
   const [selectedAccountType, setSelectedAccountType] = useState("");
   const [newAccountBillDay, setNewAccountBillDay] = useState("");
+  const [newAccountOpeningBalance, setNewAccountOpeningBalance] = useState("");
+  const [newAccountCreditLimit, setNewAccountCreditLimit] = useState("");
+  const [setupAccountId, setSetupAccountId] = useState<string | null>(null);
+  const [setupBalanceValue, setSetupBalanceValue] = useState("");
+  const [setupCreditLimit, setSetupCreditLimit] = useState("");
 
   const [budgetCategory, setBudgetCategory] = useState("");
   const [budgetAmount, setBudgetAmount] = useState("");
@@ -478,8 +484,18 @@ export default function SettingsPage() {
                   <input type="number" min={0} value={String(settings.monthlyBudget)} onChange={(e) => setMonthlyBudget(Number(e.target.value) || 0)} className={fieldClass} />
                 </SettingsRow>
 
-                <SettingsRow title="UPI ID" description="Used for split payments.">
+                <SettingsRow title="UPI ID" description="Used for split bills and collecting individual payments.">
                   <input value={settings.upiId || ""} onChange={(e) => setUpiId(e.target.value)} className={fieldClass} placeholder="name@bank" />
+                </SettingsRow>
+
+                <SettingsRow title="Collect payment" description="QR / UPI link only — not added to expenses or income.">
+                  <Link
+                    to="/collect"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm font-black text-primary transition hover:bg-primary/10"
+                  >
+                    <QrCode size={16} />
+                    Request UPI
+                  </Link>
                 </SettingsRow>
 
                 <SettingsRow title="Lock past months" description="Prevent editing previous months.">
@@ -500,6 +516,7 @@ export default function SettingsPage() {
                     <option value="cyberpunk">Cyberpunk Neon</option>
                     <option value="nordic">Nordic Frost</option>
                     <option value="deep-sea">Deep Sea Abyss</option>
+                    <option value="glass-3d">Custom Glass</option>
                   </select>
                 </SettingsRow>
 
@@ -710,7 +727,7 @@ export default function SettingsPage() {
                 <details className="rounded-2xl border border-slate-100/80 bg-white/60 p-4 dark:border-slate-800 dark:bg-slate-950/30">
                   <summary className="cursor-pointer list-none">
                     <div className="text-sm font-black text-slate-900 dark:text-slate-100">Accounts ({accounts.length})</div>
-                    <div className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">Tag expenses with an account.</div>
+                    <div className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">Savings and bank accounts need a starting balance. Pay credit bills from savings only.</div>
                   </summary>
                   <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <input value={newAccountName} onChange={(e) => setNewAccountName(e.target.value)} placeholder="Account name" className={fieldClass} />
@@ -722,44 +739,70 @@ export default function SettingsPage() {
                         </option>
                       ))}
                     </select>
-                    {selectedAccountType && accountTypes.find(t => t.id === selectedAccountType)?.name.toLowerCase().includes("credit") && (
-                      <input 
-                        type="number" 
-                        min="1" 
-                        max="31" 
-                        value={newAccountBillDay} 
-                        onChange={(e) => setNewAccountBillDay(e.target.value)} 
-                        placeholder="Bill Generation Day (1-31)" 
-                        className={fieldClass} 
-                      />
-                    )}
+                    {selectedAccountType && (() => {
+                      const typeName = accountTypes.find((t) => t.id === selectedAccountType)?.name || "";
+                      if (isCreditAccount(typeName)) {
+                        return (
+                          <>
+                            <input
+                              type="number"
+                              min="0"
+                              value={newAccountCreditLimit}
+                              onChange={(e) => setNewAccountCreditLimit(e.target.value)}
+                              placeholder="Credit limit"
+                              className={fieldClass}
+                            />
+                            <input
+                              type="number"
+                              min="1"
+                              max="31"
+                              value={newAccountBillDay}
+                              onChange={(e) => setNewAccountBillDay(e.target.value)}
+                              placeholder="Bill generation day (1-31)"
+                              className={fieldClass}
+                            />
+                          </>
+                        );
+                      }
+                      if (isBankAccount(typeName)) {
+                        return (
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={newAccountOpeningBalance}
+                            onChange={(e) => setNewAccountOpeningBalance(e.target.value)}
+                            placeholder="Current balance (required for savings / bank)"
+                            className={fieldClass}
+                          />
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                   <button
-                    onClick={() => {
-                      addAccount(newAccountName, selectedAccountType); // update useAccounts addAccount to handle billGenerationDay if we want, but wait we didn't change addAccount signature. Let's just create then update or just change addAccount. 
-                    }}
-                    disabled={!newAccountName || !selectedAccountType}
-                    className="mt-3 min-h-11 w-full rounded-xl bg-blue-600 py-3 text-sm font-black text-white hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50 hidden"
-                  >
-                    Add account
-                  </button>
-                  <button
-                    onClick={() => {
-                      const newAccountFn = async () => {
-                         const docRef = await import("firebase/firestore").then(({ addDoc, collection, serverTimestamp }) => 
-                           addDoc(collection(db, "users", user!.uid, "accounts"), {
-                             name: newAccountName.trim(),
-                             typeId: selectedAccountType,
-                             billGenerationDay: newAccountBillDay ? Number(newAccountBillDay) : null,
-                             createdAt: serverTimestamp(),
-                           })
-                         );
-                         setNewAccountName("");
-                         setSelectedAccountType("");
-                         setNewAccountBillDay("");
-                         toast.success("Account added");
-                      };
-                      if (user) newAccountFn();
+                    onClick={async () => {
+                      const typeName = accountTypes.find((t) => t.id === selectedAccountType)?.name || "";
+                      const kind = getAccountKind(typeName);
+                      if (kind === "bank" && !newAccountOpeningBalance) {
+                        toast.error("Current balance is required for savings and bank accounts");
+                        return;
+                      }
+                      if (kind === "credit" && (!newAccountCreditLimit || !newAccountBillDay)) {
+                        toast.error("Credit limit and bill day are required for credit cards");
+                        return;
+                      }
+                      await addAccount(newAccountName, selectedAccountType, {
+                        openingBalance: kind === "bank" ? Number(newAccountOpeningBalance) : undefined,
+                        balanceInitialized: kind === "bank" ? true : undefined,
+                        creditLimit: kind === "credit" ? Number(newAccountCreditLimit) : undefined,
+                        billGenerationDay: kind === "credit" ? Number(newAccountBillDay) : undefined,
+                      });
+                      setNewAccountName("");
+                      setSelectedAccountType("");
+                      setNewAccountBillDay("");
+                      setNewAccountOpeningBalance("");
+                      setNewAccountCreditLimit("");
                     }}
                     disabled={!newAccountName || !selectedAccountType}
                     className="mt-3 min-h-11 w-full rounded-xl bg-blue-600 py-3 text-sm font-black text-white hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50"
@@ -769,7 +812,9 @@ export default function SettingsPage() {
                   <div className="mt-4 space-y-2">
                     {accounts.map((a) => {
                       const typeName = accountTypes.find((t) => t.id === a.typeId)?.name || "Unknown";
-                      const isCredit = typeName.toLowerCase().includes("credit");
+                      const kind = getAccountKind(typeName);
+                      const needsBalance = kind === "bank" && !a.balanceInitialized;
+                      const needsCreditLimit = kind === "credit" && !a.creditLimit;
                       return (
                         <div key={a.id} className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/60">
                           <div className="flex items-center justify-between gap-3">
@@ -781,16 +826,69 @@ export default function SettingsPage() {
                               <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
-                          {isCredit && (
-                            <div className="flex items-center gap-2 mt-2">
-                              <span className="text-xs text-slate-500">Bill Day:</span>
-                              <input 
-                                type="number" 
-                                min="1" 
-                                max="31" 
-                                defaultValue={a.billGenerationDay || ""} 
-                                onBlur={(e) => updateAccount(a.id, { billGenerationDay: Number(e.target.value) || undefined })}
-                                className="w-20 px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-transparent"
+                          {needsBalance && (
+                            <p className="text-xs font-bold text-amber-700 dark:text-amber-300">
+                              Set your current balance below so debits and bill payments track correctly.
+                            </p>
+                          )}
+                          {needsCreditLimit && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSetupAccountId(a.id);
+                                setSetupCreditLimit(a.creditLimit?.toString() ?? "");
+                              }}
+                              className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800 dark:bg-amber-500/10 dark:text-amber-300"
+                            >
+                              Set credit limit
+                            </button>
+                          )}
+                          {kind === "bank" && (
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                                Current balance:
+                              </span>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                key={`${a.id}-${a.openingBalance ?? "unset"}`}
+                                defaultValue={a.openingBalance ?? ""}
+                                placeholder="Enter balance"
+                                onBlur={(e) => {
+                                  const val = e.target.value.trim();
+                                  if (!val) return;
+                                  updateAccount(a.id, {
+                                    openingBalance: Number(val) || 0,
+                                    balanceInitialized: true,
+                                  });
+                                }}
+                                className="min-w-[8rem] flex-1 px-3 py-2 text-sm font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                              />
+                            </div>
+                          )}
+                          {kind === "credit" && (
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-xs text-slate-500">Limit:</span>
+                              <input
+                                type="number"
+                                min="0"
+                                defaultValue={a.creditLimit ?? ""}
+                                onBlur={(e) =>
+                                  updateAccount(a.id, { creditLimit: Number(e.target.value) || undefined })
+                                }
+                                className="w-24 px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-transparent"
+                              />
+                              <span className="text-xs text-slate-500">Bill day:</span>
+                              <input
+                                type="number"
+                                min="1"
+                                max="31"
+                                defaultValue={a.billGenerationDay || ""}
+                                onBlur={(e) =>
+                                  updateAccount(a.id, { billGenerationDay: Number(e.target.value) || undefined })
+                                }
+                                className="w-16 px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-transparent"
                               />
                             </div>
                           )}
@@ -798,6 +896,61 @@ export default function SettingsPage() {
                       );
                     })}
                   </div>
+                  {setupAccountId && (() => {
+                    const acc = accounts.find((x) => x.id === setupAccountId);
+                    const typeName = acc ? accountTypes.find((t) => t.id === acc.typeId)?.name || "" : "";
+                    const kind = getAccountKind(typeName);
+                    return (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                        <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl dark:bg-slate-900">
+                          <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                            {kind === "bank" ? "Set opening balance" : "Set credit limit"}
+                          </h3>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={kind === "bank" ? setupBalanceValue : setupCreditLimit}
+                            onChange={(e) =>
+                              kind === "bank"
+                                ? setSetupBalanceValue(e.target.value)
+                                : setSetupCreditLimit(e.target.value)
+                            }
+                            className={cn(fieldClass, "mt-3")}
+                            placeholder={kind === "bank" ? "Current balance" : "Credit limit"}
+                          />
+                          <div className="mt-4 flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setSetupAccountId(null)}
+                              className="flex-1 rounded-xl border border-slate-200 py-2 text-sm font-bold dark:border-slate-700"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                if (kind === "bank") {
+                                  await updateAccount(setupAccountId, {
+                                    openingBalance: Number(setupBalanceValue) || 0,
+                                    balanceInitialized: true,
+                                  });
+                                } else {
+                                  await updateAccount(setupAccountId, {
+                                    creditLimit: Number(setupCreditLimit) || undefined,
+                                  });
+                                }
+                                setSetupAccountId(null);
+                              }}
+                              className="flex-1 rounded-xl bg-blue-600 py-2 text-sm font-bold text-white"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </details>
 
                 <details className="rounded-2xl border border-slate-100/80 bg-white/60 p-4 dark:border-slate-800 dark:bg-slate-950/30">

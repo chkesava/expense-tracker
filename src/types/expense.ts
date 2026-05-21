@@ -42,8 +42,40 @@ export interface Account {
   id: string;
   name: string;
   typeId: string;
-  billGenerationDay?: number; // Added for Credit Card billing cycles
+  billGenerationDay?: number;
+  creditLimit?: number;
+  openingBalance?: number;
+  balanceInitialized?: boolean;
   createdAt?: unknown;
+}
+
+export type AccountKind = "credit" | "bank" | "other";
+
+/** Credit card bill paid from a savings/bank account — not an expense */
+export interface AccountPayment {
+  id: string;
+  fromAccountId: string;
+  toAccountId: string;
+  amount: number;
+  date: string;
+  note?: string;
+  createdAt?: unknown;
+}
+
+export interface AccountActivity {
+  id: string;
+  date: string;
+  amount: number;
+  type: "debit" | "credit";
+  note?: string;
+  category?: string;
+  source?: string;
+  linkedExpenseId?: string;
+  linkedIncomeId?: string;
+  linkedPaymentId?: string;
+  isBillPayment?: boolean;
+  counterpartyName?: string;
+  runningBalance?: number;
 }
 
 export interface CategoryBudget {

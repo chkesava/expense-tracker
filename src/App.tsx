@@ -24,9 +24,11 @@ import CreateTripWizard from "./pages/CreateTripWizard";
 import TripDetailPage from "./pages/TripDetailPage";
 import NotFound from "./pages/NotFound";
 import LedgerHub from "./pages/LedgerHub";
+import AccountDetailPage from "./pages/AccountDetailPage";
 import InsightsHub from "./pages/InsightsHub";
 import VaultsPage from "./pages/VaultsPage";
 import VaultDetailPage from "./pages/VaultDetailPage";
+import CollectPaymentPage from "./pages/CollectPaymentPage";
 
 import { useSubscriptions } from "./hooks/useSubscriptions";
 import { useTheme } from "./hooks/useTheme";
@@ -115,6 +117,7 @@ function AppRoutes() {
               <Route path="/" element={<Navigate to={`/${settings.defaultView || 'dashboard'}`} replace />} />
               <Route path="/add" element={<AddExpense />} />
               <Route path="/ledger" element={<LedgerHub />} />
+              <Route path="/accounts/:accountId" element={<AccountDetailPage />} />
               <Route path="/insights" element={<InsightsHub />} />
               <Route path="/vaults" element={<VaultsPage />} />
               <Route path="/vaults/:vaultId" element={<VaultDetailPage />} />
@@ -128,6 +131,7 @@ function AppRoutes() {
 
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/collect" element={<CollectPaymentPage />} />
               <Route path="/split/:id" element={<SplitDetailPage />} />
               <Route path="/travel/new" element={<CreateTripWizard />} />
               <Route path="/travel/:tripId" element={<TripDetailPage />} />
@@ -161,7 +165,7 @@ export default function App() {
           </ModalProvider>
         </SettingsProvider>
       </AuthProvider>
-      <ToastContainer position="top-center" theme={theme === "dark" ? "dark" : "light"} autoClose={2000} hideProgressBar newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+      <ToastContainer position="top-center" theme={theme === "dark" || theme === "glass-3d" ? "dark" : "light"} autoClose={2000} hideProgressBar newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
     </BrowserRouter>
   );
 }

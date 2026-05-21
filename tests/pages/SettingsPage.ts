@@ -28,10 +28,10 @@ export class SettingsPage extends BasePage {
   }
 
   async addAccount(name: string, type: string, balance: string) {
-    await this.page.getByPlaceholder('Account name (e.g. HDFC Bank)').fill(name);
+    await this.page.getByPlaceholder('Account name').fill(name);
     await this.page.getByRole('combobox').first().selectOption(type);
-    await this.page.getByPlaceholder('Initial balance').fill(balance);
-    await this.page.getByRole('button', { name: 'Add Account' }).click();
+    await this.page.getByPlaceholder('Current balance (required for savings / bank)').fill(balance);
+    await this.page.getByRole('button', { name: 'Add account' }).click();
     await this.waitForToast();
   }
 

@@ -1,9 +1,15 @@
 import { addDoc, collection, serverTimestamp, updateDoc, doc } from "firebase/firestore";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { db } from "../firebase";
 import { useAuth } from "../hooks/useAuth";
 import { useAccounts } from "../hooks/useAccounts";
+import { useAccountTypes } from "../hooks/useAccountTypes";
+import { useExpenses } from "../hooks/useExpenses";
+import { useIncomes } from "../hooks/useIncomes";
+import { useAccountPayments } from "../hooks/useAccountPayments";
+import { getAccountKind } from "../utils/accountKind";
+import { previewBalanceAfterTransaction } from "../utils/accountBalance";
 import { useCategories } from "../hooks/useCategories";
 import { CATEGORIES, INCOME_SOURCES } from "../types/expense";
 import type { Expense, Income } from "../types/expense";
@@ -50,6 +56,10 @@ export default function ExpenseForm({
   const [categoryTouched, setCategoryTouched] = useState(false);
 
   const { accounts } = useAccounts();
+  const { accountTypes } = useAccountTypes();
+  const { expenses } = useExpenses();
+  const { incomes } = useIncomes();
+  const { payments } = useAccountPayments();
   const { categories: userCategories } = useCategories();
   const { rules } = useCategorizationRules();
   const { trips, syncTripSpentAmount } = useTrips();
@@ -83,6 +93,46 @@ export default function ExpenseForm({
       setTripId(state?.tripId ?? null);
     }
   }, [editingExpense, editingIncome, location.state]);
+
+  const selectedAccount = useMemo(
+    () => accounts.find((a) => a.id === accountId),
+    [accounts, accountId]
+  );
+
+  const selectedTypeName = useMemo(
+    () =>
+      selectedAccount
+        ? accountTypes.find((t) => t.id === selectedAccount.typeId)?.name || ""
+        : "",
+    [selectedAccount, accountTypes]
+  );
+
+  const balancePreview = useMemo(() => {
+    if (!selectedAccount || !amount || type === "vault") return null;
+    const num = Number(amount);
+    if (!Number.isFinite(num) || num <= 0) return null;
+    const excludeId = editingExpense?.id || editingIncome?.id;
+    return previewBalanceAfterTransaction(
+      selectedAccount,
+      selectedTypeName,
+      expenses,
+      incomes,
+      type === "income" ? "income" : "expense",
+      num,
+      payments,
+      excludeId
+    );
+  }, [
+    selectedAccount,
+    selectedTypeName,
+    amount,
+    type,
+    expenses,
+    incomes,
+    payments,
+    editingExpense?.id,
+    editingIncome?.id,
+  ]);
 
   const handleScanResult = (result: ParsedExpense) => {
     if (result.amount) setAmount(result.amount.toString());
@@ -150,6 +200,25 @@ export default function ExpenseForm({
         if (onSuccess) onSuccess();
         else navigate(`/vaults/${vaultId}`);
         return;
+      }
+
+      if (type === "expense" && accountId && selectedAccount) {
+        const kind = getAccountKind(selectedTypeName);
+        if (kind === "credit" && selectedAccount.creditLimit) {
+          const preview = previewBalanceAfterTransaction(
+            selectedAccount,
+            selectedTypeName,
+            expenses,
+            incomes,
+            "expense",
+            Number(amount),
+            payments,
+            editingExpense?.id
+          );
+          if (preview != null && preview < 0) {
+            toast.warn("This expense exceeds available credit on this card");
+          }
+        }
       }
 
       const collectionName = type === "expense" ? "expenses" : "incomes";
@@ -389,6 +458,13 @@ export default function ExpenseForm({
                 </select>
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[10px]">▼</div>
             </div>
+            {balancePreview != null && selectedAccount && (
+              <p className="mt-1 ml-1 text-[10px] font-bold text-muted-foreground">
+                {getAccountKind(selectedTypeName) === "credit"
+                  ? `Available after: ₹${balancePreview.toLocaleString()}`
+                  : `Balance after: ₹${balancePreview.toLocaleString()}`}
+              </p>
+            )}
         </div>
 
         <div className="space-y-1.5">

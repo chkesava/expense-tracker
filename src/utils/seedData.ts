@@ -130,11 +130,18 @@ export async function seedDemoWorkspaceForUser(uid: string, options: { months?: 
   accountTypeNames.forEach((n, idx) => accountTypeIdByName.set(n, accountTypeRefs[idx].id));
 
   // 2) Accounts
-  const accountsToCreate: Array<{ name: string; typeName: (typeof accountTypeNames)[number] }> = [
-    { name: "HDFC Savings", typeName: "Savings" },
-    { name: "ICICI Checking", typeName: "Checking" },
+  const accountsToCreate: Array<{
+    name: string;
+    typeName: (typeof accountTypeNames)[number];
+    openingBalance?: number;
+    balanceInitialized?: boolean;
+    creditLimit?: number;
+    billGenerationDay?: number;
+  }> = [
+    { name: "HDFC Savings", typeName: "Savings", openingBalance: 50000, balanceInitialized: true },
+    { name: "ICICI Checking", typeName: "Checking", openingBalance: 12000, balanceInitialized: true },
     { name: "SBI Cash", typeName: "Cash" },
-    { name: "Axis Credit Card", typeName: "Credit Card" },
+    { name: "Axis Credit Card", typeName: "Credit Card", creditLimit: 150000, billGenerationDay: 5 },
   ];
 
   const accountRefs = await Promise.all(
@@ -142,6 +149,10 @@ export async function seedDemoWorkspaceForUser(uid: string, options: { months?: 
       addDoc(collection(db, "users", uid, "accounts"), {
         name: a.name,
         typeId: accountTypeIdByName.get(a.typeName)!,
+        ...(a.openingBalance != null ? { openingBalance: a.openingBalance } : {}),
+        ...(a.balanceInitialized != null ? { balanceInitialized: a.balanceInitialized } : {}),
+        ...(a.creditLimit != null ? { creditLimit: a.creditLimit } : {}),
+        ...(a.billGenerationDay != null ? { billGenerationDay: a.billGenerationDay } : {}),
         demo: true,
         demoTag: seedTag,
         createdAt: serverTimestamp(),

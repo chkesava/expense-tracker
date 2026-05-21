@@ -79,6 +79,19 @@ export function useSubscriptions() {
             // Logic: If the subscription is active AND due (today or past), 
             // and NOT completed (for EMIs)
             if (sub.isActive && !isCompleted && currentDay >= sub.dayOfMonth) {
+                const expensesRef = collection(db, "users", user.uid, "expenses");
+                const existingQ = query(
+                    expensesRef,
+                    where("month", "==", currentMonth),
+                    where("note", "==", `${sub.name} (Auto-subscription)`),
+                    where("amount", "==", sub.amount)
+                );
+                const existingSnap = await getDocs(existingQ);
+
+                if (!existingSnap.empty) {
+                    initialLastProcessed = currentMonth;
+                    toast.success("Subscription added (expense already exists for this month)");
+                } else {
                 console.log(`[AddSub] Subscription ${sub.name} is due immediately. Creating expense...`);
 
                 // 1. Create the Expense
@@ -98,6 +111,7 @@ export function useSubscriptions() {
                 initialLastProcessed = currentMonth;
                 toast.success("Subscription added & expense created!");
                 addXP(10);
+                }
             } else {
                 toast.success("Subscription added");
             }

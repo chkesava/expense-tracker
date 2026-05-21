@@ -1,68 +1,39 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CreditCard, CalendarDays, TrendingUp } from "lucide-react";
+import { CreditCard } from "lucide-react";
+import PayCreditBillModal from "../components/PayCreditBillModal";
+import { useAccountPayments } from "../hooks/useAccountPayments";
 import { useAccounts } from "../hooks/useAccounts";
 import { useAccountTypes } from "../hooks/useAccountTypes";
 import { useExpenses } from "../hooks/useExpenses";
 import Amount from "../components/common/Amount";
-
-function getBillingCycleDates(billDay: number) {
-  const today = new Date();
-  const currentMonth = today.getMonth();
-  const currentYear = today.getFullYear();
-  const currentDate = today.getDate();
-
-  let previousBillDate: Date;
-  let nextBillDate: Date;
-
-  if (currentDate >= billDay) {
-    // We are past the bill generation day for this month
-    previousBillDate = new Date(currentYear, currentMonth, billDay);
-    nextBillDate = new Date(currentYear, currentMonth + 1, billDay);
-  } else {
-    // We haven't reached the bill generation day for this month yet
-    previousBillDate = new Date(currentYear, currentMonth - 1, billDay);
-    nextBillDate = new Date(currentYear, currentMonth, billDay);
-  }
-
-  return { previousBillDate, nextBillDate };
-}
+import { isCreditAccount } from "../utils/accountKind";
+import { computeCreditUsage } from "../utils/accountBalance";
 
 export default function CardsPage({ hideHeader }: { hideHeader?: boolean }) {
   const { accounts } = useAccounts();
   const { accountTypes } = useAccountTypes();
   const { expenses } = useExpenses();
+  const { payments } = useAccountPayments();
+  const [payCardId, setPayCardId] = useState<string | null>(null);
 
   const creditCards = useMemo(() => {
     return accounts.filter((a) => {
       const typeName = accountTypes.find((t) => t.id === a.typeId)?.name || "";
-      return typeName.toLowerCase().includes("credit") && a.billGenerationDay;
+      return isCreditAccount(typeName) && a.billGenerationDay;
     });
   }, [accounts, accountTypes]);
 
   const cardsData = useMemo(() => {
     return creditCards.map((card) => {
-      const { previousBillDate, nextBillDate } = getBillingCycleDates(card.billGenerationDay!);
-      
-      const cycleExpenses = expenses.filter(e => {
-        if (e.accountId !== card.id) return false;
-        const expDate = new Date(e.date);
-        return expDate >= previousBillDate && expDate < nextBillDate;
-      });
-
-      const amountGenerated = cycleExpenses.reduce((sum, e) => sum + e.amount, 0);
-
-      const daysRemaining = Math.ceil((nextBillDate.getTime() - new Date().getTime()) / (1000 * 3600 * 24));
-
+      const usage = computeCreditUsage(card, expenses, payments);
       return {
         ...card,
-        previousBillDate,
-        nextBillDate,
-        amountGenerated,
-        daysRemaining
+        ...usage,
       };
     });
-  }, [creditCards, expenses]);
+  }, [creditCards, expenses, payments]);
 
   if (cardsData.length === 0) {
     return (
@@ -99,10 +70,9 @@ export default function CardsPage({ hideHeader }: { hideHeader?: boolean }) {
               background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
             }}
           >
-            {/* Decorative background elements */}
             <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/5 blur-3xl pointer-events-none" />
             <div className="absolute -bottom-24 -left-24 h-56 w-56 rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
-            
+
             <div className="relative z-10 flex flex-col h-full">
               <div className="flex items-start justify-between mb-10">
                 <div className="flex items-center gap-4">
@@ -116,34 +86,73 @@ export default function CardsPage({ hideHeader }: { hideHeader?: boolean }) {
                 </div>
               </div>
 
-              <div className="mb-10">
+              <div className="mb-6">
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 drop-shadow-sm">Unbilled Amount</p>
                 <div className="mt-2 text-4xl sm:text-5xl font-black tracking-tighter drop-shadow-md">
-                  <Amount value={card.amountGenerated} />
+                  <Amount value={card.usedThisCycle} />
                 </div>
-                <p className="mt-3 text-xs font-bold text-slate-400">
-                  Cycle started <span className="text-slate-300">{card.previousBillDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
-                </p>
+                {card.creditLimit != null && (
+                  <p className="mt-2 text-xs font-bold text-slate-400">
+                    Available: <span className="text-slate-200"><Amount value={card.availableCredit} /></span>
+                    {" · "}Limit: <Amount value={card.creditLimit} />
+                  </p>
+                )}
+                {card.paidThisCycle > 0 && (
+                  <p className="mt-1 text-xs font-bold text-emerald-400">
+                    Paid this cycle: <Amount value={card.paidThisCycle} />
+                  </p>
+                )}
               </div>
 
               <div className="mt-auto pt-6 border-t border-white/10 flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Next Bill Date</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Limit resets</p>
                   <p className="text-sm sm:text-base font-black mt-1 tracking-wider">
-                    {card.nextBillDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    {card.nextResetDate.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Generates In</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">In</p>
                   <p className="text-sm sm:text-base font-black mt-1 text-blue-400 tracking-wider">
                     {card.daysRemaining} days
                   </p>
                 </div>
               </div>
+
+              <div className="mt-4 flex flex-col gap-2">
+                {card.usedThisCycle > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setPayCardId(card.id)}
+                    className="w-full rounded-xl bg-white/15 py-2.5 text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/25 transition-colors"
+                  >
+                    Pay bill from savings
+                  </button>
+                )}
+                <Link
+                  to={`/accounts/${card.id}`}
+                  className="text-center text-[10px] font-black uppercase tracking-widest text-blue-300 hover:text-white transition-colors"
+                >
+                  View history →
+                </Link>
+              </div>
             </div>
           </motion.div>
         ))}
       </div>
+      {payCardId && (() => {
+        const card = cardsData.find((c) => c.id === payCardId);
+        if (!card) return null;
+        return (
+          <PayCreditBillModal
+            isOpen
+            onClose={() => setPayCardId(null)}
+            creditAccountId={card.id}
+            creditAccountName={card.name}
+            suggestedAmount={card.usedThisCycle > 0 ? card.usedThisCycle : undefined}
+          />
+        );
+      })()}
     </div>
   );
 }

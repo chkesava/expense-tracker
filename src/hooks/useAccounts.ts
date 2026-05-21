@@ -32,14 +32,23 @@ export const useAccounts = () => {
     });
   }, [user]);
 
-  const addAccount = async (name: string, typeId: string) => {
+  const addAccount = async (
+    name: string,
+    typeId: string,
+    extras?: Partial<Omit<Account, "id" | "name" | "typeId" | "createdAt">>
+  ) => {
     if (!user || !name.trim() || !typeId) return;
     try {
-      await addDoc(collection(db, "users", user.uid, "accounts"), {
+      const payload: Record<string, unknown> = {
         name: name.trim(),
         typeId,
         createdAt: serverTimestamp(),
-      });
+      };
+      if (extras?.billGenerationDay != null) payload.billGenerationDay = extras.billGenerationDay;
+      if (extras?.creditLimit != null) payload.creditLimit = extras.creditLimit;
+      if (extras?.openingBalance != null) payload.openingBalance = extras.openingBalance;
+      if (extras?.balanceInitialized != null) payload.balanceInitialized = extras.balanceInitialized;
+      await addDoc(collection(db, "users", user.uid, "accounts"), payload);
       toast.success("Account added");
     } catch (err) {
       console.error(err);
