@@ -13,6 +13,7 @@ import { useUserProfilesByIds } from "../hooks/useUserProfilesByIds";
 import { useVaultExpenses } from "../hooks/useVaultExpenses";
 import { useVaults } from "../hooks/useVaults";
 import useSettings from "../hooks/useSettings";
+import { todayDateKey } from "../utils/dates";
 import { generateUpiLink, isMobile } from "../utils/upi";
 import { toast } from "react-toastify";
 import { QRCodeSVG } from "qrcode.react";
@@ -137,7 +138,7 @@ export default function VaultDetailPage() {
     amount: 0,
     category: "",
     note: "",
-    date: new Date().toISOString().slice(0, 10),
+    date: todayDateKey(),
     paidBy: user?.uid ?? "",
     splitBetween: vault?.memberIds ?? [],
   });
@@ -287,7 +288,7 @@ export default function VaultDetailPage() {
                     ...prev,
                     paidBy: user?.uid ?? vault.ownerId,
                     splitBetween: vault.memberIds,
-                    date: new Date().toISOString().slice(0, 10),
+                    date: todayDateKey(),
                   }));
                   setIsAddExpenseOpen(true);
                 }}

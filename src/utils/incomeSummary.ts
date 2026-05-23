@@ -1,4 +1,5 @@
 import type { Income } from "../types/expense";
+import { formatDateKey } from "./dates";
 
 export const getIncomeSummary = (incomes: Income[]) => {
   const total = incomes.reduce((sum, i) => sum + i.amount, 0);
@@ -11,10 +12,10 @@ export const getIncomeSummary = (incomes: Income[]) => {
 };
 
 export const groupIncomesByDay = (incomes: Income[], timezone: string = "UTC") => {
-    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: timezone });
+    const todayStr = formatDateKey(new Date(), timezone);
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toLocaleDateString('en-CA', { timeZone: timezone });
+    const yesterdayStr = formatDateKey(yesterday, timezone);
 
     return {
         today: incomes.filter(i => i.date === todayStr),

@@ -4,6 +4,7 @@ import { db } from '../firebase';
 import { useAuth } from './useAuth';
 import type { FocusSession } from '../types/focus';
 import { toast } from 'react-toastify';
+import { todayDateKey } from '../utils/dates';
 
 export function useFocusMode() {
     const { user } = useAuth();
@@ -62,7 +63,7 @@ export function useFocusMode() {
             endDate: endDate.toISOString(),
             status: 'active',
             daysSuccessful: 0,
-            lastCheckDate: startDate.toISOString().split('T')[0],
+            lastCheckDate: todayDateKey(),
             currentSpend: 0
         };
 
@@ -95,7 +96,7 @@ export function useFocusMode() {
     const checkDailySpend = useCallback(async () => {
         if (!user || !activeFocus) return 0;
 
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = todayDateKey();
 
         // Query expenses for TODAY and CATEGORY
         const expensesRef = collection(db, 'users', user.uid, 'expenses');

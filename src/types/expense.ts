@@ -46,6 +46,7 @@ export interface Account {
   creditLimit?: number;
   openingBalance?: number;
   balanceInitialized?: boolean;
+  balanceAsOfDate?: string;
   createdAt?: unknown;
 }
 

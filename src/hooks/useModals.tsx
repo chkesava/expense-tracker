@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState } from "react";
+import { currentMonthKey } from "../utils/dates";
 
 interface ModalContextType {
   isAddExpenseOpen: boolean;
@@ -14,7 +15,7 @@ const ModalContext = createContext<ModalContextType | undefined>(undefined);
 export function ModalProvider({ children }: { children: React.ReactNode }) {
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [isMonthDrawerOpen, setIsMonthDrawerOpen] = useState(false);
-  const [globalMonth, setGlobalMonth] = useState<string | null>(new Date().toISOString().slice(0, 7));
+  const [globalMonth, setGlobalMonth] = useState<string | null>(currentMonthKey());
 
   return (
     <ModalContext.Provider 

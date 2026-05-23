@@ -8,13 +8,9 @@ import type {
 } from "../types/expense";
 import { getAccountKind } from "./accountKind";
 import { getBillingCycleDates, getDaysUntilReset } from "./billingCycle";
+import { parseLocalDate, toLocalDateKey, billDateForMonth } from "./dates";
 
-export function toLocalDateKey(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
+export { toLocalDateKey } from "./dates";
 
 function paymentBelongsToCycle(
   payment: AccountPayment,
@@ -44,7 +40,7 @@ function paymentBelongsToCycle(
       );
     }
   }
-  const d = new Date(payment.date);
+  const d = parseLocalDate(payment.date);
   return d >= cycleStart && d < cycleEnd;
 }
 
@@ -74,6 +70,11 @@ function entriesForAccount(accountId: string, entries: AccountEntry[]) {
   return entries.filter((e) => e.accountId === accountId);
 }
 
+function isOnOrAfter(date: string, baseline?: string): boolean {
+  if (!baseline) return true;
+  return date >= baseline;
+}
+
 function paymentsInBillingCycle(
   accountId: string,
   payments: AccountPayment[],
@@ -93,18 +94,21 @@ export function computeBankBalance(
   entries: AccountEntry[] = []
 ): number {
   const opening = account.openingBalance ?? 0;
+  const baseline = account.balanceAsOfDate;
   const totalExpenses = expenses
-    .filter((e) => e.accountId === account.id)
+    .filter((e) => e.accountId === account.id && isOnOrAfter(e.date, baseline))
     .reduce((sum, e) => sum + e.amount, 0);
   const totalIncomes = incomes
-    .filter((i) => i.accountId === account.id)
+    .filter((i) => i.accountId === account.id && isOnOrAfter(i.date, baseline))
     .reduce((sum, i) => sum + i.amount, 0);
-  const billPaymentsOut = paymentsFromAccount(account.id, payments).reduce(
-    (sum, p) => sum + p.amount,
-    0
-  );
+  const billPaymentsOut = paymentsFromAccount(account.id, payments)
+    .filter((p) => isOnOrAfter(p.date, baseline))
+    .reduce((sum, p) => sum + p.amount, 0);
   const manualAdjustments = entriesForAccount(account.id, entries).reduce(
-    (sum, entry) => sum + (entry.direction === "credit" ? entry.amount : -entry.amount),
+    (sum, entry) =>
+      isOnOrAfter(entry.date, baseline)
+        ? sum + (entry.direction === "credit" ? entry.amount : -entry.amount)
+        : sum,
     0
   );
   return opening + totalIncomes - totalExpenses - billPaymentsOut + manualAdjustments;
@@ -176,21 +180,15 @@ export function getCreditBillHistory(
   const history: CreditBillSummary[] = [];
 
   for (let i = 0; i < cycles; i += 1) {
-    const cycleEnd = new Date(
-      previousBillDate.getFullYear(),
-      previousBillDate.getMonth() - i,
-      billDay
-    );
-    const cycleStart = new Date(
-      previousBillDate.getFullYear(),
-      previousBillDate.getMonth() - i - 1,
-      billDay
-    );
+    const cycleEndMonth = previousBillDate.getMonth() - i;
+    const cycleEndYear = previousBillDate.getFullYear();
+    const cycleEnd = billDateForMonth(cycleEndYear, cycleEndMonth, billDay);
+    const cycleStart = billDateForMonth(cycleEndYear, cycleEndMonth - 1, billDay);
 
     const billedAmount = expenses
       .filter((e) => {
         if (e.accountId !== account.id) return false;
-        const d = new Date(e.date);
+        const d = parseLocalDate(e.date);
         return d >= cycleStart && d < cycleEnd;
       })
       .reduce((sum, e) => sum + e.amount, 0);
@@ -238,13 +236,28 @@ export function buildAccountActivities(
   entries: AccountEntry[] = [],
   accountNameById?: Record<string, string>
 ): AccountActivity[] {
-  const accountExpenses = expenses.filter((e) => e.accountId === account.id);
-  const accountIncomes = incomes.filter((i) => i.accountId === account.id);
-  const accountEntries = entriesForAccount(account.id, entries);
+  const baseline = account.balanceAsOfDate;
+  const shouldApplyBaseline = getAccountKind(typeName) !== "credit";
+  const withinBaseline = (date: string) =>
+    !shouldApplyBaseline || isOnOrAfter(date, baseline);
+
+  const accountExpenses = expenses.filter(
+    (e) => e.accountId === account.id && withinBaseline(e.date)
+  );
+  const accountIncomes = incomes.filter(
+    (i) => i.accountId === account.id && withinBaseline(i.date)
+  );
+  const accountEntries = entriesForAccount(account.id, entries).filter((entry) =>
+    withinBaseline(entry.date)
+  );
   const kind = getAccountKind(typeName);
 
-  const outgoingPayments = paymentsFromAccount(account.id, payments);
-  const incomingPayments = paymentsToAccount(account.id, payments);
+  const outgoingPayments = paymentsFromAccount(account.id, payments).filter((p) =>
+    withinBaseline(p.date)
+  );
+  const incomingPayments = paymentsToAccount(account.id, payments).filter((p) =>
+    withinBaseline(p.date)
+  );
 
   const activities: AccountActivity[] = [
     ...accountExpenses.map((e, idx) => ({
@@ -301,14 +314,14 @@ export function buildAccountActivities(
   ];
 
   activities.sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    (a, b) => parseLocalDate(b.date).getTime() - parseLocalDate(a.date).getTime()
   );
 
   if (kind !== "credit") {
     const opening = account.openingBalance ?? 0;
     let running = opening;
     const chronological = [...activities].sort((a, b) => {
-      const diff = new Date(a.date).getTime() - new Date(b.date).getTime();
+      const diff = parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime();
       if (diff !== 0) return diff;
       if (a.type !== b.type) return a.type === "credit" ? -1 : 1;
       return 0;

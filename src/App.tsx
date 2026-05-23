@@ -25,6 +25,7 @@ import TripDetailPage from "./pages/TripDetailPage";
 import NotFound from "./pages/NotFound";
 import LedgerHub from "./pages/LedgerHub";
 import AccountDetailPage from "./pages/AccountDetailPage";
+import InvestmentDetailPage from "./pages/InvestmentDetailPage";
 import InsightsHub from "./pages/InsightsHub";
 import VaultsPage from "./pages/VaultsPage";
 import VaultDetailPage from "./pages/VaultDetailPage";
@@ -122,6 +123,7 @@ function AppRoutes() {
               <Route path="/add" element={<AddExpense />} />
               <Route path="/ledger" element={<LedgerHub />} />
               <Route path="/accounts/:accountId" element={<AccountDetailPage />} />
+              <Route path="/investments/:investmentId" element={<InvestmentDetailPage />} />
               <Route path="/insights" element={<InsightsHub />} />
               <Route path="/vaults" element={<VaultsPage />} />
               <Route path="/vaults/:vaultId" element={<VaultDetailPage />} />

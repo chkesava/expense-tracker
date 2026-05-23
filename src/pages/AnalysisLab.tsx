@@ -47,6 +47,7 @@ import {
 } from "recharts";
 import { COLORS } from "../utils/chartColors";
 import PageHeader from "../components/layout/PageHeader";
+import { currentMonthKey, todayDateKey, toLocalDateKey } from "../utils/dates";
 
 export default function AnalysisLab({ hideHeader }: { hideHeader?: boolean }) {
   const { expenses, loading } = useExpenses();
@@ -57,11 +58,9 @@ export default function AnalysisLab({ hideHeader }: { hideHeader?: boolean }) {
   // Range States
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
-    return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
+    return toLocalDateKey(new Date(d.getFullYear(), d.getMonth(), 1));
   });
-  const [endDate, setEndDate] = useState(() => {
-    return new Date().toISOString().split('T')[0];
-  });
+  const [endDate, setEndDate] = useState(() => todayDateKey());
 
   // Filter states
   const [query, setQuery] = useState("");
@@ -157,7 +156,7 @@ export default function AnalysisLab({ hideHeader }: { hideHeader?: boolean }) {
         .map(([name, value]) => ({ name, value }));
 
     // Forecast Logic
-    const isCurrentMonthActive = endDate.startsWith(new Date().toISOString().slice(0, 7));
+    const isCurrentMonthActive = endDate.startsWith(currentMonthKey());
     const daysPassed = new Date().getDate();
     const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
     const projectedSpend = isCurrentMonthActive ? (total / daysPassed) * daysInMonth : null;

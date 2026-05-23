@@ -142,7 +142,7 @@ export default function AnalyticsPage({ hideHeader }: { hideHeader?: boolean }) 
                   <>
                     <SmartSummary expenses={filteredExpenses} />
                     <div className="h-px bg-slate-100 dark:bg-slate-800" />
-                    <MonthlyComparison expenses={expenses} />
+                    <MonthlyComparison expenses={expenses} selectedMonth={selectedMonth} />
                     <div className="h-px bg-slate-100 dark:bg-slate-800" />
                     <WeeklySummary expenses={expenses} month={selectedMonth} />
                   </>

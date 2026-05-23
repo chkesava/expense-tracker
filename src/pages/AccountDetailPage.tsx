@@ -141,6 +141,7 @@ export default function AccountDetailPage() {
             {account.openingBalance != null && account.balanceInitialized && (
               <p className="mt-2 text-xs text-muted-foreground">
                 Starting balance (when set): <Amount value={account.openingBalance} />
+                {account.balanceAsOfDate ? ` · As of ${account.balanceAsOfDate}` : ""}
               </p>
             )}
             {account.balanceInitialized && (

@@ -1,4 +1,5 @@
 import { CATEGORIES } from "../types/expense";
+import { toLocalDateKey, todayDateKey } from "./dates";
 
 export interface ParsedExpense {
   amount: number | null;
@@ -125,7 +126,7 @@ export function parseMagicEntry(text: string): ParsedExpense {
     dateFound = true;
   }
 
-  const formattedDate = date.toISOString().slice(0, 10);
+  const formattedDate = toLocalDateKey(date);
 
   // 3. Infer Category (Weighted Scoring)
   let category = "Other";

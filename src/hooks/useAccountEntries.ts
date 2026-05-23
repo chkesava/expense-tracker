@@ -12,6 +12,7 @@ import { toast } from "react-toastify";
 import { db } from "../firebase";
 import type { AccountEntry } from "../types/expense";
 import { useAuth } from "./useAuth";
+import { isValidDateKey } from "../utils/dates";
 
 export function useAccountEntries() {
   const { user } = useAuth();
@@ -48,7 +49,14 @@ export function useAccountEntries() {
     date: string,
     note?: string
   ) => {
-    if (!user || !accountId || amount <= 0 || !date) return;
+    if (!user || !accountId || amount <= 0 || !date) {
+      toast.error("Enter a valid amount and date");
+      return;
+    }
+    if (!isValidDateKey(date)) {
+      toast.error("Invalid entry date");
+      return;
+    }
     try {
       await addDoc(collection(db, "users", user.uid, "accountEntries"), {
         accountId,

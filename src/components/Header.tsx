@@ -25,6 +25,7 @@ import { useStoryGenerator } from "../hooks/useStoryGenerator";
 import useSettings from "../hooks/useSettings";
 import StoryViewer from "./story/StoryViewer";
 import { cn } from "../lib/utils";
+import { currentMonthKey, todayDateKey } from "../utils/dates";
 
 function formatMonthLabel(month: string, short = false) {
   if (!month) return "This Month";
@@ -57,7 +58,7 @@ export default function Header() {
     () => Array.from(new Set(expenses.map((expense) => expense.month))).sort().reverse(),
     [expenses]
   );
-  const selectedMonth = globalMonth ?? months[0] ?? new Date().toISOString().slice(0, 7);
+  const selectedMonth = globalMonth ?? months[0] ?? currentMonthKey(settings.timezone);
   const filteredExpenses = useMemo(
     () => expenses.filter((expense) => expense.month === selectedMonth),
     [expenses, selectedMonth]

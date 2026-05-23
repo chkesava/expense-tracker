@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, writeBatch } from "firebase/firestore";
 import { Brush, Database, Folder, LayoutGrid, LogOut, SlidersHorizontal, Trash2, User, WalletCards, FileText, Loader2, Share2, Shield, Fingerprint, QrCode } from "lucide-react";
 import { jsPDF } from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 import { toast } from "react-toastify";
 
@@ -28,6 +28,7 @@ import { useBiometrics } from "../hooks/useBiometrics";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import { cn } from "../lib/utils";
 import { getAccountKind, isCreditAccount } from "../utils/accountKind";
+import { currentMonthKey, todayDateKey } from "../utils/dates";
 
 const TIMEZONES = [
   "UTC",
@@ -58,6 +59,8 @@ const surfaceClass =
 
 const fieldClass =
   "min-h-11 w-full rounded-xl bg-muted/50 border border-border px-3 py-2.5 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all";
+
+const getTodayKey = () => todayDateKey();
 
 function SettingsCard({ title, subtitle, icon: Icon, children }: { title: string; subtitle?: string; icon: React.ComponentType<{ className?: string }>; children: React.ReactNode }) {
   return (
@@ -150,7 +153,7 @@ export default function SettingsPage() {
 
   const [budgetCategory, setBudgetCategory] = useState("");
   const [budgetAmount, setBudgetAmount] = useState("");
-  const [budgetMonth, setBudgetMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [budgetMonth, setBudgetMonth] = useState(currentMonthKey());
 
   const [goalName, setGoalName] = useState("");
   const [goalTarget, setGoalTarget] = useState("");
@@ -220,18 +223,39 @@ export default function SettingsPage() {
     if (!user) return;
     setIsDeleting(true);
     try {
-      const colRef = collection(db, "users", user.uid, "expenses");
-      const snap = await getDocs(colRef);
-      if (snap.empty) {
+      const deleteCollectionInChunks = async (collectionName: string) => {
+        const snap = await getDocs(collection(db, "users", user.uid, collectionName));
+        if (snap.empty) return 0;
+        const docs = snap.docs;
+        const chunkSize = 450;
+        let deleted = 0;
+        for (let i = 0; i < docs.length; i += chunkSize) {
+          const chunk = docs.slice(i, i + chunkSize);
+          const batch = writeBatch(db);
+          chunk.forEach((d) => batch.delete(d.ref));
+          await batch.commit();
+          deleted += chunk.length;
+        }
+        return deleted;
+      };
+
+      const [deletedExpenses, deletedIncomes, deletedPayments, deletedEntries] = await Promise.all([
+        deleteCollectionInChunks("expenses"),
+        deleteCollectionInChunks("incomes"),
+        deleteCollectionInChunks("accountPayments"),
+        deleteCollectionInChunks("accountEntries"),
+      ]);
+      const totalDeleted = deletedExpenses + deletedIncomes + deletedPayments + deletedEntries;
+
+      if (totalDeleted === 0) {
         toast.info("No data to delete");
         setIsDeleting(false);
         setShowDeleteConfirm(false);
         return;
       }
-      const batch = writeBatch(db);
-      snap.docs.forEach((d) => batch.delete(d.ref));
-      await batch.commit();
-      toast.success(`Deleted ${snap.size} expenses`);
+      toast.success(
+        `Deleted ${deletedExpenses} expenses, ${deletedIncomes} incomes, ${deletedPayments} bill payments, ${deletedEntries} account entries`
+      );
       setShowDeleteConfirm(false);
     } catch (err) {
       console.error(err);
@@ -273,7 +297,7 @@ export default function SettingsPage() {
         doc.setTextColor(0);
         doc.text(`Total Expenses: ₹${totalExp.toLocaleString()}`, 14, 50);
         const tableData = expenses.slice(0, 500).map((e) => [e.date, e.category, e.note || "-", `₹${e.amount.toLocaleString()}`]);
-        (doc as any).autoTable({
+        autoTable(doc, {
           startY: 65,
           head: [["Date", "Category", "Note", "Amount"]],
           body: tableData,
@@ -281,7 +305,7 @@ export default function SettingsPage() {
           headStyles: { fillColor: [79, 70, 229], fontSize: 10 },
           styles: { fontSize: 9 },
         });
-        doc.save(`Vault_Report_${new Date().toISOString().split("T")[0]}.pdf`);
+        doc.save(`Vault_Report_${todayDateKey()}.pdf`);
       }
       toast.success("Report Generated!");
     } catch (err) {
@@ -795,6 +819,7 @@ export default function SettingsPage() {
                       await addAccount(newAccountName, selectedAccountType, {
                         openingBalance: kind !== "credit" ? Number(newAccountOpeningBalance) : undefined,
                         balanceInitialized: kind !== "credit" ? true : undefined,
+                        balanceAsOfDate: kind !== "credit" ? getTodayKey() : undefined,
                         creditLimit: kind === "credit" ? Number(newAccountCreditLimit) : undefined,
                         billGenerationDay: kind === "credit" ? Number(newAccountBillDay) : undefined,
                       });
@@ -861,6 +886,7 @@ export default function SettingsPage() {
                                   updateAccount(a.id, {
                                     openingBalance: Number(val) || 0,
                                     balanceInitialized: true,
+                                    balanceAsOfDate: getTodayKey(),
                                   });
                                 }}
                                 className="min-w-[8rem] flex-1 px-3 py-2 text-sm font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
@@ -934,6 +960,7 @@ export default function SettingsPage() {
                                   await updateAccount(setupAccountId, {
                                     openingBalance: Number(setupBalanceValue) || 0,
                                     balanceInitialized: true,
+                                    balanceAsOfDate: getTodayKey(),
                                   });
                                 } else {
                                   await updateAccount(setupAccountId, {
@@ -1230,7 +1257,7 @@ export default function SettingsPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="text-sm font-black text-red-700 dark:text-red-300">Delete all data</div>
-                        <div className="mt-1 text-[11px] font-medium text-red-600/80 dark:text-red-300/80">Permanently deletes all recorded expenses.</div>
+                        <div className="mt-1 text-[11px] font-medium text-red-600/80 dark:text-red-300/80">Permanently deletes expenses, incomes, bill payments, and account entries.</div>
                       </div>
                       <button
                         onClick={() => {
@@ -1294,7 +1321,7 @@ export default function SettingsPage() {
       <ConfirmDialog
         open={showDeleteConfirm}
         title="Delete All Data"
-        message="This will permanently delete ALL your recorded expenses. This action cannot be undone. Are you absolutely sure?"
+        message="This will permanently delete expenses, incomes, bill payments, and account entries. This action cannot be undone. Are you absolutely sure?"
         confirmText={isDeleting ? "Deleting..." : "Yes, Delete Everything"}
         onConfirm={handleDeleteAll}
         onCancel={() => setShowDeleteConfirm(false)}

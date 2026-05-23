@@ -4,6 +4,7 @@ import { useAccounts } from "../hooks/useAccounts";
 import { useCategories } from "../hooks/useCategories";
 import { useAccountTypes } from "../hooks/useAccountTypes";
 import { useCategorizationRules } from "../hooks/useCategorizationRules";
+import { useTrips } from "../hooks/useTrips";
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
@@ -38,7 +39,7 @@ import {
     Share2
 } from "lucide-react";
 import { jsPDF } from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 import PageHeader from "../components/layout/PageHeader";
 import BulkActionBar from "../components/BulkActionBar";
@@ -55,6 +56,7 @@ import { getMonthlySummary } from "../utils/monthSummary";
 import { groupExpensesByDay } from "../utils/dayGrouping";
 import { exportExpensesToCSV } from "../utils/exportCsv";
 import { getIncomeSummary, groupIncomesByDay } from "../utils/incomeSummary";
+import { currentMonthKey, todayDateKey } from "../utils/dates";
 import { INCOME_SOURCES } from "../types/expense";
 
 // Audit Components
@@ -62,6 +64,37 @@ import AuditCard from "../components/audit/AuditCard";
 import AuditControls from "../components/audit/AuditControls";
 
 type ExpensesTab = "history" | "income" | "audit" | "data";
+
+function splitCsvLine(line: string): string[] {
+    const result: string[] = [];
+    let current = "";
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i += 1) {
+        const char = line[i];
+        if (char === '"') {
+            const nextChar = line[i + 1];
+            if (inQuotes && nextChar === '"') {
+                current += '"';
+                i += 1;
+            } else {
+                inQuotes = !inQuotes;
+            }
+            continue;
+        }
+        if (char === "," && !inQuotes) {
+            result.push(current.trim());
+            current = "";
+            continue;
+        }
+        current += char;
+    }
+    result.push(current.trim());
+    return result;
+}
+
+function normalizeHeader(header: string): string {
+    return header.trim().toLowerCase();
+}
 
 export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }) {
     const { settings } = useSettings();
@@ -72,6 +105,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
     const { categories: userCategories } = useCategories();
     const { accountTypes } = useAccountTypes();
     const { rules } = useCategorizationRules();
+    const { syncTripSpentAmount } = useTrips();
     const { globalMonth } = useModals();
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -85,7 +119,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
     // --- HISTORY STATE ---
     const months = useMemo(() => [...new Set(expenses.map((e) => e.month))].sort().reverse(), [expenses]);
     const selectedMonth = globalMonth ?? months[0] ?? "";
-    const currentMonth = new Date().toISOString().slice(0, 7);
+    const currentMonth = currentMonthKey(settings.timezone);
 
     const [selectedCategory, setSelectedCategory] = useState<string>("");
     const [selectedAccountId, setSelectedAccountId] = useState<string>("");
@@ -107,7 +141,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
     const [defaultImportAccountId, setDefaultImportAccountId] = useState("");
 
     // --- COMMON UI STATE ---
-    const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: "expense" | "income" } | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: "expense" | "income", tripId?: string | null } | null>(null);
     const [editingExpense, setEditingExpense] = useState<any | null>(null);
     const [editingIncome, setEditingIncome] = useState<any | null>(null);
     const [viewingTransaction, setViewingTransaction] = useState<{ data: any, type: "expense" | "income" } | null>(null);
@@ -210,17 +244,51 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
     // --- LOGIC: DATA ---
     const handleCsvFile = async (file: File) => {
         const text = await file.text();
-        const rows = text.split("\n").filter(l => l.trim()).slice(1);
-        const parsed = rows.map(line => {
-            const parts = line.split(",").map(p => p.trim());
-            return {
-                amount: Number(parts[0]),
-                date: parts[1],
-                category: parts[2] || "Other",
-                note: parts[3] || "",
-                month: parts[1]?.slice(0, 7)
-            };
-        }).filter(r => r.amount > 0 && r.date);
+        const lines = text.split(/\r?\n/).filter(l => l.trim());
+        if (!lines.length) {
+            toast.error("CSV file is empty");
+            return;
+        }
+
+        const headerCols = splitCsvLine(lines[0]).map(normalizeHeader);
+        const hasNamedHeaders = headerCols.some((h) =>
+            ["date", "time", "category", "amount", "note"].includes(h)
+        );
+        const dataLines = hasNamedHeaders ? lines.slice(1) : lines;
+
+        const parsed = dataLines
+            .map((line) => splitCsvLine(line))
+            .map((parts) => {
+                if (hasNamedHeaders) {
+                    const getByName = (name: string) => {
+                        const idx = headerCols.indexOf(name);
+                        return idx >= 0 ? parts[idx] ?? "" : "";
+                    };
+                    const date = getByName("date");
+                    const amountRaw = getByName("amount");
+                    const amount = Number(String(amountRaw).replace(/[^0-9.-]/g, ""));
+                    return {
+                        amount,
+                        date,
+                        category: getByName("category") || "Other",
+                        note: getByName("note") || "",
+                        month: date?.slice(0, 7),
+                        time: getByName("time") || "12:00",
+                    };
+                }
+
+                const amount = Number(String(parts[0] ?? "").replace(/[^0-9.-]/g, ""));
+                const date = parts[1] ?? "";
+                return {
+                    amount,
+                    date,
+                    category: parts[2] || "Other",
+                    note: parts[3] || "",
+                    month: date?.slice(0, 7),
+                    time: parts[4] || "12:00",
+                };
+            })
+            .filter((r) => r.amount > 0 && /^\d{4}-\d{2}-\d{2}$/.test(r.date));
         setImportRows(parsed);
         toast.info(`Loaded ${parsed.length} rows`);
     };
@@ -229,17 +297,23 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
         if (!user || !importRows.length) return;
         setIsImporting(true);
         try {
-            const batch = writeBatch(db);
-            for (const row of importRows) {
-                const ref = doc(collection(db, "users", user.uid, "expenses"));
-                batch.set(ref, {
-                    ...row,
-                    accountId: defaultImportAccountId || accounts[0]?.id || "",
-                    createdAt: serverTimestamp(),
-                    time: "12:00"
-                });
+            const chunkSize = 450;
+            for (let i = 0; i < importRows.length; i += chunkSize) {
+                const chunk = importRows.slice(i, i + chunkSize);
+                const batch = writeBatch(db);
+                for (const row of chunk) {
+                    const ref = doc(collection(db, "users", user.uid, "expenses"));
+                    batch.set(ref, {
+                        ...row,
+                        ...(defaultImportAccountId || accounts[0]?.id
+                            ? { accountId: defaultImportAccountId || accounts[0]?.id }
+                            : {}),
+                        createdAt: serverTimestamp(),
+                        time: row.time || "12:00",
+                    });
+                }
+                await batch.commit();
             }
-            await batch.commit();
             toast.success(`Imported ${importRows.length} expenses`);
             setImportRows([]);
         } catch (err) {
@@ -252,11 +326,13 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
     const generateReport = async () => {
         setIsGenerating(true);
         try {
+            const reportExpenses = expenses.filter((e) => e.month === selectedMonth);
+            const reportIncomes = incomes.filter((i) => i.month === selectedMonth);
             // Aesthetic delay for the "Wow" factor animation
             await new Promise(r => setTimeout(r, 2500));
 
             if (reportType === "csv") {
-                exportExpensesToCSV(expenses, `Vault_Report_${selectedMonth}.csv`);
+                exportExpensesToCSV(reportExpenses, `Vault_Report_${selectedMonth}.csv`);
             } else {
                 const doc = new jsPDF();
 
@@ -271,8 +347,8 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                 doc.text(`Period: ${selectedMonth}`, 14, 35);
 
                 // Stats Summary
-                const totalExp = expenses.reduce((s, e) => s + e.amount, 0);
-                const totalInc = incomes.reduce((s, i) => s + i.amount, 0);
+                const totalExp = reportExpenses.reduce((s, e) => s + e.amount, 0);
+                const totalInc = reportIncomes.reduce((s, i) => s + i.amount, 0);
 
                 doc.setFontSize(12);
                 doc.setTextColor(0);
@@ -281,14 +357,14 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                 doc.text(`Net Savings: ₹${(totalInc - totalExp).toLocaleString()}`, 14, 64);
 
                 // Table
-                const tableData = expenses.map(e => [
+                const tableData = reportExpenses.map(e => [
                     e.date,
                     e.category,
                     e.note || "-",
                     `₹${e.amount.toLocaleString()}`
                 ]);
 
-                (doc as any).autoTable({
+                autoTable(doc, {
                     startY: 75,
                     head: [['Date', 'Category', 'Note', 'Amount']],
                     body: tableData,
@@ -328,9 +404,16 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
         if (!user || !selectedIds.size) return;
         if (!window.confirm(`Delete ${selectedIds.size} items?`)) return;
         try {
+            const affectedTripIds = new Set(
+                searchedExpenses
+                    .filter((e) => e.id && selectedIds.has(e.id))
+                    .map((e) => e.tripId)
+                    .filter((tripId): tripId is string => !!tripId)
+            );
             const batch = writeBatch(db);
             selectedIds.forEach(id => batch.delete(doc(db, "users", user.uid, "expenses", id)));
             await batch.commit();
+            await Promise.all(Array.from(affectedTripIds).map((tripId) => syncTripSpentAmount(tripId)));
             toast.success("Deleted!");
             setSelectedIds(new Set());
             setIsSelectionMode(false);
@@ -472,7 +555,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                     isSelected={selectedIds.has(e.id!)}
                                                                     onSelect={() => isSelectionMode ? toggleSelection(e.id!) : setViewingTransaction({ data: e, type: "expense" })}
                                                                     onEdit={() => setEditingExpense(e)}
-                                                                    onDelete={() => setDeleteTarget({ id: e.id!, type: "expense" })}
+                                                                    onDelete={() => setDeleteTarget({ id: e.id!, type: "expense", tripId: e.tripId })}
                                                                 />
                                                             ))}
                                                         </div>
@@ -493,7 +576,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                     isSelected={selectedIds.has(e.id!)}
                                                                     onSelect={() => isSelectionMode ? toggleSelection(e.id!) : setViewingTransaction({ data: e, type: "expense" })}
                                                                     onEdit={() => setEditingExpense(e)}
-                                                                    onDelete={() => setDeleteTarget({ id: e.id!, type: "expense" })}
+                                                                    onDelete={() => setDeleteTarget({ id: e.id!, type: "expense", tripId: e.tripId })}
                                                                 />
                                                             ))}
                                                         </div>
@@ -514,7 +597,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                     isSelected={selectedIds.has(e.id!)}
                                                                     onSelect={() => isSelectionMode ? toggleSelection(e.id!) : setViewingTransaction({ data: e, type: "expense" })}
                                                                     onEdit={() => setEditingExpense(e)}
-                                                                    onDelete={() => setDeleteTarget({ id: e.id!, type: "expense" })}
+                                                                    onDelete={() => setDeleteTarget({ id: e.id!, type: "expense", tripId: e.tripId })}
                                                                 />
                                                             ))}
                                                         </div>
@@ -779,7 +862,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                             </div>
 
                                             <button
-                                                onClick={() => exportExpensesToCSV(expenses, `Vault_Backup_${new Date().toISOString().split('T')[0]}.csv`)}
+                                                onClick={() => exportExpensesToCSV(expenses, `Vault_Backup_${todayDateKey(settings.timezone)}.csv`)}
                                                 className="flex w-full items-center justify-between p-6 rounded-[2.5rem] bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 transition-all group"
                                             >
                                                 <div className="text-left">
@@ -839,6 +922,9 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                     if (!user || !deleteTarget) return;
                     const collectionName = deleteTarget.type === "expense" ? "expenses" : "incomes";
                     await deleteDoc(doc(db, "users", user.uid, collectionName, deleteTarget.id));
+                    if (deleteTarget.type === "expense" && deleteTarget.tripId) {
+                        await syncTripSpentAmount(deleteTarget.tripId);
+                    }
                     setDeleteTarget(null);
                     toast.success("Deleted!");
                 }}
@@ -901,7 +987,11 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                             </button>
                             <button
                                 onClick={() => {
-                                    setDeleteTarget({ id: viewingTransaction.data.id, type: viewingTransaction.type });
+                                    setDeleteTarget({
+                                        id: viewingTransaction.data.id,
+                                        type: viewingTransaction.type,
+                                        tripId: viewingTransaction.type === "expense" ? viewingTransaction.data.tripId : undefined,
+                                    });
                                     setViewingTransaction(null);
                                 }}
                                 className="flex-1 py-3 bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2"

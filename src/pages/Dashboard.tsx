@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { motion, type Variants, Reorder, AnimatePresence } from "framer-motion";
-import { GripVertical, LayoutPanelLeft, Check, Sparkles, ArrowRight, Zap, BarChart3, Target, History as HistoryIcon, LayoutGrid, Search, ChevronRight, Repeat } from "lucide-react";
+import { GripVertical, LayoutPanelLeft, Check, Sparkles, ArrowRight, Zap, BarChart3, Target, History as HistoryIcon, LayoutGrid, Search, ChevronRight, Repeat, TrendingUp } from "lucide-react";
 import { toast } from "react-toastify";
 import GamificationCard from "../components/GamificationCard";
 import FocusWidget from "../components/focus/FocusWidget";
@@ -15,6 +15,8 @@ import { useCategoryBudgets } from "../hooks/useCategoryBudgets";
 import { useFinancialGoals } from "../hooks/useFinancialGoals";
 import { useAuth } from "../hooks/useAuth";
 import { useAccounts } from "../hooks/useAccounts";
+import { useInvestments } from "../hooks/useInvestments";
+import { totalPortfolioValue } from "../utils/investmentInterest";
 import useSettings, { DEFAULTS } from "../hooks/useSettings";
 import { useModals } from "../hooks/useModals";
 import { db } from "../firebase";
@@ -22,6 +24,7 @@ import { groupByCategory, groupByMonth } from "../utils/analytics";
 import { getUsageColor, getSmartInsight } from "../utils/insights";
 import { CATEGORIES } from "../types/expense";
 import { cn } from "../lib/utils";
+import { monthFromDateKey, todayDateKey } from "../utils/dates";
 import MagicChatEntry from "../components/MagicChatEntry";
 import NumberTicker from "../components/common/NumberTicker";
 import Amount from "../components/common/Amount";
@@ -40,12 +43,21 @@ const itemVariants: Variants = {
 
 const surfaceClass = "bento-card";
 const softSurfaceClass = "bg-primary/5 dark:bg-white/5 border border-primary/10 dark:border-white/5 transition-all duration-300 rounded-2xl";
+const getPreviousMonthKey = (month: string) => {
+  const [yearStr, monthStr] = month.split("-");
+  const year = Number(yearStr);
+  const m = Number(monthStr);
+  if (!Number.isFinite(year) || !Number.isFinite(m) || m < 1 || m > 12) return month;
+  const d = new Date(year, m - 2, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+};
 
 export default function Dashboard() {
   const { expenses, loading: expensesLoading } = useExpenses();
   const { incomes, loading: incomesLoading } = useIncomes();
   const loading = expensesLoading || incomesLoading;
   const { accounts } = useAccounts();
+  const { investments } = useInvestments();
   const { subscriptions } = useSubscriptions();
   const { budgets } = useCategoryBudgets();
   const { goals } = useFinancialGoals();
@@ -74,8 +86,8 @@ export default function Dashboard() {
     if (!user) return toast.error("Sign in to add expenses");
     setIsAdding(true);
     try {
-      const date = new Date().toISOString().slice(0, 10);
-      const month = date.slice(0, 7);
+      const date = todayDateKey(settings.timezone);
+      const month = monthFromDateKey(date);
       const now = new Date();
       await addDoc(collection(db, "users", user.uid, "expenses"), {
         amount: Number(amount),
@@ -101,14 +113,12 @@ export default function Dashboard() {
   }, [filteredExpenses]);
 
   const monthlyComparison = useMemo(() => {
-    const byMonth = groupByMonth(expenses);
-    const currentExpenses = byMonth.find((m) => m.month === selectedMonth)?.value ?? 0;
-    
-    const incomeByMonth = groupByMonth(incomes as any);
-    const currentIncome = incomeByMonth.find((m) => m.month === selectedMonth)?.value ?? 0;
-
-    const idx = byMonth.findIndex((m) => m.month === selectedMonth);
-    const prevExpenses = idx >= 0 && byMonth[idx + 1] ? byMonth[idx + 1].value : 0;
+    const expenseTotals = Object.fromEntries(groupByMonth(expenses).map((m) => [m.month, m.value]));
+    const incomeTotals = Object.fromEntries(groupByMonth(incomes as any).map((m) => [m.month, m.value]));
+    const currentExpenses = expenseTotals[selectedMonth] ?? 0;
+    const currentIncome = incomeTotals[selectedMonth] ?? 0;
+    const previousMonth = getPreviousMonthKey(selectedMonth);
+    const prevExpenses = expenseTotals[previousMonth] ?? 0;
     const change = prevExpenses === 0 ? 0 : Math.round(((currentExpenses - prevExpenses) / prevExpenses) * 100);
     
     return { 
@@ -162,6 +172,16 @@ export default function Dashboard() {
     neutral: "from-slate-600 to-slate-700 shadow-slate-500/20",
   };
 
+  const portfolioTotal = useMemo(() => {
+    const active = investments.filter((i) => i.status === "active" || i.status === "matured");
+    return totalPortfolioValue(active);
+  }, [investments]);
+
+  const activeInvestmentCount = useMemo(
+    () => investments.filter((i) => i.status === "active" || i.status === "matured").length,
+    [investments]
+  );
+
   const auditableCount = useMemo(() => {
     return expenses.filter(e => {
       const needsCategory = !e.category || e.category === "Other" || e.category === "Uncategorized";
@@ -172,6 +192,25 @@ export default function Dashboard() {
 
   const widgetMap: Record<string, React.ReactNode> = {
     magicChat: <MagicChatEntry />,
+    investments: activeInvestmentCount > 0 && (
+      <Link
+        to="/ledger?tab=investments"
+        className={`${surfaceClass} flex h-full flex-col justify-between p-6 transition-all hover:-translate-y-0.5 hover:shadow-lg`}
+      >
+        <div className="flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-primary" />
+          <h3 className="text-[13px] font-black uppercase tracking-widest text-slate-800 dark:text-slate-100 opacity-80">
+            Investments
+          </h3>
+        </div>
+        <div className="mt-4">
+          <Amount value={portfolioTotal} className="text-2xl font-black text-slate-900 dark:text-white" />
+          <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+            {activeInvestmentCount} active holding{activeInvestmentCount === 1 ? "" : "s"}
+          </p>
+        </div>
+      </Link>
+    ),
     analysisLab: (
       <motion.div 
         whileHover={{ scale: 1.02 }}
@@ -503,7 +542,8 @@ export default function Dashboard() {
     const knownIds = [
       ...DEFAULTS.dashboardOrder,
       "magicChat",
-      "audit"
+      "audit",
+      "investments",
     ];
 
     const sortedKnown = [

@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import type { AccountPayment } from "../types/expense";
 import { useAuth } from "./useAuth";
 import { toast } from "react-toastify";
+import { isValidDateKey } from "../utils/dates";
 
 export function useAccountPayments() {
   const { user } = useAuth();
@@ -51,6 +52,14 @@ export function useAccountPayments() {
     opts?: { appliedCycleStart?: string; appliedCycleEnd?: string }
   ) => {
     if (!user || !fromAccountId || !toAccountId || amount <= 0) return;
+    if (fromAccountId === toAccountId) {
+      toast.error("Source and destination accounts must differ");
+      return;
+    }
+    if (!isValidDateKey(date)) {
+      toast.error("Invalid payment date");
+      return;
+    }
     try {
       await addDoc(collection(db, "users", user.uid, "accountPayments"), {
         fromAccountId,
@@ -80,6 +89,10 @@ export function useAccountPayments() {
     opts?: { appliedCycleStart?: string; appliedCycleEnd?: string }
   ) => {
     if (!user || !toAccountId || amount <= 0) return;
+    if (!isValidDateKey(date)) {
+      toast.error("Invalid payment date");
+      return;
+    }
     try {
       await addDoc(collection(db, "users", user.uid, "accountPayments"), {
         fromAccountId: "external",

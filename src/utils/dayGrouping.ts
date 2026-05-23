@@ -1,5 +1,5 @@
-
 import type { Expense } from "../types/expense";
+import { formatDateKey } from "./dates";
 
 export type DayGroup = {
   today: Expense[];
@@ -8,17 +8,11 @@ export type DayGroup = {
 };
 
 export function groupExpensesByDay(expenses: Expense[], timezone: string = Intl.DateTimeFormat().resolvedOptions().timeZone): DayGroup {
-  // Use LOCAL time in the specified timezone
-  const now = new Date();
-  const options: Intl.DateTimeFormatOptions = { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' };
-
-  // Format to parts and reconstruct YYYY-MM-DD
-  const formatter = new Intl.DateTimeFormat('en-CA', options); // en-CA gives YYYY-MM-DD
-  const todayStr = formatter.format(now);
+  const todayStr = formatDateKey(new Date(), timezone);
 
   const yDate = new Date();
-  yDate.setDate(now.getDate() - 1);
-  const yesterdayStr = formatter.format(yDate);
+  yDate.setDate(yDate.getDate() - 1);
+  const yesterdayStr = formatDateKey(yDate, timezone);
 
   const groups: DayGroup = {
     today: [],

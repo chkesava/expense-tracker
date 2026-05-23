@@ -6,6 +6,7 @@ import type { UserStats } from '../types/stats';
 import { LEVEL_THRESHOLDS } from '../types/stats';
 import { toast } from 'react-toastify';
 import { useCelebration } from './useCelebration';
+import { formatDateKey, todayDateKey } from '../utils/dates';
 
 const DEFAULT_STATS: UserStats = {
     currentStreak: 0,
@@ -101,7 +102,7 @@ export function useGamification() {
         if (!user || loading) return;
 
         const checkDailyProgress = async () => {
-            const today = new Date().toISOString().split('T')[0];
+            const today = todayDateKey();
 
             // Avoid redundant writes if already processed today
             if (stats.lastLoginDate === today) return;
@@ -121,7 +122,7 @@ export function useGamification() {
                 // We check what happened YESTERDAY to award Shields or Fires
                 const yesterday = new Date();
                 yesterday.setDate(yesterday.getDate() - 1);
-                const yesterdayStr = yesterday.toISOString().split('T')[0];
+                const yesterdayStr = formatDateKey(yesterday);
                 const lastMonthStr = yesterdayStr.slice(0, 7); // YYYY-MM
 
                 // Query yesterday's expenses

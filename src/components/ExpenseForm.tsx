@@ -11,6 +11,7 @@ import { useAccountPayments } from "../hooks/useAccountPayments";
 import { useAccountEntries } from "../hooks/useAccountEntries";
 import { getAccountKind } from "../utils/accountKind";
 import { previewBalanceAfterTransaction } from "../utils/accountBalance";
+import { currentMonthKey, monthFromDateKey, todayDateKey } from "../utils/dates";
 import { useCategories } from "../hooks/useCategories";
 import { CATEGORIES, INCOME_SOURCES } from "../types/expense";
 import type { Expense, Income } from "../types/expense";
@@ -89,12 +90,12 @@ export default function ExpenseForm({
     } else {
       const last = localStorage.getItem("lastCategory");
       if (last) setCategory(last);
-      setDate(new Date().toISOString().slice(0, 10));
+      setDate(todayDateKey(settings.timezone));
       setCategoryTouched(false);
       const state = location.state as { tripId?: string } | null;
       setTripId(state?.tripId ?? null);
     }
-  }, [editingExpense, editingIncome, location.state]);
+  }, [editingExpense, editingIncome, location.state, settings.timezone]);
 
   const selectedAccount = useMemo(
     () => accounts.find((a) => a.id === accountId),
@@ -163,7 +164,7 @@ export default function ExpenseForm({
     setCategory(match.category);
   }, [note, rules, editingExpense, categoryTouched]);
 
-  const currentMonth = new Date().toISOString().slice(0, 7);
+  const currentMonth = currentMonthKey(settings.timezone);
   const isLocked = !!(settings.lockPastMonths && (
     (editingExpense && editingExpense.month !== currentMonth) || 
     (editingIncome && editingIncome.month !== currentMonth)
@@ -175,7 +176,7 @@ export default function ExpenseForm({
     if (!user || !amount || !date) return;
     setIsSubmitting(true);
     try {
-      const month = date.slice(0, 7);
+      const month = monthFromDateKey(date);
 
       if (type === "vault") {
         if (!vaultId) {

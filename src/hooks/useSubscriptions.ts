@@ -7,8 +7,6 @@ import {
     updateDoc,
     deleteDoc,
     doc,
-    setDoc,
-    getDoc,
     serverTimestamp,
     getDocs,
     where
@@ -18,6 +16,7 @@ import { useAuth } from "./useAuth";
 import type { Subscription } from "../types/subscription";
 import { toast } from "react-toastify";
 import { useGamification } from "./useGamification";
+import { currentMonthKey, todayDateKey } from "../utils/dates";
 
 export function useSubscriptions() {
     const { user } = useAuth();
@@ -25,13 +24,7 @@ export function useSubscriptions() {
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Helper: Get local YYYY-MM
-    const getLocalMonth = () => {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        return `${year}-${month}`;
-    };
+    const getLocalMonth = () => currentMonthKey();
 
     // Helper: Get local Day of Month (1-31)
     const getLocalDay = () => new Date().getDate();
@@ -65,7 +58,6 @@ export function useSubscriptions() {
         const currentYear = new Date().getFullYear();
         const currentMonthInt = new Date().getMonth() + 1;
         const currentDay = getLocalDay();
-        let initialLastProcessed = "";
         let isCompleted = false;
 
         try {
@@ -76,59 +68,63 @@ export function useSubscriptions() {
                 }
             }
 
-            // Logic: If the subscription is active AND due (today or past), 
-            // and NOT completed (for EMIs)
-            if (sub.isActive && !isCompleted && currentDay >= sub.dayOfMonth) {
-                const expensesRef = collection(db, "users", user.uid, "expenses");
-                const existingQ = query(
-                    expensesRef,
-                    where("month", "==", currentMonth),
-                    where("note", "==", `${sub.name} (Auto-subscription)`),
-                    where("amount", "==", sub.amount)
-                );
-                const existingSnap = await getDocs(existingQ);
-
-                if (!existingSnap.empty) {
-                    initialLastProcessed = currentMonth;
-                    toast.success("Subscription added (expense already exists for this month)");
-                } else {
-                console.log(`[AddSub] Subscription ${sub.name} is due immediately. Creating expense...`);
-
-                // 1. Create the Expense
-                await addDoc(collection(db, "users", user.uid, "expenses"), {
-                    amount: sub.amount,
-                    category: sub.category,
-                    note: `${sub.name} (Auto-subscription)`,
-                    date: new Date().toISOString().slice(0, 10), // Today
-                    month: currentMonth,
-                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    createdAt: serverTimestamp(),
-                    fromSubscription: true,
-                    accountId: sub.accountId || ""
-                });
-
-                // 2. Mark as processed so the listener skips it
-                initialLastProcessed = currentMonth;
-                toast.success("Subscription added & expense created!");
-                addXP(10);
-                }
-            } else {
-                toast.success("Subscription added");
-            }
-
-            // 3. Save the Subscription
+            // 1. Save the Subscription first so generated expenses can link by id
             // Filter out undefined values (e.g. endMonth/endYear for non-EMIs)
             const cleanSub = Object.fromEntries(
                 Object.entries(sub).filter(([_, v]) => v !== undefined)
             );
 
-            await addDoc(collection(db, "users", user.uid, "subscriptions"), {
+            const subRef = await addDoc(collection(db, "users", user.uid, "subscriptions"), {
                 ...cleanSub,
-                lastProcessed: initialLastProcessed,
+                lastProcessed: "",
                 isCompleted,
                 isActive: isCompleted ? false : sub.isActive,
                 createdAt: serverTimestamp(),
             });
+
+            const dueNow = sub.isActive && !isCompleted && currentDay >= sub.dayOfMonth;
+            if (dueNow) {
+                const existingByIdQ = query(
+                    collection(db, "users", user.uid, "expenses"),
+                    where("month", "==", currentMonth),
+                    where("subscriptionId", "==", subRef.id)
+                );
+                const existingByIdSnap = await getDocs(existingByIdQ);
+                let hasExisting = !existingByIdSnap.empty;
+                if (!hasExisting) {
+                    const legacyQ = query(
+                        collection(db, "users", user.uid, "expenses"),
+                        where("month", "==", currentMonth),
+                        where("note", "==", `${sub.name} (Auto-subscription)`),
+                        where("amount", "==", sub.amount)
+                    );
+                    const legacySnap = await getDocs(legacyQ);
+                    hasExisting = !legacySnap.empty;
+                }
+                if (!hasExisting) {
+                    await addDoc(collection(db, "users", user.uid, "expenses"), {
+                        amount: sub.amount,
+                        category: sub.category,
+                        note: `${sub.name} (Auto-subscription)`,
+                        date: todayDateKey(),
+                        month: currentMonth,
+                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        createdAt: serverTimestamp(),
+                        fromSubscription: true,
+                        subscriptionId: subRef.id,
+                        ...(sub.accountId ? { accountId: sub.accountId } : {}),
+                    });
+                    addXP(10);
+                    toast.success("Subscription added & expense created!");
+                } else {
+                    toast.success("Subscription added (expense already exists for this month)");
+                }
+                await updateDoc(doc(db, "users", user.uid, "subscriptions", subRef.id), {
+                    lastProcessed: currentMonth,
+                });
+            } else {
+                toast.success("Subscription added");
+            }
 
         } catch (error) {
             console.error("Error adding subscription:", error);
@@ -154,6 +150,12 @@ export function useSubscriptions() {
     const deleteSubscription = async (id: string) => {
         if (!user) return;
         try {
+            const linkedExpensesQ = query(
+                collection(db, "users", user.uid, "expenses"),
+                where("subscriptionId", "==", id)
+            );
+            const linkedExpensesSnap = await getDocs(linkedExpensesQ);
+            await Promise.all(linkedExpensesSnap.docs.map((d) => deleteDoc(d.ref)));
             await deleteDoc(doc(db, "users", user.uid, "subscriptions", id));
             toast.success("Subscription removed");
         } catch (error) {
@@ -200,15 +202,25 @@ export function useSubscriptions() {
                     // Double-Check Idempotency (in case of race conditions during app load)
                     // We use a specific query to see if an expense exists for this month.
                     const expensesRef = collection(db, "users", user.uid, "expenses");
-                    const q = query(
+                    const byIdQ = query(
                         expensesRef,
                         where("month", "==", currentMonth),
-                        where("note", "==", `${sub.name} (Auto-subscription)`),
-                        where("amount", "==", sub.amount)
+                        where("subscriptionId", "==", sub.id)
                     );
-                    const snapshot = await getDocs(q);
+                    const byIdSnap = await getDocs(byIdQ);
+                    let hasExisting = !byIdSnap.empty;
+                    if (!hasExisting) {
+                        const legacyQ = query(
+                            expensesRef,
+                            where("month", "==", currentMonth),
+                            where("note", "==", `${sub.name} (Auto-subscription)`),
+                            where("amount", "==", sub.amount)
+                        );
+                        const legacySnap = await getDocs(legacyQ);
+                        hasExisting = !legacySnap.empty;
+                    }
 
-                    if (!snapshot.empty) {
+                    if (hasExisting) {
                         // Already exists, just update record and skip
                         if (sub.lastProcessed !== currentMonth) {
                             await updateDoc(doc(db, "users", user.uid, "subscriptions", sub.id!), {
@@ -223,13 +235,13 @@ export function useSubscriptions() {
                         amount: sub.amount,
                         category: sub.category,
                         note: `${sub.name} (Auto-subscription)`,
-                        date: new Date().toISOString().slice(0, 10),
+                        date: todayDateKey(),
                         month: currentMonth,
                         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                         createdAt: serverTimestamp(),
                         fromSubscription: true,
                         subscriptionId: sub.id,
-                        accountId: sub.accountId || ""
+                        ...(sub.accountId ? { accountId: sub.accountId } : {})
                     });
 
                     addXP(10);

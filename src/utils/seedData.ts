@@ -1,6 +1,7 @@
 import { addDoc, collection, deleteDoc, doc, getDocs, query, where, serverTimestamp, writeBatch } from "firebase/firestore";
 import { db } from "../firebase";
 import { CATEGORIES } from "../types/expense";
+import { toLocalDateKey, todayDateKey } from "./dates";
 
 function pad(n: number) {
   return n < 10 ? `0${n}` : `${n}`;
@@ -151,6 +152,7 @@ export async function seedDemoWorkspaceForUser(uid: string, options: { months?: 
         typeId: accountTypeIdByName.get(a.typeName)!,
         ...(a.openingBalance != null ? { openingBalance: a.openingBalance } : {}),
         ...(a.balanceInitialized != null ? { balanceInitialized: a.balanceInitialized } : {}),
+        ...(a.balanceInitialized ? { balanceAsOfDate: todayDateKey() } : {}),
         ...(a.creditLimit != null ? { creditLimit: a.creditLimit } : {}),
         ...(a.billGenerationDay != null ? { billGenerationDay: a.billGenerationDay } : {}),
         demo: true,
@@ -186,8 +188,8 @@ export async function seedDemoWorkspaceForUser(uid: string, options: { months?: 
   );
 
   // 4) Trips
-  const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 10).toISOString().slice(0, 10);
-  const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 14).toISOString().slice(0, 10);
+  const startDate = toLocalDateKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 10));
+  const endDate = toLocalDateKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 14));
 
   const tripRef = await addDoc(collection(db, "trips"), {
     destination: "Goa",
@@ -246,7 +248,7 @@ export async function seedDemoWorkspaceForUser(uid: string, options: { months?: 
         amount: subDef.amount,
         category: subDef.category,
         note: `${subDef.name} (Auto-subscription)`,
-        date: new Date().toISOString().slice(0, 10),
+        date: todayDateKey(),
         month: currentMonth,
         time: `${pad(Math.floor(Math.random() * 24))}:${pad(Math.floor(Math.random() * 60))}`,
         createdAt: serverTimestamp(),

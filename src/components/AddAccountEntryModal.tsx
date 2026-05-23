@@ -6,6 +6,7 @@ import { useExpenses } from "../hooks/useExpenses";
 import { useIncomes } from "../hooks/useIncomes";
 import type { Account } from "../types/expense";
 import { computeBankBalance } from "../utils/accountBalance";
+import { todayDateKey } from "../utils/dates";
 import Amount from "./common/Amount";
 import Modal from "./common/Modal";
 
@@ -27,7 +28,7 @@ export default function AddAccountEntryModal({
 
   const [direction, setDirection] = useState<"credit" | "debit">("credit");
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(todayDateKey());
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -42,7 +43,7 @@ export default function AddAccountEntryModal({
   const reset = () => {
     setDirection("credit");
     setAmount("");
-    setDate(new Date().toISOString().slice(0, 10));
+    setDate(todayDateKey());
     setNote("");
   };
 

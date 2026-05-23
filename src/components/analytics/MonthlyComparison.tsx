@@ -5,10 +5,12 @@ import Amount from "../common/Amount";
 
 export default function MonthlyComparison({
   expenses,
+  selectedMonth,
 }: {
   expenses: Expense[];
+  selectedMonth: string;
 }) {
-  const result = compareCurrentWithPrevious(expenses);
+  const result = compareCurrentWithPrevious(expenses, selectedMonth);
 
   if (!result) {
     return (

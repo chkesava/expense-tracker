@@ -1,4 +1,14 @@
-import { collection, onSnapshot, orderBy, query, addDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  query,
+  addDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp,
+  getDocs,
+  where,
+} from "firebase/firestore";
 import { db } from "../firebase";
 import { useEffect, useState } from "react";
 import type { Account } from "../types/expense";
@@ -48,6 +58,7 @@ export const useAccounts = () => {
       if (extras?.creditLimit != null) payload.creditLimit = extras.creditLimit;
       if (extras?.openingBalance != null) payload.openingBalance = extras.openingBalance;
       if (extras?.balanceInitialized != null) payload.balanceInitialized = extras.balanceInitialized;
+      if (extras?.balanceAsOfDate != null) payload.balanceAsOfDate = extras.balanceAsOfDate;
       await addDoc(collection(db, "users", user.uid, "accounts"), payload);
       toast.success("Account added");
     } catch (err) {
@@ -59,6 +70,35 @@ export const useAccounts = () => {
   const deleteAccount = async (id: string) => {
     if (!user) return;
     try {
+      const base = ["users", user.uid] as const;
+      const [
+        linkedExpensesSnap,
+        linkedIncomesSnap,
+        linkedEntriesSnap,
+        linkedPaymentsFromSnap,
+        linkedPaymentsToSnap,
+      ] = await Promise.all([
+        getDocs(query(collection(db, ...base, "expenses"), where("accountId", "==", id))),
+        getDocs(query(collection(db, ...base, "incomes"), where("accountId", "==", id))),
+        getDocs(query(collection(db, ...base, "accountEntries"), where("accountId", "==", id))),
+        getDocs(query(collection(db, ...base, "accountPayments"), where("fromAccountId", "==", id))),
+        getDocs(query(collection(db, ...base, "accountPayments"), where("toAccountId", "==", id))),
+      ]);
+
+      const linkedCount =
+        linkedExpensesSnap.size +
+        linkedIncomesSnap.size +
+        linkedEntriesSnap.size +
+        linkedPaymentsFromSnap.size +
+        linkedPaymentsToSnap.size;
+
+      if (linkedCount > 0) {
+        toast.error(
+          `Cannot delete account. ${linkedCount} linked records exist. Move/unlink transactions first.`
+        );
+        return;
+      }
+
       await deleteDoc(doc(db, "users", user.uid, "accounts", id));
       toast.success("Account deleted");
     } catch (err) {

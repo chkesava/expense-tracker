@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { parseMagicEntry } from "../utils/magicParser";
 import type { ParsedExpense } from "../utils/magicParser";
+import { todayDateKey } from "../utils/dates";
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -34,7 +35,7 @@ export async function parseReceiptText(text: string): Promise<ParsedExpense> {
 
       Rules:
       1. If amount is missing, return null for amount.
-      2. If date is missing, return today's date (${new Date().toISOString().slice(0, 10)}).
+      2. If date is missing, return today's date (${todayDateKey()}).
       3. Return ONLY the JSON object, no other text.
       4. Note field should be the Merchant Name.
     `;
@@ -47,7 +48,7 @@ export async function parseReceiptText(text: string): Promise<ParsedExpense> {
 
     return {
       amount: parsed.amount,
-      date: parsed.date || new Date().toISOString().slice(0, 10),
+      date: parsed.date || todayDateKey(),
       note: parsed.merchant || "Receipt Scan",
       category: parsed.category || "Other",
       confidence: 0.9,

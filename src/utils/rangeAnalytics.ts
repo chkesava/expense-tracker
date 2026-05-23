@@ -1,4 +1,5 @@
 import type { Expense } from "../types/expense";
+import { parseLocalDate, toLocalDateKey } from "./dates";
 
 export interface TimeSeriesPoint {
   date: string;
@@ -12,12 +13,12 @@ export const getDailySpendingSeries = (expenses: Expense[], start: string, end: 
   const dailyMap: Record<string, number> = {};
   
   // Initialize map with all dates in range
-  const startDate = new Date(start);
-  const endDate = new Date(end);
+  const startDate = parseLocalDate(start);
+  const endDate = parseLocalDate(end);
   const current = new Date(startDate);
 
   while (current <= endDate) {
-    const dStr = current.toISOString().split('T')[0];
+    const dStr = toLocalDateKey(current);
     dailyMap[dStr] = 0;
     current.setDate(current.getDate() + 1);
   }

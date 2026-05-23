@@ -16,6 +16,7 @@ import { db } from "../firebase";
 import { useAuth } from "./useAuth";
 import type { Split } from "../types/split";
 import { toast } from "react-toastify";
+import { currentMonthKey, todayDateKey } from "../utils/dates";
 
 export const useSplits = () => {
   const { user } = useAuth();
@@ -102,8 +103,8 @@ export const useSplits = () => {
           amount: currentUserParticipant.amount,
           category: splitData.category || "Other",
           note: `Split: ${splitData.title}`,
-          date: new Date().toISOString().split('T')[0],
-          month: new Date().toISOString().slice(0, 7),
+          date: todayDateKey(),
+          month: currentMonthKey(),
           createdAt: serverTimestamp(),
           splitId: docRef.id
         });

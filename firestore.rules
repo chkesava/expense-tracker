@@ -2,92 +2,269 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper for Admin access
-    function isSuperAdmin() {
-      return request.auth != null && 
-             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "SUPER_ADMIN";
+
+  function isSuperAdmin() {
+    return request.auth != null &&
+           exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "SUPER_ADMIN";
+  }
+
+  function isOwner(userId) {
+    return request.auth != null && request.auth.uid == userId;
+  }
+
+  function canAccessUser(userId) {
+    return isOwner(userId) || isSuperAdmin();
+  }
+
+  function isValidDateKey(val) {
+    return val is string && val.matches('^\\d{4}-\\d{2}-\\d{2}$');
+  }
+
+  function isValidMonthKey(val) {
+    return val is string && val.matches('^\\d{4}-\\d{2}$');
+  }
+
+  function isPositiveNumber(val) {
+    return val is number && val > 0;
+  }
+
+  function isNonEmptyString(val) {
+    return val is string && val.size() > 0;
+  }
+
+  function hasValidCreatedAt() {
+    return request.resource.data.createdAt is timestamp;
+  }
+
+  function optionalValidDateKey(field) {
+    return !(field in request.resource.data)
+      || request.resource.data[field] == null
+      || isValidDateKey(request.resource.data[field]);
+  }
+
+  function isValidExpenseData() {
+    let d = request.resource.data;
+    return isPositiveNumber(d.amount)
+      && isNonEmptyString(d.category)
+      && d.note is string
+      && isValidDateKey(d.date)
+      && isValidMonthKey(d.month)
+      && hasValidCreatedAt();
+  }
+
+  function isValidIncomeData() {
+    let d = request.resource.data;
+    return isPositiveNumber(d.amount)
+      && isNonEmptyString(d.source)
+      && d.note is string
+      && isValidDateKey(d.date)
+      && isValidMonthKey(d.month)
+      && hasValidCreatedAt();
+  }
+
+  function isValidAccountEntryData() {
+    let d = request.resource.data;
+    return isNonEmptyString(d.accountId)
+      && isPositiveNumber(d.amount)
+      && (d.direction == 'credit' || d.direction == 'debit')
+      && isValidDateKey(d.date)
+      && d.note is string
+      && hasValidCreatedAt();
+  }
+
+  function isValidAccountPaymentData() {
+    let d = request.resource.data;
+    return isNonEmptyString(d.fromAccountId)
+      && isNonEmptyString(d.toAccountId)
+      && d.fromAccountId != d.toAccountId
+      && isPositiveNumber(d.amount)
+      && isValidDateKey(d.date)
+      && d.note is string
+      && (
+        !('sourceType' in d)
+        || d.sourceType == 'account'
+        || d.sourceType == 'external'
+      )
+      && (
+        ('sourceType' in d && d.sourceType == 'external' && d.fromAccountId == 'external')
+        || !('sourceType' in d)
+        || d.sourceType == 'account'
+      )
+      && hasValidCreatedAt()
+      && optionalValidDateKey('appliedCycleStart')
+      && optionalValidDateKey('appliedCycleEnd');
+  }
+
+  function isValidAccountData() {
+    let d = request.resource.data;
+    return isNonEmptyString(d.name)
+      && isNonEmptyString(d.typeId)
+      && (
+        !('billGenerationDay' in d)
+        || (d.billGenerationDay is int && d.billGenerationDay >= 1 && d.billGenerationDay <= 31)
+      )
+      && (
+        !('creditLimit' in d)
+        || (d.creditLimit is number && d.creditLimit >= 0)
+      )
+      && (
+        !('openingBalance' in d)
+        || d.openingBalance is number
+      )
+      && optionalValidDateKey('balanceAsOfDate');
+  }
+
+  function isValidInvestmentKind(val) {
+    return val == 'fixed_deposit' || val == 'interest_savings' || val == 'mutual_fund';
+  }
+
+  function isValidInvestmentStatus(val) {
+    return val == 'active' || val == 'matured' || val == 'closed';
+  }
+
+  function isValidInterestMethod(val) {
+    return val == 'simple' || val == 'compound';
+  }
+
+  function isValidCreditFrequency(val) {
+    return val == 'daily'
+      || val == 'monthly'
+      || val == 'quarterly'
+      || val == 'yearly'
+      || val == 'at_maturity';
+  }
+
+  function isValidInvestmentData() {
+    let d = request.resource.data;
+    return isNonEmptyString(d.name)
+      && isValidInvestmentKind(d.kind)
+      && isPositiveNumber(d.principal)
+      && isValidDateKey(d.startDate)
+      && isValidInvestmentStatus(d.status)
+      && hasValidCreatedAt()
+      && optionalValidDateKey('maturityDate')
+      && optionalValidDateKey('closedDate')
+      && optionalValidDateKey('lastNavUpdated')
+      && (
+        !('annualInterestRate' in d)
+        || (d.annualInterestRate is number && d.annualInterestRate >= 0 && d.annualInterestRate <= 100)
+      )
+      && (
+        !('interestMethod' in d)
+        || isValidInterestMethod(d.interestMethod)
+      )
+      && (
+        !('creditFrequency' in d)
+        || isValidCreditFrequency(d.creditFrequency)
+      )
+      && (
+        !('units' in d)
+        || (d.units is number && d.units > 0)
+      )
+      && (
+        !('purchaseNav' in d)
+        || (d.purchaseNav is number && d.purchaseNav > 0)
+      )
+      && (
+        !('currentNav' in d)
+        || (d.currentNav is number && d.currentNav > 0)
+      );
+  }
+
+  match /users/{userId} {
+    allow read: if request.auth != null;
+    allow write: if canAccessUser(userId);
+
+    match /expenses/{expenseId} {
+      allow read, delete: if canAccessUser(userId);
+      allow create, update: if canAccessUser(userId) && isValidExpenseData();
     }
 
-    match /users/{userId} {
-      // Allow search: Registered users can read basic profile info of others
-      allow read: if request.auth != null;
-      // Users can only edit THEIR OWN profile
-      allow write: if request.auth != null && (request.auth.uid == userId || isSuperAdmin());
-
-      match /{document=**} {
-        // Keep personal subcollections (expenses, etc) private
-        allow read, write: if request.auth != null && (request.auth.uid == userId || isSuperAdmin());
-      }
+    match /incomes/{incomeId} {
+      allow read, delete: if canAccessUser(userId);
+      allow create, update: if canAccessUser(userId) && isValidIncomeData();
     }
 
-    // Shared Vaults Rules
-    match /vaults/{vaultId} {
-      // Access granted only if you are in the memberIds list
-      allow read: if request.auth != null && (request.auth.uid in resource.data.memberIds || isSuperAdmin());
-      
-      // Allow creation if the creator sets themselves as the owner
-      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
-      
-      // Allow members to update (for adding new members or updating joint budget)
-      allow update: if request.auth != null && (request.auth.uid in resource.data.memberIds || isSuperAdmin());
-      
-      // Only the owner or admin can delete the entire vault
-      allow delete: if request.auth != null && (resource.data.ownerId == request.auth.uid || isSuperAdmin());
-
-      // Vault expenses subcollection — accessible by vault members only
-      match /expenses/{expenseId} {
-        // Any vault member can read all expenses
-        allow read: if request.auth != null &&
-          request.auth.uid in get(/databases/$(database)/documents/vaults/$(vaultId)).data.memberIds;
-
-        // A vault member can create an expense; createdBy must match the logged-in user
-        allow create: if request.auth != null &&
-          request.auth.uid in get(/databases/$(database)/documents/vaults/$(vaultId)).data.memberIds &&
-          request.resource.data.createdBy == request.auth.uid;
-
-        // Any vault member can update (e.g., split adjustments)
-        allow update: if request.auth != null &&
-          request.auth.uid in get(/databases/$(database)/documents/vaults/$(vaultId)).data.memberIds;
-
-        // Only the creator or a super admin can delete
-        allow delete: if request.auth != null && (
-          resource.data.createdBy == request.auth.uid ||
-          isSuperAdmin()
-        );
-      }
+    match /accounts/{accountId} {
+      allow read, delete: if canAccessUser(userId);
+      allow create, update: if canAccessUser(userId) && isValidAccountData();
     }
 
-    match /splits/{splitId} {
-      // Access granted only if you are in the participantIds list
-      allow read, update: if request.auth != null && (request.auth.uid in resource.data.participantIds || isSuperAdmin());
-      allow create: if request.auth != null && request.resource.data.createdBy == request.auth.uid;
-      allow delete: if request.auth != null && (resource.data.createdBy == request.auth.uid || isSuperAdmin());
+    match /accountEntries/{entryId} {
+      allow read, delete: if canAccessUser(userId);
+      allow create, update: if canAccessUser(userId) && isValidAccountEntryData();
     }
 
-    // UPI payment pages — public read for /payment/:slug share links
-    match /paymentRequests/{slug} {
-      allow read: if true;
-      allow create: if request.auth != null
-        && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.status == "active"
-        && request.resource.data.slug == slug;
-      allow update: if request.auth != null
-        && resource.data.createdBy == request.auth.uid;
-      allow delete: if request.auth != null
-        && (resource.data.createdBy == request.auth.uid || isSuperAdmin());
+    match /accountPayments/{paymentId} {
+      allow read, delete: if canAccessUser(userId);
+      allow create, update: if canAccessUser(userId) && isValidAccountPaymentData();
     }
 
-    // Trip rules
-    match /trips/{tripId} {
-      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isSuperAdmin());
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if request.auth != null && (resource.data.userId == request.auth.uid || isSuperAdmin());
-      
-      match /categoryBudgets/{budgetId} {
-        allow read, write: if request.auth != null && (get(/databases/$(database)/documents/trips/$(tripId)).data.userId == request.auth.uid || isSuperAdmin());
-      }
+    match /investments/{investmentId} {
+      allow read, delete: if canAccessUser(userId);
+      allow create, update: if canAccessUser(userId) && isValidInvestmentData();
     }
+
+    match /{collection}/{docId} {
+      allow read, write: if canAccessUser(userId)
+        && !(collection in ['expenses', 'incomes', 'accounts', 'accountEntries', 'accountPayments', 'investments']);
+    }
+  }
+
+  match /vaults/{vaultId} {
+    allow read: if request.auth != null && (request.auth.uid in resource.data.memberIds || isSuperAdmin());
+
+    allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
+
+    allow update: if request.auth != null && (request.auth.uid in resource.data.memberIds || isSuperAdmin());
+
+    allow delete: if request.auth != null && (resource.data.ownerId == request.auth.uid || isSuperAdmin());
+
+    match /expenses/{expenseId} {
+      allow read: if request.auth != null &&
+        request.auth.uid in get(/databases/$(database)/documents/vaults/$(vaultId)).data.memberIds;
+
+      allow create: if request.auth != null &&
+        request.auth.uid in get(/databases/$(database)/documents/vaults/$(vaultId)).data.memberIds &&
+        request.resource.data.createdBy == request.auth.uid;
+
+      allow update: if request.auth != null &&
+        request.auth.uid in get(/databases/$(database)/documents/vaults/$(vaultId)).data.memberIds;
+
+      allow delete: if request.auth != null && (
+        resource.data.createdBy == request.auth.uid ||
+        isSuperAdmin()
+      );
+    }
+  }
+
+  match /splits/{splitId} {
+    allow read, update: if request.auth != null && (request.auth.uid in resource.data.participantIds || isSuperAdmin());
+    allow create: if request.auth != null && request.resource.data.createdBy == request.auth.uid;
+    allow delete: if request.auth != null && (resource.data.createdBy == request.auth.uid || isSuperAdmin());
+  }
+
+  match /paymentRequests/{slug} {
+    allow read: if true;
+    allow create: if request.auth != null
+      && request.resource.data.createdBy == request.auth.uid
+      && request.resource.data.status == "active"
+      && request.resource.data.slug == slug;
+    allow update: if request.auth != null
+      && resource.data.createdBy == request.auth.uid;
+    allow delete: if request.auth != null
+      && (resource.data.createdBy == request.auth.uid || isSuperAdmin());
+  }
+
+  match /trips/{tripId} {
+    allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isSuperAdmin());
+    allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    allow update, delete: if request.auth != null && (resource.data.userId == request.auth.uid || isSuperAdmin());
+
+    match /categoryBudgets/{budgetId} {
+      allow read, write: if request.auth != null && (get(/databases/$(database)/documents/trips/$(tripId)).data.userId == request.auth.uid || isSuperAdmin());
+    }
+  }
   }
 }

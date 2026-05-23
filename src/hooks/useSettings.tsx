@@ -44,7 +44,7 @@ export const DEFAULTS: Settings = {
     gamification: true,
     topCategories: true,
   },
-  dashboardOrder: ["focus", "gamification", "subscriptions", "topCategories", "overview", "quickAdd", "insight", "budgetAlerts", "financialGoals", "recentActivity"],
+  dashboardOrder: ["focus", "gamification", "subscriptions", "topCategories", "overview", "investments", "quickAdd", "insight", "budgetAlerts", "financialGoals", "recentActivity"],
   navigationStyle: "bottom",
   ghostMode: false,
   privacyPin: "",

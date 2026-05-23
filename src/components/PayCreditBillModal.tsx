@@ -8,6 +8,7 @@ import { useAccountPayments } from "../hooks/useAccountPayments";
 import { useAccountEntries } from "../hooks/useAccountEntries";
 import { getAccountKind } from "../utils/accountKind";
 import { computeBankBalance, previewBalanceAfterBillPayment } from "../utils/accountBalance";
+import { todayDateKey } from "../utils/dates";
 import Amount from "./common/Amount";
 import { toast } from "react-toastify";
 
@@ -41,7 +42,7 @@ export default function PayCreditBillModal({
 
   const [fromAccountId, setFromAccountId] = useState("");
   const [amount, setAmount] = useState(suggestedAmount?.toString() ?? "");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(todayDateKey());
   const [note, setNote] = useState(suggestedNote ?? "");
   const [alreadyPaid, setAlreadyPaid] = useState(false);
   const [submitting, setSubmitting] = useState(false);
