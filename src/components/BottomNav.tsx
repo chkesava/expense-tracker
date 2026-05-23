@@ -3,39 +3,43 @@ import { cn } from "../lib/utils";
 import { motion } from "framer-motion";
 import { useModals } from "../hooks/useModals";
 import { BarChart3, Home, Plus, Wallet, Users } from "lucide-react";
+import { CORE_NAV_ITEMS, isNavItemActive } from "../config/navigation";
 
 export default function BottomNav() {
   const location = useLocation();
   const { setIsAddExpenseOpen } = useModals();
+  type ActionLink = { id: "add"; path: "#add"; label: "Add"; isAction: true };
 
+  const iconById = {
+    home: Home,
+    ledger: Wallet,
+    vaults: Users,
+    insights: BarChart3,
+  } as const;
+  const navLinks = CORE_NAV_ITEMS.filter((item) => item.includeInBottomNav);
+  const actionLink: ActionLink = { id: "add", path: "#add", label: "Add", isAction: true };
   const allLinks = [
-    { id: "home", path: "/dashboard", label: "Home", icon: Home },
-    { id: "ledger", path: "/ledger", label: "Ledger", icon: Wallet },
-    { id: "add", path: "#add", label: "Add", icon: Plus, isAction: true },
-    { id: "vaults", path: "/vaults", label: "Vaults", icon: Users },
-    { id: "insights", path: "/insights", label: "Insights", icon: BarChart3 },
+    ...CORE_NAV_ITEMS.filter((item) => item.includeInBottomNav),
+    actionLink,
   ];
-
-  const navLinks = allLinks.filter(link => !link.isAction);
 
   // Split links into two groups for centering the Plus button
   const mid = Math.ceil(navLinks.length / 2);
   const leftLinks = navLinks.slice(0, mid);
   const rightLinks = navLinks.slice(mid);
-  const actionLink = allLinks.find(l => l.isAction)!;
-
-  const renderLink = (link: typeof allLinks[0]) => {
-    const isActive = location.pathname === link.path;
-    const Icon = link.icon;
+  const renderLink = (link: (typeof navLinks)[number]) => {
+    const isActive = isNavItemActive(location.pathname, link.id as any);
+    const Icon = iconById[link.id as keyof typeof iconById];
 
     return (
       <NavLink
         key={link.id}
         to={link.path}
-        className={({ isActive }) => cn(
+        className={cn(
           "relative flex flex-col items-center justify-center py-2 px-1 flex-1 min-w-0 transition-all duration-500",
           isActive ? "text-primary" : "text-muted-foreground"
         )}
+        aria-label={`Go to ${link.label}`}
       >
         {isActive && (
           <motion.div
@@ -55,7 +59,7 @@ export default function BottomNav() {
         />
         <span className={cn(
           "text-[10px] font-black mt-1 transition-all duration-500 tracking-tighter uppercase",
-          isActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"
+          isActive ? "opacity-100 translate-y-0" : "opacity-75 translate-y-0"
         )}>
           {link.label}
         </span>
@@ -71,8 +75,6 @@ export default function BottomNav() {
     );
   };
 
-  const ActionIcon = actionLink.icon;
-
   return (
     <div className="mobile-action-dock fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-0 w-full flex justify-center z-[100] px-3 sm:px-4 pointer-events-none md:hidden animate-in fade-in slide-in-from-bottom-8 duration-700">
       <nav className="bento-card px-3 py-2 pointer-events-auto flex items-center justify-between gap-1 w-full max-w-[480px]">
@@ -84,13 +86,14 @@ export default function BottomNav() {
           key={actionLink.id}
           onClick={() => setIsAddExpenseOpen(true)}
           className="relative flex flex-col items-center justify-center p-1 flex-1 min-w-0 group"
+          aria-label="Add transaction"
         >
           <motion.div
             whileHover={{ scale: 1.1, rotate: 90 }}
             whileTap={{ scale: 0.9 }}
             className="w-14 h-14 rounded-[1.5rem] bg-gradient-to-br from-primary via-primary to-indigo-600 text-white flex items-center justify-center shadow-xl shadow-primary/20 shine-effect"
           >
-            <ActionIcon size={28} strokeWidth={3} />
+            <Plus size={28} strokeWidth={3} />
           </motion.div>
         </button>
 

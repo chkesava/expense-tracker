@@ -24,6 +24,7 @@ import { generateUpiLink, isMobile } from "../utils/upi";
 import { toast } from "react-toastify";
 import { QRCodeSVG } from "qrcode.react";
 import Modal from "../components/common/Modal";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import { QrCode as QrCodeIcon } from "lucide-react";
 
 const containerVariants = {
@@ -47,6 +48,8 @@ export default function SplitDetailPage() {
   const { settings } = useSettings();
   
   const [qrData, setQrData] = useState<{ name: string, amount: number, upiLink: string } | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const split = useMemo(() => splits.find(s => s.id === id), [splits, id]);
   const isCreator = split?.createdBy === user?.uid;
@@ -111,9 +114,14 @@ export default function SplitDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (confirm("Are you sure you want to delete this split?")) {
-      await deleteSplit(id!);
-      navigate("/split");
+    if (!id) return;
+    setIsDeleting(true);
+    try {
+      await deleteSplit(id);
+      navigate("/ledger?tab=splits");
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -141,7 +149,7 @@ export default function SplitDetailPage() {
           </button>
           {isCreator && (
             <button 
-              onClick={handleDelete}
+              onClick={() => setShowDeleteConfirm(true)}
               className="p-3 rounded-2xl bg-rose-50 border border-rose-100 shadow-sm transition-all active:scale-95 text-rose-600"
             >
               <Trash2 size={20} />
@@ -343,6 +351,17 @@ export default function SplitDetailPage() {
           </div>
         )}
       </Modal>
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        title="Delete this split?"
+        message="All participants and payment status for this split will be removed."
+        confirmText={isDeleting ? "Deleting…" : "Delete"}
+        cancelText="Cancel"
+        variant="destructive"
+        onCancel={() => !isDeleting && setShowDeleteConfirm(false)}
+        onConfirm={handleDelete}
+      />
     </motion.main>
   );
 }

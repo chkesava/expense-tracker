@@ -47,6 +47,7 @@ import {
 } from "recharts";
 import { COLORS } from "../utils/chartColors";
 import PageHeader from "../components/layout/PageHeader";
+import Button from "../components/ui/Button";
 import { currentMonthKey, todayDateKey, toLocalDateKey } from "../utils/dates";
 
 export default function AnalysisLab({ hideHeader }: { hideHeader?: boolean }) {
@@ -202,28 +203,47 @@ export default function AnalysisLab({ hideHeader }: { hideHeader?: boolean }) {
           icon={<Search size={24} />}
           rightElement={
             <div className="flex gap-2">
-              <button
+              <Button
+                type="button"
+                variant={showFilters ? "primary" : "secondary"}
+                icon={<Filter size={16} />}
                 onClick={() => setShowFilters(!showFilters)}
-                className={cn(
-                  "flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-bold transition-all",
-                  showFilters 
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30" 
-                    : "bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400"
-                )}
               >
-                <Filter size={16} />
-                <span>Filters</span>
-              </button>
-              <button
+                Filters
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                icon={<Download size={16} />}
                 onClick={() => exportExpensesToCSV(filteredExpenses, "lab-export.csv")}
-                className="hidden sm:flex items-center gap-2 rounded-2xl px-4 py-2 bg-slate-900 dark:bg-slate-800 text-white text-sm font-bold shadow-lg"
+                className="hidden sm:inline-flex"
               >
-                <Download size={16} />
-                <span>Export</span>
-              </button>
+                Export
+              </Button>
             </div>
           }
         />
+      )}
+
+      {hideHeader && (
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Button
+            type="button"
+            variant={showFilters ? "primary" : "secondary"}
+            icon={<Filter size={16} />}
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            Filters
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            icon={<Download size={16} />}
+            onClick={() => exportExpensesToCSV(filteredExpenses, "lab-export.csv")}
+          >
+            Export
+          </Button>
+        </div>
       )}
 
       <div className="flex flex-col gap-8 lg:flex-row">

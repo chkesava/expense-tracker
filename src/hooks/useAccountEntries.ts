@@ -48,14 +48,14 @@ export function useAccountEntries() {
     direction: "credit" | "debit",
     date: string,
     note?: string
-  ) => {
+  ): Promise<boolean> => {
     if (!user || !accountId || amount <= 0 || !date) {
       toast.error("Enter a valid amount and date");
-      return;
+      return false;
     }
     if (!isValidDateKey(date)) {
       toast.error("Invalid entry date");
-      return;
+      return false;
     }
     try {
       await addDoc(collection(db, "users", user.uid, "accountEntries"), {
@@ -67,9 +67,11 @@ export function useAccountEntries() {
         createdAt: serverTimestamp(),
       });
       toast.success(direction === "credit" ? "Funds added to account" : "Debit recorded in account");
+      return true;
     } catch (err) {
       console.error(err);
       toast.error("Failed to save account entry");
+      return false;
     }
   };
 

@@ -11,6 +11,10 @@ import { computeBankBalance, previewBalanceAfterBillPayment } from "../utils/acc
 import { todayDateKey } from "../utils/dates";
 import Amount from "./common/Amount";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import FormField from "./ui/FormField";
+import Input from "./ui/Input";
+import Button from "./ui/Button";
 
 type PayCreditBillModalProps = {
   isOpen: boolean;
@@ -33,6 +37,7 @@ export default function PayCreditBillModal({
   targetCycleStart,
   targetCycleEnd,
 }: PayCreditBillModalProps) {
+  const navigate = useNavigate();
   const { accounts } = useAccounts();
   const { accountTypes } = useAccountTypes();
   const { expenses } = useExpenses();
@@ -46,6 +51,7 @@ export default function PayCreditBillModal({
   const [note, setNote] = useState(suggestedNote ?? "");
   const [alreadyPaid, setAlreadyPaid] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
     setAmount(suggestedAmount?.toString() ?? "");
@@ -97,8 +103,10 @@ export default function PayCreditBillModal({
       return;
     }
     setSubmitting(true);
+    setSubmitError("");
+    let didSave = false;
     if (alreadyPaid) {
-      await addExternalPayment(
+      didSave = await addExternalPayment(
         creditAccountId,
         num,
         date,
@@ -109,7 +117,7 @@ export default function PayCreditBillModal({
         }
       );
     } else {
-      await addPayment(
+      didSave = await addPayment(
         fromAccountId,
         creditAccountId,
         num,
@@ -122,9 +130,14 @@ export default function PayCreditBillModal({
       );
     }
     setSubmitting(false);
+    if (!didSave) {
+      setSubmitError("Could not record this payment. Please try again.");
+      return;
+    }
     setAmount("");
     setNote("");
     setAlreadyPaid(false);
+    setSubmitError("");
     onClose();
   };
 
@@ -137,9 +150,19 @@ export default function PayCreditBillModal({
         </p>
 
         {sourceAccounts.length === 0 ? (
-          <p className="rounded-xl bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-800 dark:text-amber-200">
-            Add a non-credit account with an opening balance in Settings → Accounts first.
-          </p>
+          <div className="space-y-3 rounded-xl bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-800 dark:text-amber-200">
+            <p>Add a non-credit account with an opening balance in Settings → Accounts first.</p>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                navigate("/settings");
+              }}
+              className="rounded-lg border border-amber-700/20 bg-amber-100/80 px-3 py-2 text-xs font-black uppercase tracking-widest text-amber-900 dark:bg-amber-400/10 dark:text-amber-100"
+            >
+              Open settings
+            </button>
+          </div>
         ) : (
           <>
             <label className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
@@ -158,11 +181,9 @@ export default function PayCreditBillModal({
             )}
 
             {!alreadyPaid && (
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                  Pay from account
-                </label>
+              <FormField id="pay-credit-from" label="Pay from account">
                 <select
+                  id="pay-credit-from"
                   value={fromAccountId}
                   onChange={(e) => setFromAccountId(e.target.value)}
                   className="w-full rounded-xl border border-border bg-muted/50 px-3 py-2.5 text-sm font-bold"
@@ -178,15 +199,13 @@ export default function PayCreditBillModal({
                     );
                   })}
                 </select>
-              </div>
+              </FormField>
             )}
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                  Amount
-                </label>
-                <input
+              <FormField id="pay-credit-amount" label="Amount">
+                <Input
+                  id="pay-credit-amount"
                   type="number"
                   min="0"
                   step="0.01"
@@ -195,50 +214,60 @@ export default function PayCreditBillModal({
                   className="w-full rounded-xl border border-border bg-muted/50 px-3 py-2.5 text-sm font-bold"
                   placeholder={suggestedAmount ? String(suggestedAmount) : "0"}
                 />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                  Date
-                </label>
-                <input
+              </FormField>
+              <FormField id="pay-credit-date" label="Date">
+                <Input
+                  id="pay-credit-date"
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   className="w-full rounded-xl border border-border bg-muted/50 px-3 py-2.5 text-sm font-bold"
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                Note (optional)
-              </label>
-              <input
+            <FormField id="pay-credit-note" label="Note" optional>
+              <Input
+                id="pay-credit-note"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 className="w-full rounded-xl border border-border bg-muted/50 px-3 py-2.5 text-sm font-bold"
                 placeholder="e.g. March statement"
               />
-            </div>
+            </FormField>
 
             {balanceAfter != null && selectedFrom && (
               <p className="text-xs font-bold text-muted-foreground">
                 Balance after payment: <Amount value={balanceAfter} />
               </p>
             )}
+            {submitError && (
+              <p className="text-sm font-semibold text-destructive">{submitError}</p>
+            )}
 
-            <button
-              type="button"
-              disabled={submitting || (!alreadyPaid && !fromAccountId) || !amount}
-              onClick={handleSubmit}
-              className="w-full rounded-xl bg-primary py-3 text-sm font-black text-primary-foreground disabled:opacity-50"
-            >
-              {submitting
-                ? "Recording…"
-                : alreadyPaid
-                  ? "Mark bill as already paid"
-                  : "Record bill payment"}
-            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                disabled={submitting}
+                onClick={onClose}
+                variant="secondary"
+                className="w-full"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                disabled={submitting || (!alreadyPaid && !fromAccountId) || !amount}
+                onClick={handleSubmit}
+                className="w-full"
+              >
+                {submitting
+                  ? "Recording..."
+                  : alreadyPaid
+                    ? "Mark bill as already paid"
+                    : "Record bill payment"}
+              </Button>
+            </div>
           </>
         )}
       </div>

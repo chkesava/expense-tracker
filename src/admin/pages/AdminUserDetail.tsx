@@ -35,7 +35,7 @@ export default function AdminUserDetail() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center pt-24">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
             </div>
         );
@@ -43,7 +43,7 @@ export default function AdminUserDetail() {
 
     if (!user) {
         return (
-            <div className="min-h-screen flex items-center justify-center flex-col gap-4">
+            <div className="min-h-screen flex items-center justify-center flex-col gap-4 pt-24">
                 <h2 className="text-xl font-bold text-slate-800">User not found</h2>
                 <Link to="/admin/users" className="text-blue-600 hover:underline">
                     &larr; Back to Users
@@ -84,7 +84,7 @@ export default function AdminUserDetail() {
     };
 
     return (
-        <div className="min-h-screen pb-24 bg-slate-50/50 p-4 md:p-8">
+        <main className="min-h-screen bg-background px-4 pb-24 pt-24 text-foreground md:px-8">
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -159,6 +159,6 @@ export default function AdminUserDetail() {
                 </div>
 
             </motion.div>
-        </div>
+        </main>
     );
 }

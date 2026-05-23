@@ -24,6 +24,7 @@ import {
 import { toast } from "react-toastify";
 import { Skeleton } from "../components/common/Skeleton";
 import Amount from "../components/common/Amount";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 
 
 export default function TripDetailPage() {
@@ -33,6 +34,7 @@ export default function TripDetailPage() {
   const { expenses, loading } = useExpenses();
   
   const trip = trips.find(t => t.id === tripId);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const tripExpenses = useMemo(() => 
     expenses.filter(e => e.tripId === tripId),
   [expenses, tripId]);
@@ -74,11 +76,9 @@ export default function TripDetailPage() {
   }, [trip, tripExpenses, budgetUsedPercent, isOverBudget]);
 
   const handleDelete = async () => {
-    if (window.confirm("Are you sure you want to delete this trip? Expenses will be unlinked but not deleted.")) {
-      await deleteTrip(trip.id!);
-      toast.success("Trip removed");
-      navigate("/subscriptions");
-    }
+    await deleteTrip(trip.id!);
+    toast.success("Trip removed");
+    navigate("/subscriptions");
   };
 
   const toggleStatus = async () => {
@@ -112,8 +112,9 @@ export default function TripDetailPage() {
               <CheckCircle2 size={20} />
             </button>
             <button 
-              onClick={handleDelete}
+              onClick={() => setShowDeleteConfirm(true)}
               className="p-2 rounded-xl bg-red-50 text-red-500 border border-red-100"
+              aria-label="Delete trip"
             >
               <Trash2 size={20} />
             </button>
@@ -284,9 +285,23 @@ export default function TripDetailPage() {
       <button
         onClick={() => navigate("/add-expense", { state: { tripId: trip.id } })}
         className="fixed bottom-28 right-6 w-14 h-14 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-xl shadow-slate-900/20 active:scale-95 transition-all z-20"
+        aria-label="Add expense to trip"
       >
         <span className="text-2xl">+</span>
       </button>
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        title="Delete this trip?"
+        message="Expenses will be unlinked but not deleted."
+        variant="destructive"
+        confirmText="Delete trip"
+        cancelText="Cancel"
+        onCancel={() => setShowDeleteConfirm(false)}
+        onConfirm={async () => {
+          setShowDeleteConfirm(false);
+          await handleDelete();
+        }}
+      />
     </motion.main>
   );
 }

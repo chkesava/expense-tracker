@@ -19,7 +19,7 @@ export default function AdminUsers() {
         }).format(amount);
 
     return (
-        <div className="min-h-screen pb-24 bg-slate-50/50 p-4 md:p-8">
+        <main className="min-h-screen bg-background px-4 pb-24 pt-24 text-foreground md:px-8">
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -27,8 +27,8 @@ export default function AdminUsers() {
             >
                 <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-900">Users</h1>
-                        <p className="text-slate-500">Manage and view all registered users</p>
+                        <h1 className="text-3xl font-bold">Users</h1>
+                        <p className="text-muted-foreground">Manage and view all registered users</p>
                     </div>
                     <div className="relative">
                         <input
@@ -117,6 +117,6 @@ export default function AdminUsers() {
                     </div>
                 )}
             </motion.div>
-        </div>
+        </main>
     );
 }

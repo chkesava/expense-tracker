@@ -38,6 +38,9 @@ export default function MonthDrawer() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -50 }}
             className="relative w-full max-w-lg bg-white/90 dark:bg-slate-900/95 rounded-[2.5rem] shadow-2xl border border-white/20 dark:border-slate-800 p-8 pt-6"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Select month"
           >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
@@ -52,6 +55,7 @@ export default function MonthDrawer() {
               <button
                 onClick={() => setIsMonthDrawerOpen(false)}
                 className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-xl transition-all active:scale-90"
+                aria-label="Close month picker"
               >
                 <X size={20} />
               </button>

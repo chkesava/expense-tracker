@@ -6,6 +6,7 @@ import PageHeader from "../components/layout/PageHeader";
 import AnalyticsPage from "./AnalyticsPage";
 import AnalysisLab from "./AnalysisLab";
 import YearlyAnalytics from "./YearlyAnalytics";
+import PageShell from "../components/layout/PageShell";
 
 type InsightsTab = "analytics" | "yearly" | "search";
 
@@ -33,33 +34,36 @@ export default function InsightsHub() {
   ];
 
   return (
-    <motion.main
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="mx-auto max-w-6xl px-4 pb-32 pt-24 md:px-6"
-    >
-      <PageHeader
-        title="Insights Hub"
-        subtitle="Advanced financial analytics and discovery."
-        icon={<BarChart3 size={24} />}
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={(id) => setActiveTab(id as InsightsTab)}
-      />
+    <PageShell width="standard">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        <PageHeader
+          title="Insights Hub"
+          subtitle="Advanced financial analytics and discovery."
+          icon={<BarChart3 size={24} />}
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as InsightsTab)}
+          tabAriaLabel="Insights sections"
+          tabLayoutId="insights-tab-pill"
+        />
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.2 }}
-        >
-          {activeTab === "analytics" && <AnalyticsPage hideHeader />}
-          {activeTab === "yearly"    && <YearlyAnalytics />}
-          {activeTab === "search"    && <AnalysisLab hideHeader />}
-        </motion.div>
-      </AnimatePresence>
-    </motion.main>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            id={`panel-${activeTab}`}
+            role="tabpanel"
+            aria-labelledby={`tab-${activeTab}`}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            {activeTab === "analytics" && <AnalyticsPage hideHeader />}
+            {activeTab === "yearly" && <YearlyAnalytics />}
+            {activeTab === "search" && <AnalysisLab hideHeader />}
+          </motion.div>
+        </AnimatePresence>
+      </motion.div>
+    </PageShell>
   );
 }

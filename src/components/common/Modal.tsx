@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useId, useRef } from "react";
 import { cn } from "../../lib/utils";
+import { useFocusTrap } from "../../hooks/useFocusTrap";
 
 interface ModalProps {
   isOpen: boolean;
@@ -12,6 +13,10 @@ interface ModalProps {
 }
 
 export default function Modal({ isOpen, onClose, title, children, className }: ModalProps) {
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const titleId = useId();
+  useFocusTrap(isOpen, panelRef);
+
   // Close on Esc key
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -31,6 +36,17 @@ export default function Modal({ isOpen, onClose, title, children, className }: M
     return () => {
       document.body.style.overflow = "unset";
     };
+  }, [isOpen]);
+
+  // Focus first focusable element when opened.
+  useEffect(() => {
+    if (!isOpen) return;
+    const panel = panelRef.current;
+    if (!panel) return;
+    const firstFocusable = panel.querySelector<HTMLElement>(
+      'button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])'
+    );
+    firstFocusable?.focus();
   }, [isOpen]);
 
   return (
@@ -53,6 +69,7 @@ export default function Modal({ isOpen, onClose, title, children, className }: M
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            ref={panelRef}
             className={cn(
               // Mobile: full-width sheet from bottom with rounded top corners
               // Desktop: centered card with full rounded corners
@@ -62,6 +79,9 @@ export default function Modal({ isOpen, onClose, title, children, className }: M
               "max-h-[85dvh] sm:max-h-[90dvh]",
               className
             )}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={title ? titleId : undefined}
           >
             {/* Drag handle — mobile only */}
             <div className="flex justify-center pt-3 pb-1 sm:hidden">
@@ -71,13 +91,14 @@ export default function Modal({ isOpen, onClose, title, children, className }: M
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
               {title && (
-                <h2 className="text-xl font-black text-gradient-premium tracking-tighter">
+                <h2 id={titleId} className="text-xl font-black text-gradient-premium tracking-tighter">
                   {title}
                 </h2>
               )}
               <button
                 onClick={onClose}
                 className="p-2 -mr-1 bg-white/10 text-slate-400 hover:text-white rounded-xl transition-all active:scale-90"
+                aria-label="Close modal"
               >
                 <X size={20} />
               </button>

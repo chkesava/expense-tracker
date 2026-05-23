@@ -9,6 +9,7 @@ import { getInvestmentValuation } from "../utils/investmentInterest";
 import { todayDateKey } from "../utils/dates";
 import type { InvestmentStatus } from "../types/investment";
 import { cn } from "../lib/utils";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 
 const fieldClass =
   "w-full rounded-xl border border-border bg-background px-4 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/30";
@@ -22,6 +23,8 @@ export default function InvestmentDetailPage() {
 
   const [navInput, setNavInput] = useState("");
   const [updatingNav, setUpdatingNav] = useState(false);
+  const [navError, setNavError] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const investment = useMemo(
     () => investments.find((i) => i.id === investmentId),
@@ -42,7 +45,11 @@ export default function InvestmentDetailPage() {
   const handleUpdateNav = async () => {
     if (!investment) return;
     const nav = Number(navInput);
-    if (!Number.isFinite(nav) || nav <= 0) return;
+    if (!Number.isFinite(nav) || nav <= 0) {
+      setNavError("Enter a valid NAV value.");
+      return;
+    }
+    setNavError("");
     setUpdatingNav(true);
     await updateInvestment(investment.id, {
       currentNav: nav,
@@ -59,10 +66,6 @@ export default function InvestmentDetailPage() {
 
   const handleDelete = async () => {
     if (!investment) return;
-    const msg = investment.fundingExpenseId
-      ? "Delete this investment? The linked funding expense will remain in your ledger."
-      : "Delete this investment?";
-    if (!window.confirm(msg)) return;
     await deleteInvestment(investment.id);
     navigate("/ledger?tab=investments");
   };
@@ -225,6 +228,7 @@ export default function InvestmentDetailPage() {
               Save
             </button>
           </div>
+          {navError && <p className="mt-2 text-xs font-semibold text-destructive">{navError}</p>}
         </section>
       )}
 
@@ -284,12 +288,29 @@ export default function InvestmentDetailPage() {
 
       <button
         type="button"
-        onClick={handleDelete}
+        onClick={() => setShowDeleteConfirm(true)}
         className="mt-8 flex items-center gap-2 text-sm font-bold text-red-600 dark:text-red-400"
       >
         <Trash2 className="h-4 w-4" />
         Delete investment
       </button>
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        title="Delete investment?"
+        message={
+          investment.fundingExpenseId
+            ? "The linked funding expense will remain in your ledger."
+            : "This action cannot be undone."
+        }
+        variant="destructive"
+        confirmText="Delete"
+        cancelText="Cancel"
+        onCancel={() => setShowDeleteConfirm(false)}
+        onConfirm={async () => {
+          setShowDeleteConfirm(false);
+          await handleDelete();
+        }}
+      />
     </motion.main>
   );
 }

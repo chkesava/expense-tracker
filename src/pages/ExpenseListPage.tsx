@@ -147,6 +147,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
     const [viewingTransaction, setViewingTransaction] = useState<{ data: any, type: "expense" | "income" } | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isSelectionMode, setIsSelectionMode] = useState(false);
+    const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
     // --- LOGIC: HISTORY ---
     const filteredByMonth = useMemo(() => expenses.filter(e => e.month === selectedMonth), [expenses, selectedMonth]);
@@ -402,7 +403,6 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
 
     const handleBulkDelete = async () => {
         if (!user || !selectedIds.size) return;
-        if (!window.confirm(`Delete ${selectedIds.size} items?`)) return;
         try {
             const affectedTripIds = new Set(
                 searchedExpenses
@@ -433,7 +433,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
     };
 
     return (
-        <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={cn("min-h-screen bg-slate-50 dark:bg-slate-950 pb-32", hideHeader ? "pt-0" : "pt-24")}>
+        <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={cn(hideHeader ? "space-y-6" : "min-h-screen pb-32 pt-24")}>
             {!hideHeader && (
                 <PageHeader
                     title="Vault Ledger"
@@ -441,7 +441,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                     icon={<History className="text-blue-600" />}
                     rightElement={
                         <div className="flex gap-2">
-                            <button onClick={() => setIsSelectionMode(!isSelectionMode)} className={cn("p-3 rounded-2xl transition-all", isSelectionMode ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-900 text-slate-400 hover:text-blue-600")}>
+                            <button onClick={() => setIsSelectionMode(!isSelectionMode)} aria-label={isSelectionMode ? "Exit selection mode" : "Enter selection mode"} className={cn("p-3 rounded-2xl transition-all", isSelectionMode ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-900 text-slate-400 hover:text-blue-600")}>
                                 <Plus className={cn("transition-transform", isSelectionMode && "rotate-45")} />
                             </button>
                         </div>
@@ -463,7 +463,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                     : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                             )}
                         >
-                            {tab}
+                            {{ history: "Expenses", income: "Income", audit: "Review", data: "Import & export" }[tab]}
                         </button>
                     ))}
                 </div>
@@ -916,8 +916,11 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
             {/* MODALS */}
             <ConfirmDialog
                 open={!!deleteTarget}
-                title="Purge Record"
+                title="Delete transaction?"
                 message="Delete this entry permanently?"
+                variant="destructive"
+                confirmText="Delete"
+                cancelText="Cancel"
                 onConfirm={async () => {
                     if (!user || !deleteTarget) return;
                     const collectionName = deleteTarget.type === "expense" ? "expenses" : "incomes";
@@ -929,6 +932,19 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                     toast.success("Deleted!");
                 }}
                 onCancel={() => setDeleteTarget(null)}
+            />
+            <ConfirmDialog
+                open={showBulkDeleteConfirm}
+                title="Delete selected transactions?"
+                message={`Delete ${selectedIds.size} selected item${selectedIds.size === 1 ? "" : "s"} permanently?`}
+                variant="destructive"
+                confirmText="Delete all"
+                cancelText="Cancel"
+                onCancel={() => setShowBulkDeleteConfirm(false)}
+                onConfirm={async () => {
+                    setShowBulkDeleteConfirm(false);
+                    await handleBulkDelete();
+                }}
             />
             <Modal isOpen={!!editingExpense || !!editingIncome} onClose={() => { setEditingExpense(null); setEditingIncome(null); }} title="Edit Transaction">
                 <ExpenseForm
@@ -1010,7 +1026,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                         <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }} className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] p-8">
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-lg font-black uppercase tracking-widest">Select Category</h3>
-                                <button onClick={() => setShowCategoryPicker(false)}><X size={20} /></button>
+                                <button onClick={() => setShowCategoryPicker(false)} aria-label="Close category picker"><X size={20} /></button>
                             </div>
                             <div className="grid grid-cols-3 gap-2">
                                 {CATEGORIES.map(c => (
@@ -1024,7 +1040,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
 
             <AnimatePresence>
                 {isSelectionMode && (
-                    <BulkActionBar selectedCount={selectedIds.size} onClear={() => { setSelectedIds(new Set()); setIsSelectionMode(false); }} onDelete={handleBulkDelete} onCategorize={handleBulkCategorize} userCategories={userCategories} />
+                    <BulkActionBar selectedCount={selectedIds.size} onClear={() => { setSelectedIds(new Set()); setIsSelectionMode(false); }} onDelete={() => setShowBulkDeleteConfirm(true)} onCategorize={handleBulkCategorize} userCategories={userCategories} />
                 )}
             </AnimatePresence>
         </motion.main>
@@ -1057,6 +1073,7 @@ function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete 
                 <button
                     onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
                     className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition-colors"
+                    aria-label="Open expense actions"
                 >
                     <MoreVertical size={16} />
                 </button>
@@ -1143,6 +1160,7 @@ function IncomeRow({ income, accounts, onEdit, onDelete, onSelect }: any) {
                 <button
                     onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
                     className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition-colors"
+                    aria-label="Open income actions"
                 >
                     <MoreVertical size={16} />
                 </button>

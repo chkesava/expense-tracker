@@ -12,6 +12,7 @@ import type { PaymentRequest } from "../types/paymentRequest";
 import type { QrStyleId } from "../utils/qrStyles";
 import { getStoredQrStyleId } from "../utils/qrStyles";
 import AuraBackground from "../components/layout/AuraBackground";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import { getPaymentSlugFromLocation } from "../utils/paymentRequestPath";
 
 export default function PaymentRequestPage() {
@@ -27,6 +28,8 @@ export default function PaymentRequestPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [qrStyleId, setQrStyleId] = useState<QrStyleId>(getStoredQrStyleId);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const isOwner = !!user && request?.createdBy === user.uid;
   const paymentSlug = request?.slug ?? slug ?? "";
@@ -124,9 +127,15 @@ export default function PaymentRequestPage() {
   };
 
   const handleDelete = async () => {
-    if (!paymentSlug || !confirm("Delete this payment page? The shared link will stop working.")) return;
-    await deletePaymentRequest(paymentSlug);
-    navigate(user ? "/ledger?tab=collect" : "/");
+    if (!paymentSlug) return;
+    setIsDeleting(true);
+    try {
+      await deletePaymentRequest(paymentSlug);
+      navigate(user ? "/ledger?tab=collect" : "/");
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
   };
 
   if (loading) {
@@ -188,8 +197,9 @@ export default function PaymentRequestPage() {
           {isOwner && (
             <button
               type="button"
-              onClick={handleDelete}
+              onClick={() => setShowDeleteConfirm(true)}
               className="rounded-xl p-2 text-destructive hover:bg-destructive/10"
+              aria-label="Delete payment page"
               title="Delete"
             >
               <Trash2 size={18} />
@@ -214,6 +224,17 @@ export default function PaymentRequestPage() {
           sharePageUrl={sharePageUrl}
         />
       </motion.main>
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        title="Delete payment page?"
+        message="The shared link will stop working. This cannot be undone."
+        confirmText={isDeleting ? "Deleting…" : "Delete"}
+        cancelText="Cancel"
+        variant="destructive"
+        onCancel={() => !isDeleting && setShowDeleteConfirm(false)}
+        onConfirm={handleDelete}
+      />
     </>
   );
 }

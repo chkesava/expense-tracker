@@ -1,10 +1,12 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Home, Wallet, Users, RefreshCw, BarChart3, Settings, Shield, LogOut } from "lucide-react";
+import { X, Home, Wallet, Users, BarChart3, Settings, Shield, LogOut, Activity } from "lucide-react";
+import { useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 import { useAuth } from "../hooks/useAuth";
 import { useUserRole } from "../hooks/useUserRole";
 import { cn } from "../lib/utils";
-import { useTheme } from "../hooks/useTheme";
+import { ADMIN_NAV_ITEM, CORE_NAV_ITEMS, isNavItemActive } from "../config/navigation";
 
 interface SideDrawerProps {
   isOpen: boolean;
@@ -12,21 +14,25 @@ interface SideDrawerProps {
 }
 
 export default function SideDrawer({ isOpen, onClose }: SideDrawerProps) {
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  useFocusTrap(isOpen, panelRef);
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user } = useAuth();
   const { isAdmin } = useUserRole();
-  const { theme } = useTheme();
 
   const links = [
-    { path: "/dashboard", label: "Dashboard", icon: Home },
-    { path: "/expenses", label: "My Expenses", icon: Wallet },
-    { path: "/split", label: "Split Bills", icon: Users },
-    { path: "/subscriptions", label: "Recurring", icon: RefreshCw },
-    { path: "/analytics", label: "Insights", icon: BarChart3 },
-    { path: "/settings", label: "Preferences", icon: Settings },
-    ...(isAdmin ? [{ path: "/admin", label: "Admin Panel", icon: Shield }] : []),
+    ...CORE_NAV_ITEMS.filter((item) => item.includeInDrawer),
+    ...(isAdmin ? [ADMIN_NAV_ITEM] : []),
   ];
+  const iconById = {
+    home: Home,
+    ledger: Wallet,
+    vaults: Users,
+    insights: BarChart3,
+    settings: Settings,
+    admin: Shield,
+  } as const;
 
   return (
     <AnimatePresence>
@@ -43,23 +49,28 @@ export default function SideDrawer({ isOpen, onClose }: SideDrawerProps) {
 
           {/* Drawer */}
           <motion.div
+            ref={panelRef}
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="absolute right-0 top-0 bottom-0 w-[80%] max-w-sm bg-white dark:bg-slate-900 shadow-2xl flex flex-col"
+            className="absolute right-0 top-0 bottom-0 w-[80%] max-w-sm bg-card shadow-2xl flex flex-col"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
           >
             {/* Header */}
             <div className="p-8 pb-6 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-black text-xl">
-                  E
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-foreground text-background shadow-lg shadow-foreground/20">
+                  <Activity size={18} />
                 </div>
-                <h2 className="font-black text-xl text-slate-900 dark:text-white uppercase tracking-tight">Navigation</h2>
+                <h2 className="font-black text-xl text-slate-900 dark:text-white uppercase tracking-tight">Vault</h2>
               </div>
               <button
                 onClick={onClose}
                 className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-xl transition-all active:scale-90"
+                aria-label="Close navigation menu"
               >
                 <X size={20} />
               </button>
@@ -68,8 +79,8 @@ export default function SideDrawer({ isOpen, onClose }: SideDrawerProps) {
             {/* Links */}
             <nav className="flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar">
               {links.map((link) => {
-                const isActive = location.pathname === link.path;
-                const Icon = link.icon;
+                const isActive = isNavItemActive(location.pathname, link.id);
+                const Icon = iconById[link.id];
                 return (
                   <button
                     key={link.path}

@@ -20,6 +20,7 @@ import { useAccounts } from "../hooks/useAccounts";
 import { Skeleton } from "../components/common/Skeleton";
 import PageHeader from "../components/layout/PageHeader";
 import { useModals } from "../hooks/useModals";
+import SegmentedTabs from "../components/ui/SegmentedTabs";
 
 type AnalyticsTab = "overview" | "distribution" | "trends";
 
@@ -99,23 +100,14 @@ export default function AnalyticsPage({ hideHeader }: { hideHeader?: boolean }) 
 
       {/* Tab switcher when used inside InsightsHub */}
       {hideHeader && (
-        <div className="flex gap-2 mb-6 flex-wrap">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id as AnalyticsTab)}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-black uppercase tracking-widest transition-all",
-                activeTab === t.id
-                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
-                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400"
-              )}
-            >
-              {t.icon}
-              {t.label}
-            </button>
-          ))}
-        </div>
+        <SegmentedTabs
+          items={tabs}
+          value={activeTab}
+          onChange={(next) => setActiveTab(next as AnalyticsTab)}
+          ariaLabel="Analytics sections"
+          layoutId="analytics-embedded-tab-pill"
+          className="mb-6"
+        />
       )}
 
       <AnimatePresence mode="wait">

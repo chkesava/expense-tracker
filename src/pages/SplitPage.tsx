@@ -25,6 +25,7 @@ import { cn } from "../lib/utils";
 import PageHeader from "../components/layout/PageHeader";
 import Avatar from "../components/Avatar";
 import Amount from "../components/common/Amount";
+import SegmentedTabs from "../components/ui/SegmentedTabs";
 
 import { CATEGORIES } from "../types/expense";
 import type { Participant } from "../types/split";
@@ -109,12 +110,11 @@ export default function SplitPage({ hideHeader }: { hideHeader?: boolean }) {
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-blue-600" /></div>;
 
   return (
-    <motion.main
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className={cn(
-        "mx-auto max-w-4xl px-4 pb-32",
-        !hideHeader && "pt-24"
+        hideHeader ? "space-y-6" : "mx-auto max-w-4xl space-y-6 px-4 pb-32 pt-24"
       )}
     >
       {!hideHeader && (
@@ -125,6 +125,15 @@ export default function SplitPage({ hideHeader }: { hideHeader?: boolean }) {
           tabs={tabs}
           activeTab={activeTab}
           onTabChange={setActiveTab}
+        />
+      )}
+      {hideHeader && (
+        <SegmentedTabs
+          items={tabs}
+          value={activeTab}
+          onChange={(next) => setActiveTab(next as SplitTab)}
+          ariaLabel="Split sections"
+          layoutId="split-embedded-tab-pill"
         />
       )}
 
@@ -283,6 +292,6 @@ export default function SplitPage({ hideHeader }: { hideHeader?: boolean }) {
 
         </motion.div>
       </AnimatePresence>
-    </motion.main>
+    </motion.div>
   );
 }

@@ -111,12 +111,18 @@ function AppRoutes() {
       <CelebrationOverlay />
 
       {/* Global animated background */}
-      <div className="fixed inset-0 z-[-1] bg-gradient-to-br from-slate-50 to-blue-50/50 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 pointer-events-none transition-colors" />
+      <div className="fixed inset-0 z-[-1] bg-gradient-to-br from-background via-background to-muted/40 pointer-events-none transition-colors" />
 
-      <div className="min-h-[100dvh] flex flex-col font-sans text-slate-900 dark:text-slate-100 transition-colors overflow-x-clip">
+      <div className="min-h-[100dvh] flex flex-col bg-background font-sans text-foreground transition-colors overflow-x-clip">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[300] focus:rounded-xl focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-primary-foreground"
+        >
+          Skip to main content
+        </a>
         <Header />
 
-        <div className="flex-1 w-full pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
+        <div id="main-content" className="flex-1 w-full pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
               <Route path="/" element={<Navigate to={`/${settings.defaultView || 'dashboard'}`} replace />} />
@@ -160,6 +166,8 @@ function AppRoutes() {
 
 export default function App() {
   const { theme } = useTheme();
+  const darkToastThemes = new Set(["dark", "midnight", "midnight-olive", "cyberpunk", "deep-sea", "glass-3d"]);
+  const toastTheme = darkToastThemes.has(theme) ? "dark" : "light";
   return (
     <BrowserRouter>
       <AuthProvider>
@@ -175,7 +183,7 @@ export default function App() {
           </ModalProvider>
         </SettingsProvider>
       </AuthProvider>
-      <ToastContainer position="top-center" theme={theme === "dark" || theme === "glass-3d" ? "dark" : "light"} autoClose={2000} hideProgressBar newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+      <ToastContainer position="top-center" theme={toastTheme} autoClose={2000} hideProgressBar newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
     </BrowserRouter>
   );
 }

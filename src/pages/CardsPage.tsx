@@ -8,6 +8,7 @@ import { useAccounts } from "../hooks/useAccounts";
 import { useAccountTypes } from "../hooks/useAccountTypes";
 import { useExpenses } from "../hooks/useExpenses";
 import Amount from "../components/common/Amount";
+import EmptyState from "../components/common/EmptyState";
 import { isCreditAccount } from "../utils/accountKind";
 import {
   computeCreditUsage,
@@ -59,15 +60,11 @@ export default function CardsPage({ hideHeader }: { hideHeader?: boolean }) {
 
   if (cardsData.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 py-20 text-center dark:border-slate-800">
-        <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-blue-500 dark:bg-blue-500/10">
-          <CreditCard className="h-8 w-8" />
-        </div>
-        <h3 className="text-lg font-black text-slate-900 dark:text-white">No Credit Cards Found</h3>
-        <p className="mt-2 max-w-sm text-sm font-medium text-slate-500 dark:text-slate-400">
-          Go to Settings &gt; Accounts and set a Bill Generation Day for your credit card accounts.
-        </p>
-      </div>
+      <EmptyState
+        icon={<CreditCard className="h-7 w-7" />}
+        title="No credit cards found"
+        description="Go to Settings → Accounts and set a bill generation day for your credit card accounts."
+      />
     );
   }
 

@@ -9,12 +9,14 @@ import { useIncomes } from "../hooks/useIncomes";
 import { useAccountPayments } from "../hooks/useAccountPayments";
 import { useAccountEntries } from "../hooks/useAccountEntries";
 import Amount from "../components/common/Amount";
+import EmptyState from "../components/common/EmptyState";
+import { Skeleton } from "../components/common/Skeleton";
 import { getAccountKind } from "../utils/accountKind";
 import { computeBankBalance, computeCreditUsage } from "../utils/accountBalance";
 
 export default function AccountsPage({ hideHeader }: { hideHeader?: boolean }) {
   const navigate = useNavigate();
-  const { accounts } = useAccounts();
+  const { accounts, loading } = useAccounts();
   const { accountTypes } = useAccountTypes();
   const { expenses } = useExpenses();
   const { incomes } = useIncomes();
@@ -87,15 +89,23 @@ export default function AccountsPage({ hideHeader }: { hideHeader?: boolean }) {
     );
   };
 
+  if (loading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-20 w-full rounded-2xl" />
+        ))}
+      </div>
+    );
+  }
+
   if (accounts.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border py-20 text-center">
-        <Wallet className="mb-4 h-10 w-10 text-muted-foreground" />
-        <h3 className="text-lg font-black text-foreground">No accounts yet</h3>
-        <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-          Add bank or credit accounts in Settings → Accounts.
-        </p>
-      </div>
+      <EmptyState
+        icon={<Wallet className="h-7 w-7" />}
+        title="No accounts yet"
+        description="Add bank or credit accounts in Settings → Accounts."
+      />
     );
   }
 

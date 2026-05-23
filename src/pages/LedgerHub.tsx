@@ -11,6 +11,7 @@ import InvestmentsPage from "./InvestmentsPage";
 import PaymentRequestsPage from "./PaymentRequestsPage";
 import { Wallet, Users, RefreshCw, Plane, CreditCard, Landmark, QrCode, TrendingUp } from "lucide-react";
 import PageHeader from "../components/layout/PageHeader";
+import PageShell from "../components/layout/PageShell";
 
 type LedgerTab = "expenses" | "splits" | "subscriptions" | "travel" | "cards" | "accounts" | "investments" | "collect";
 
@@ -43,38 +44,41 @@ export default function LedgerHub() {
   ];
 
   return (
-    <motion.main
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="mx-auto max-w-6xl px-4 pb-32 pt-24 md:px-6"
-    >
-      <PageHeader 
-        title="Ledger Hub" 
-        subtitle="Consolidated financial records and planning."
-        icon={<Wallet size={24} />}
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={(id) => setActiveTab(id as LedgerTab)}
-      />
+    <PageShell width="standard">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        <PageHeader
+          title="Ledger Hub"
+          subtitle="Consolidated financial records and planning."
+          icon={<Wallet size={24} />}
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as LedgerTab)}
+          tabAriaLabel="Ledger sections"
+          tabLayoutId="ledger-tab-pill"
+        />
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.2 }}
-        >
-          {activeTab === "expenses" && <ExpenseListPage hideHeader />}
-          {activeTab === "splits" && <SplitPage hideHeader />}
-          {activeTab === "subscriptions" && <SubscriptionsPage hideHeader />}
-          {activeTab === "travel" && <TripsPage hideHeader />}
-          {activeTab === "cards" && <CardsPage hideHeader />}
-          {activeTab === "accounts" && <AccountsPage hideHeader />}
-          {activeTab === "investments" && <InvestmentsPage hideHeader />}
-          {activeTab === "collect" && <PaymentRequestsPage hideHeader />}
-        </motion.div>
-      </AnimatePresence>
-    </motion.main>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            id={`panel-${activeTab}`}
+            role="tabpanel"
+            aria-labelledby={`tab-${activeTab}`}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            {activeTab === "expenses" && <ExpenseListPage hideHeader />}
+            {activeTab === "splits" && <SplitPage hideHeader />}
+            {activeTab === "subscriptions" && <SubscriptionsPage hideHeader />}
+            {activeTab === "travel" && <TripsPage hideHeader />}
+            {activeTab === "cards" && <CardsPage hideHeader />}
+            {activeTab === "accounts" && <AccountsPage hideHeader />}
+            {activeTab === "investments" && <InvestmentsPage hideHeader />}
+            {activeTab === "collect" && <PaymentRequestsPage hideHeader />}
+          </motion.div>
+        </AnimatePresence>
+      </motion.div>
+    </PageShell>
   );
 }

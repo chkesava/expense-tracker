@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "../lib/utils";
 import Amount from "../components/common/Amount";
 import { Skeleton } from "../components/common/Skeleton";
+import EmptyState from "../components/common/EmptyState";
+import Button from "../components/ui/Button";
 
 export default function TripsPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const { trips, loading } = useTrips();
@@ -30,30 +32,20 @@ export default function TripsPage({ hideHeader = false }: { hideHeader?: boolean
             <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Travel Hub</h1>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Manage trip budgets and tagged expenses.</p>
           </div>
-          <button
-            onClick={() => navigate("/travel/new")}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95"
-          >
-            <Plus size={18} />
+          <Button type="button" icon={<Plus size={18} />} onClick={() => navigate("/travel/new")}>
             New Trip
-          </button>
+          </Button>
         </div>
       )}
 
       {trips.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-slate-50 dark:bg-slate-900/50 rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-slate-800">
-          <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center text-blue-600 mb-4">
-            <MapPin size={32} />
-          </div>
-          <h2 className="text-lg font-black text-slate-900 dark:text-white">No trips planned yet</h2>
-          <p className="text-sm text-slate-500 mt-1">Start tracking your travel expenses by creating a trip.</p>
-          <button
-            onClick={() => navigate("/travel/new")}
-            className="mt-6 px-8 py-3 bg-slate-900 dark:bg-white dark:text-slate-900 text-white rounded-2xl font-black text-sm shadow-xl"
-          >
-            Plan First Trip
-          </button>
-        </div>
+        <EmptyState
+          icon={<MapPin className="h-7 w-7" />}
+          title="No trips planned yet"
+          description="Start tracking your travel expenses by creating a trip."
+          actionLabel="Plan first trip"
+          onAction={() => navigate("/travel/new")}
+        />
       ) : (
         <>
           {/* Active Trips */}

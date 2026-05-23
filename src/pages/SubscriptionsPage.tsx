@@ -21,6 +21,8 @@ import Modal from "../components/common/Modal";
 import { Skeleton } from "../components/common/Skeleton";
 import PageHeader from "../components/layout/PageHeader";
 import Amount from "../components/common/Amount";
+import SegmentedTabs from "../components/ui/SegmentedTabs";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 
 type SubTab = "recurring" | "stats";
 
@@ -46,6 +48,7 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
 
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
   const [editingSub, setEditingSub] = useState<Subscription | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const stats = useMemo(() => {
     const active = subscriptions.filter((s) => s.isActive);
@@ -102,10 +105,10 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
   };
 
   return (
-    <motion.main
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className={cn("mx-auto max-w-4xl px-4 pb-32", !hideHeader && "pt-24")}
+      className={cn(hideHeader ? "space-y-6" : "mx-auto max-w-4xl space-y-6 px-4 pb-32 pt-24")}
     >
       {!hideHeader && (
         <PageHeader
@@ -127,6 +130,15 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
               <span className="sm:hidden">New</span>
             </button>
           }
+        />
+      )}
+      {hideHeader && (
+        <SegmentedTabs
+          items={tabs}
+          value={activeTab}
+          onChange={(next) => setActiveTab(next as SubTab)}
+          ariaLabel="Recurring sections"
+          layoutId="subscriptions-embedded-tab-pill"
         />
       )}
 
@@ -183,9 +195,7 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
                       accounts={accounts}
                       onEdit={() => handleEdit(sub)}
                       onToggle={() => updateSubscription(sub.id!, { isActive: !sub.isActive })}
-                      onDelete={() =>
-                        window.confirm("Archive this subscription?") && deleteSubscription(sub.id!)
-                      }
+                      onDelete={() => setDeleteTargetId(sub.id!)}
                     />
                   ))}
                 </div>
@@ -429,7 +439,21 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
           </button>
         </form>
       </Modal>
-    </motion.main>
+      <ConfirmDialog
+        open={!!deleteTargetId}
+        title="Archive recurring bill?"
+        message="You can re-enable it later. Existing records remain unchanged."
+        variant="warning"
+        confirmText="Archive"
+        cancelText="Cancel"
+        onCancel={() => setDeleteTargetId(null)}
+        onConfirm={async () => {
+          if (!deleteTargetId) return;
+          await deleteSubscription(deleteTargetId);
+          setDeleteTargetId(null);
+        }}
+      />
+    </motion.div>
   );
 }
 

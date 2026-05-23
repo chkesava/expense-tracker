@@ -8,15 +8,15 @@ export default function AdminDashboard() {
     const { stats, users, loading } = useAdminData();
 
     return (
-        <div className="min-h-screen pb-24 bg-slate-50/50 p-4 md:p-8">
+        <main className="min-h-screen bg-background px-4 pb-24 pt-24 text-foreground md:px-8">
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="max-w-7xl mx-auto"
             >
                 <header className="mb-8">
-                    <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
-                    <p className="text-slate-500">Global overview & analytics</p>
+                    <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+                    <p className="text-muted-foreground">Global overview and analytics</p>
                 </header>
 
                 <AdminStatsCards stats={stats} loading={loading} />
@@ -30,6 +30,6 @@ export default function AdminDashboard() {
                     </div>
                 </div>
             </motion.div>
-        </div>
+        </main>
     );
 }

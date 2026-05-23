@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { clearDemoWorkspaceForUser, seedDemoWorkspaceForUser } from "../utils/seedData";
 import { toast } from 'react-toastify';
+import ConfirmDialog from "../components/common/ConfirmDialog";
 
 export default function SeedDataPage() {
   const { user } = useAuth();
   const [status, setStatus] = useState<string | null>(null);
   const [seedTag, setSeedTag] = useState<string | null>(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const addSeed = async () => {
     if (!user) return setStatus("Please sign in first");
@@ -27,8 +29,6 @@ export default function SeedDataPage() {
 
   const clearSeed = async () => {
     if (!user) return setStatus("Please sign in first");
-    const ok = window.confirm("Remove demo data? This will only remove items flagged as demo.");
-    if (!ok) return;
     setStatus("Removing demo items...");
     try {
       const res = await clearDemoWorkspaceForUser(user.uid, seedTag ?? undefined);
@@ -53,7 +53,7 @@ export default function SeedDataPage() {
 
           <div style={{ display: "flex", gap: 10 }}>
             <button className="primary-btn" onClick={addSeed}>Seed demo data</button>
-            <button className="small-btn muted-btn" onClick={clearSeed}>Remove demo data</button>
+            <button className="small-btn muted-btn" onClick={() => setShowClearConfirm(true)}>Remove demo data</button>
           </div>
 
           {status && <p style={{ marginTop: 12 }}>{status}</p>}
@@ -65,6 +65,19 @@ export default function SeedDataPage() {
           </p>
         </div>
       </main>
+      <ConfirmDialog
+        open={showClearConfirm}
+        title="Remove demo data?"
+        message="This removes only records flagged as demo."
+        variant="warning"
+        confirmText="Remove demo data"
+        cancelText="Cancel"
+        onCancel={() => setShowClearConfirm(false)}
+        onConfirm={async () => {
+          setShowClearConfirm(false);
+          await clearSeed();
+        }}
+      />
     </div>
   );
 }

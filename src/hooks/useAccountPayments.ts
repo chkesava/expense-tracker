@@ -50,15 +50,15 @@ export function useAccountPayments() {
     date: string,
     note?: string,
     opts?: { appliedCycleStart?: string; appliedCycleEnd?: string }
-  ) => {
-    if (!user || !fromAccountId || !toAccountId || amount <= 0) return;
+  ): Promise<boolean> => {
+    if (!user || !fromAccountId || !toAccountId || amount <= 0) return false;
     if (fromAccountId === toAccountId) {
       toast.error("Source and destination accounts must differ");
-      return;
+      return false;
     }
     if (!isValidDateKey(date)) {
       toast.error("Invalid payment date");
-      return;
+      return false;
     }
     try {
       await addDoc(collection(db, "users", user.uid, "accountPayments"), {
@@ -75,9 +75,11 @@ export function useAccountPayments() {
         createdAt: serverTimestamp(),
       });
       toast.success("Bill payment recorded");
+      return true;
     } catch (err) {
       console.error(err);
       toast.error("Failed to record payment");
+      return false;
     }
   };
 
@@ -87,11 +89,11 @@ export function useAccountPayments() {
     date: string,
     note?: string,
     opts?: { appliedCycleStart?: string; appliedCycleEnd?: string }
-  ) => {
-    if (!user || !toAccountId || amount <= 0) return;
+  ): Promise<boolean> => {
+    if (!user || !toAccountId || amount <= 0) return false;
     if (!isValidDateKey(date)) {
       toast.error("Invalid payment date");
-      return;
+      return false;
     }
     try {
       await addDoc(collection(db, "users", user.uid, "accountPayments"), {
@@ -108,9 +110,11 @@ export function useAccountPayments() {
         createdAt: serverTimestamp(),
       });
       toast.success("Marked as already paid");
+      return true;
     } catch (err) {
       console.error(err);
       toast.error("Failed to mark as paid");
+      return false;
     }
   };
 

@@ -166,6 +166,7 @@ export default function SettingsPage() {
   const [seedStatus, setSeedStatus] = useState<string | null>(null);
   const [seedTag, setSeedTag] = useState<string | null>(null);
   const [isSeeding, setIsSeeding] = useState(false);
+  const [seedClearScope, setSeedClearScope] = useState<"tag" | "all" | null>(null);
 
   const allCategoryOptions = useMemo(() => [...CATEGORIES, ...categories.map((c) => c.name)], [categories]);
 
@@ -359,13 +360,6 @@ export default function SettingsPage() {
     if (scope === "tag" && !seedTag) {
       return toast.info("No seed tag yet. Seed once or clear all demo data.");
     }
-    const ok = window.confirm(
-      scope === "all"
-        ? "Remove ALL demo data for this account? This only removes items flagged as demo."
-        : `Remove demo data with tag ${seedTag}? This only removes items flagged as demo.`
-    );
-    if (!ok) return;
-
     setIsSeeding(true);
     setSeedStatus("Removing demo data...");
     try {
@@ -1291,14 +1285,14 @@ export default function SettingsPage() {
                       {isSeeding ? "Working..." : "Seed everything"}
                     </button>
                     <button
-                      onClick={() => handleClearSeeded("tag")}
+                      onClick={() => setSeedClearScope("tag")}
                       disabled={isSeeding}
                       className="min-h-11 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 hover:bg-slate-50 active:scale-[0.98] disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
                     >
                       Clear this seed
                     </button>
                     <button
-                      onClick={() => handleClearSeeded("all")}
+                      onClick={() => setSeedClearScope("all")}
                       disabled={isSeeding}
                       className="min-h-11 rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-black text-red-700 hover:bg-red-50 active:scale-[0.98] disabled:opacity-50 dark:border-red-900/40 dark:bg-slate-950 dark:text-red-300 dark:hover:bg-red-950/30"
                     >
@@ -1323,6 +1317,7 @@ export default function SettingsPage() {
         title="Delete All Data"
         message="This will permanently delete expenses, incomes, bill payments, and account entries. This action cannot be undone. Are you absolutely sure?"
         confirmText={isDeleting ? "Deleting..." : "Yes, Delete Everything"}
+        variant="destructive"
         onConfirm={handleDeleteAll}
         onCancel={() => setShowDeleteConfirm(false)}
       />
@@ -1332,8 +1327,28 @@ export default function SettingsPage() {
         title="Sign Out"
         message="Are you sure you want to sign out of your account?"
         confirmText="Sign Out"
+        variant="neutral"
         onConfirm={handleLogout}
         onCancel={() => setShowLogoutConfirm(false)}
+      />
+      <ConfirmDialog
+        open={!!seedClearScope}
+        title={seedClearScope === "all" ? "Clear all demo data?" : "Clear current seed data?"}
+        message={
+          seedClearScope === "all"
+            ? "This removes all demo-tagged data for this account."
+            : `This removes only records tagged with ${seedTag ?? "the current seed tag"}.`
+        }
+        confirmText="Clear demo data"
+        cancelText="Cancel"
+        variant="warning"
+        onCancel={() => setSeedClearScope(null)}
+        onConfirm={async () => {
+          if (!seedClearScope) return;
+          const scope = seedClearScope;
+          setSeedClearScope(null);
+          await handleClearSeeded(scope);
+        }}
       />
     </>
   );

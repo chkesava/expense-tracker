@@ -1,6 +1,9 @@
-
-
 import { motion, AnimatePresence } from "framer-motion";
+import { AlertTriangle, Trash2 } from "lucide-react";
+import { useRef } from "react";
+import { cn } from "../../lib/utils";
+import { useFocusTrap } from "../../hooks/useFocusTrap";
+import Button from "../ui/Button";
 
 export default function ConfirmDialog({
   open,
@@ -10,6 +13,7 @@ export default function ConfirmDialog({
   onCancel,
   confirmText = "Yes",
   cancelText = "No",
+  variant = "destructive",
 }: {
   open: boolean;
   title?: string;
@@ -18,7 +22,12 @@ export default function ConfirmDialog({
   onCancel: () => void;
   confirmText?: string;
   cancelText?: string;
+  variant?: "destructive" | "warning" | "neutral";
 }) {
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  useFocusTrap(open, panelRef);
+  const icon = variant === "destructive" ? <Trash2 size={20} /> : <AlertTriangle size={20} />;
+
   return (
     <AnimatePresence>
       {open && (
@@ -34,36 +43,49 @@ export default function ConfirmDialog({
 
           {/* Dialog */}
           <motion.div
+            ref={panelRef}
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-white/50"
+            className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-border bg-card text-card-foreground shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-dialog-title"
           >
             <div className="p-6 text-center space-y-4">
-              <div className="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto text-2xl">
-                🗑️
+              <div
+                className={cn(
+                  "mx-auto flex h-12 w-12 items-center justify-center rounded-full",
+                  variant === "destructive" && "bg-destructive/10 text-destructive",
+                  variant === "warning" && "bg-amber-500/10 text-amber-600",
+                  variant === "neutral" && "bg-primary/10 text-primary"
+                )}
+              >
+                {icon}
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-lg font-bold text-slate-900">{title}</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">
+                <h3 className="text-lg font-bold">{title}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   {message}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-2">
-                <button
-                  onClick={onCancel}
-                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-colors active:scale-95"
-                >
+                <Button type="button" variant="secondary" onClick={onCancel} className="w-full">
                   {cancelText}
-                </button>
-                <button
+                </Button>
+                <Button
+                  type="button"
+                  variant={variant === "destructive" ? "destructive" : "primary"}
                   onClick={onConfirm}
-                  className="px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl shadow-lg shadow-red-500/20 transition-all active:scale-95"
+                  className={cn(
+                    "w-full",
+                    variant === "warning" && "bg-amber-600 hover:bg-amber-700 text-white"
+                  )}
                 >
                   {confirmText}
-                </button>
+                </Button>
               </div>
             </div>
           </motion.div>

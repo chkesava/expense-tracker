@@ -9,6 +9,9 @@ import { computeBankBalance } from "../utils/accountBalance";
 import { todayDateKey } from "../utils/dates";
 import Amount from "./common/Amount";
 import Modal from "./common/Modal";
+import FormField from "./ui/FormField";
+import Input from "./ui/Input";
+import Button from "./ui/Button";
 
 type AddAccountEntryModalProps = {
   isOpen: boolean;
@@ -31,6 +34,7 @@ export default function AddAccountEntryModal({
   const [date, setDate] = useState(todayDateKey());
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const balanceAfter = useMemo(() => {
     if (!amount) return null;
@@ -45,6 +49,7 @@ export default function AddAccountEntryModal({
     setAmount("");
     setDate(todayDateKey());
     setNote("");
+    setSubmitError("");
   };
 
   const handleClose = () => {
@@ -64,18 +69,23 @@ export default function AddAccountEntryModal({
       return;
     }
 
+    setSubmitError("");
     setSubmitting(true);
-    await addEntry(account.id, num, direction, date, note);
+    const didSave = await addEntry(account.id, num, direction, date, note);
     setSubmitting(false);
-    reset();
-    onClose();
+    if (didSave) {
+      reset();
+      onClose();
+      return;
+    }
+    setSubmitError("Could not save this entry. Please try again.");
   };
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={direction === "credit" ? "Add funds" : "Add debit"}
+      title="Manual account entry"
     >
       <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
@@ -109,11 +119,9 @@ export default function AddAccountEntryModal({
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-              Amount
-            </label>
-            <input
+          <FormField id="account-entry-amount" label="Amount">
+            <Input
+              id="account-entry-amount"
               type="number"
               min="0"
               step="0.01"
@@ -121,51 +129,63 @@ export default function AddAccountEntryModal({
               onChange={(e) => setAmount(e.target.value)}
               className="w-full rounded-xl border border-border bg-muted/50 px-3 py-2.5 text-sm font-bold"
               placeholder="0"
+              aria-invalid={!!submitError && !amount}
             />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-              Date
-            </label>
-            <input
+          </FormField>
+          <FormField id="account-entry-date" label="Date">
+            <Input
+              id="account-entry-date"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
               className="w-full rounded-xl border border-border bg-muted/50 px-3 py-2.5 text-sm font-bold"
+              aria-invalid={!!submitError && !date}
             />
-          </div>
+          </FormField>
         </div>
 
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-            Note (optional)
-          </label>
-          <input
+        <FormField id="account-entry-note" label="Note" optional>
+          <Input
+            id="account-entry-note"
             value={note}
             onChange={(e) => setNote(e.target.value)}
             className="w-full rounded-xl border border-border bg-muted/50 px-3 py-2.5 text-sm font-bold"
             placeholder={direction === "credit" ? "e.g. Savings top up" : "e.g. Transfer out"}
           />
-        </div>
+        </FormField>
 
         {balanceAfter != null && (
           <p className="text-xs font-bold text-muted-foreground">
             Balance after entry: <Amount value={balanceAfter} />
           </p>
         )}
+        {submitError && (
+          <p className="text-sm font-semibold text-destructive">{submitError}</p>
+        )}
 
-        <button
-          type="button"
-          disabled={submitting || !amount || !date}
-          onClick={handleSubmit}
-          className="w-full rounded-xl bg-primary py-3 text-sm font-black text-primary-foreground disabled:opacity-50"
-        >
-          {submitting
-            ? "Saving..."
-            : direction === "credit"
-              ? "Record funds entry"
-              : "Record debit entry"}
-        </button>
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            type="button"
+            disabled={submitting}
+            onClick={handleClose}
+            variant="secondary"
+            className="w-full"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            disabled={submitting || !amount || !date}
+            onClick={handleSubmit}
+            className="w-full"
+          >
+            {submitting
+              ? "Saving…"
+              : direction === "credit"
+                ? "Record funds entry"
+                : "Record debit entry"}
+          </Button>
+        </div>
       </div>
     </Modal>
   );

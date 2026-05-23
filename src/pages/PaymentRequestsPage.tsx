@@ -15,7 +15,9 @@ import { toast } from "react-toastify";
 import RequestUpiPayment from "../components/RequestUpiPayment";
 import { usePaymentRequests } from "../hooks/usePaymentRequests";
 import Amount from "../components/common/Amount";
-import { cn } from "../lib/utils";
+import ConfirmDialog from "../components/common/ConfirmDialog";
+import EmptyState from "../components/common/EmptyState";
+import SegmentedTabs from "../components/ui/SegmentedTabs";
 import { getPaymentRequestShareUrl } from "../utils/paymentRequestUrl";
 
 type CollectTab = "requests" | "new";
@@ -23,6 +25,8 @@ type CollectTab = "requests" | "new";
 export default function PaymentRequestsPage({ hideHeader }: { hideHeader?: boolean }) {
   const { requests, loading, deletePaymentRequest } = usePaymentRequests();
   const [activeTab, setActiveTab] = useState<CollectTab>("requests");
+  const [deleteSlug, setDeleteSlug] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const tabs = [
     { id: "requests" as const, label: "Saved", icon: <History size={16} /> },
@@ -58,30 +62,34 @@ export default function PaymentRequestsPage({ hideHeader }: { hideHeader?: boole
     );
   }
 
+  const handleConfirmDelete = async () => {
+    if (!deleteSlug) return;
+    setIsDeleting(true);
+    try {
+      await deletePaymentRequest(deleteSlug);
+      toast.success("Payment page deleted");
+    } finally {
+      setIsDeleting(false);
+      setDeleteSlug(null);
+    }
+  };
+
   return (
-    <div className={cn(!hideHeader && "")}>
-      <div className="mb-6 flex gap-2 rounded-2xl bg-muted/50 p-1">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setActiveTab(t.id)}
-            className={cn(
-              "flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-black uppercase tracking-widest transition-all",
-              activeTab === t.id
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground"
-            )}
-          >
-            {t.icon}
-            {t.label}
-          </button>
-        ))}
-      </div>
+    <div className="space-y-6">
+      <SegmentedTabs
+        items={tabs}
+        value={activeTab}
+        onChange={(next) => setActiveTab(next as CollectTab)}
+        ariaLabel="Collect sections"
+        layoutId={hideHeader ? "collect-embedded-tab-pill" : "collect-tab-pill"}
+        className="mb-2"
+      />
 
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
+          role="tabpanel"
+          aria-label={activeTab === "new" ? "New payment request" : "Saved payment requests"}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
@@ -91,17 +99,13 @@ export default function PaymentRequestsPage({ hideHeader }: { hideHeader?: boole
           ) : (
             <div className="space-y-4">
               {requests.length === 0 ? (
-                <div className="bento-card py-16 text-center">
-                  <QrCode className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-                  <p className="text-sm font-bold text-muted-foreground">No saved payment pages yet</p>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("new")}
-                    className="mt-4 text-sm font-black text-primary"
-                  >
-                    Create one
-                  </button>
-                </div>
+                <EmptyState
+                  icon={<QrCode className="h-7 w-7" />}
+                  title="No saved payment pages yet"
+                  description="Create a shareable UPI payment page with a QR code."
+                  actionLabel="Create one"
+                  onAction={() => setActiveTab("new")}
+                />
               ) : (
                 <div className="divide-y divide-border overflow-hidden rounded-3xl border border-border bg-card">
                   {requests.map((r) => (
@@ -148,10 +152,9 @@ export default function PaymentRequestsPage({ hideHeader }: { hideHeader?: boole
                         </button>
                         <button
                           type="button"
-                          onClick={() => {
-                            if (confirm("Delete this payment page?")) deletePaymentRequest(r.slug);
-                          }}
+                          onClick={() => setDeleteSlug(r.slug)}
                           className="rounded-xl p-2 text-destructive hover:bg-destructive/10"
+                          aria-label="Delete payment page"
                           title="Delete"
                         >
                           <Trash2 size={16} />
@@ -165,6 +168,17 @@ export default function PaymentRequestsPage({ hideHeader }: { hideHeader?: boole
           )}
         </motion.div>
       </AnimatePresence>
+
+      <ConfirmDialog
+        open={deleteSlug !== null}
+        title="Delete payment page?"
+        message="This removes the saved link and QR. You cannot undo this action."
+        confirmText={isDeleting ? "Deleting…" : "Delete"}
+        cancelText="Cancel"
+        variant="destructive"
+        onCancel={() => !isDeleting && setDeleteSlug(null)}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

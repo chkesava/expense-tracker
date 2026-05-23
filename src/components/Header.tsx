@@ -25,7 +25,8 @@ import { useStoryGenerator } from "../hooks/useStoryGenerator";
 import useSettings from "../hooks/useSettings";
 import StoryViewer from "./story/StoryViewer";
 import { cn } from "../lib/utils";
-import { currentMonthKey, todayDateKey } from "../utils/dates";
+import { currentMonthKey } from "../utils/dates";
+import { ADMIN_NAV_ITEM, CORE_NAV_ITEMS, isNavItemActive } from "../config/navigation";
 
 function formatMonthLabel(month: string, short = false) {
   if (!month) return "This Month";
@@ -39,6 +40,7 @@ function formatMonthLabel(month: string, short = false) {
 export default function Header() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isOnline } = useOnline();
   const { stats } = useGamification();
   const { isAdmin } = useUserRole();
@@ -47,12 +49,17 @@ export default function Header() {
   const { settings, setGhostMode } = useSettings();
 
   const desktopLinks = [
-    { path: "/dashboard", label: "Home", icon: Home },
-    { path: "/ledger", label: "Ledger", icon: Wallet },
-    { path: "/vaults", label: "Vaults", icon: Users },
-    { path: "/insights", label: "Insights", icon: BarChart3 },
-    ...(isAdmin ? [{ path: "/admin", label: "Admin", icon: Shield }] : []),
+    ...CORE_NAV_ITEMS.filter((item) => item.id !== "settings"),
+    ...(isAdmin ? [ADMIN_NAV_ITEM] : []),
   ];
+  const iconById = {
+    home: Home,
+    ledger: Wallet,
+    vaults: Users,
+    insights: BarChart3,
+    admin: Shield,
+    settings: Settings,
+  } as const;
 
   const months = useMemo(
     () => Array.from(new Set(expenses.map((expense) => expense.month))).sort().reverse(),
@@ -95,7 +102,8 @@ export default function Header() {
             </span>
           </motion.button>
 
-          <div
+          <button
+            type="button"
             onClick={() => setGhostMode(!settings.ghostMode)}
             className={cn(
               "hidden min-[360px]:inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] shadow-sm ring-1 transition-all duration-300 cursor-pointer hover:bg-muted/50",
@@ -106,6 +114,8 @@ export default function Header() {
                   : "bg-red-500/10 text-red-600 ring-red-500/20"
             )}
             title={settings.ghostMode ? "Ghost Mode Active - Amounts blurred" : isOnline ? "Connected to database" : "Working offline"}
+            aria-pressed={settings.ghostMode}
+            aria-label={settings.ghostMode ? "Disable ghost mode" : "Enable ghost mode"}
           >
             {settings.ghostMode ? (
               <EyeOff size={10} className="animate-pulse" />
@@ -123,13 +133,13 @@ export default function Header() {
               </span>
             )}
              <span className="hidden sm:inline">{settings.ghostMode ? "Ghost" : isOnline ? "Online" : "Offline"}</span>
-          </div>
+          </button>
         </div>
 
         <nav className="hidden lg:flex items-center gap-1 bg-slate-100/50 dark:bg-slate-800/50 backdrop-blur-md p-1.5 rounded-[1.5rem] border border-white/50 dark:border-white/5">
           {desktopLinks.map((link) => {
-            const isActive = location.pathname === link.path;
-            const Icon = link.icon;
+            const isActive = isNavItemActive(location.pathname, link.id);
+            const Icon = iconById[link.id];
             return (
               <motion.button
                 key={link.path}
@@ -173,6 +183,7 @@ export default function Header() {
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsAddExpenseOpen(true)}
             className="hidden md:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full font-bold text-sm shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-shadow"
+            aria-label="Add transaction"
           >
             <Plus size={16} />
             <span>Add</span>
@@ -201,7 +212,7 @@ export default function Header() {
           <div className="relative shrink-0">
             <button
               onClick={() => setShowStory(true)}
-              className="focus:outline-none"
+              className="focus-visible:ring-2 focus-visible:ring-ring rounded-full"
               aria-label="Open your monthly story"
               title="Monthly story"
             >
@@ -250,8 +261,8 @@ function VaultMemberIndicator() {
         )}
       </div>
       <div className="flex flex-col">
-        <span className="text-[8px] font-black uppercase tracking-tighter text-blue-600 dark:text-blue-400">Joint Access</span>
-        <span className="text-[7px] font-bold text-slate-400 truncate max-w-[60px]">{vault.name}</span>
+        <span className="text-[11px] font-black uppercase tracking-tight text-blue-600 dark:text-blue-400">Joint Access</span>
+        <span className="text-[11px] font-semibold text-slate-400 truncate max-w-[90px]">{vault.name}</span>
       </div>
     </motion.div>
   );

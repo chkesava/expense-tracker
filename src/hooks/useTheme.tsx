@@ -37,12 +37,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       "theme-cyberpunk", "theme-nordic", "theme-deep-sea", "theme-glass-3d"
     ];
     root.classList.remove(...themeClasses);
+    root.classList.remove("dark");
     
     // Add the appropriate class
     if (theme === "dark" || theme === "light") {
       root.classList.add(theme);
     } else {
       root.classList.add(`theme-${theme}`);
+      if (["midnight", "midnight-olive", "cyberpunk", "deep-sea", "glass-3d"].includes(theme)) {
+        root.classList.add("dark");
+      }
     }
     
     window.localStorage.setItem(STORAGE_KEY, theme);
