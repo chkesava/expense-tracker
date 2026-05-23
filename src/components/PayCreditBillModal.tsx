@@ -18,6 +18,8 @@ type PayCreditBillModalProps = {
   creditAccountName: string;
   suggestedAmount?: number;
   suggestedNote?: string;
+  targetCycleStart?: string;
+  targetCycleEnd?: string;
 };
 
 export default function PayCreditBillModal({
@@ -27,18 +29,21 @@ export default function PayCreditBillModal({
   creditAccountName,
   suggestedAmount,
   suggestedNote,
+  targetCycleStart,
+  targetCycleEnd,
 }: PayCreditBillModalProps) {
   const { accounts } = useAccounts();
   const { accountTypes } = useAccountTypes();
   const { expenses } = useExpenses();
   const { incomes } = useIncomes();
-  const { payments, addPayment } = useAccountPayments();
+  const { payments, addPayment, addExternalPayment } = useAccountPayments();
   const { entries } = useAccountEntries();
 
   const [fromAccountId, setFromAccountId] = useState("");
   const [amount, setAmount] = useState(suggestedAmount?.toString() ?? "");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [note, setNote] = useState(suggestedNote ?? "");
+  const [alreadyPaid, setAlreadyPaid] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -62,6 +67,7 @@ export default function PayCreditBillModal({
   );
 
   const balanceAfter = useMemo(() => {
+    if (alreadyPaid) return null;
     if (!selectedFrom || !amount) return null;
     const num = Number(amount);
     if (!Number.isFinite(num) || num <= 0) return null;
@@ -73,10 +79,10 @@ export default function PayCreditBillModal({
       entries,
       num
     );
-  }, [selectedFrom, amount, expenses, incomes, payments, entries]);
+  }, [alreadyPaid, selectedFrom, amount, expenses, incomes, payments, entries]);
 
   const handleSubmit = async () => {
-    if (!fromAccountId) {
+    if (!alreadyPaid && !fromAccountId) {
       toast.error("Select an account to pay from");
       return;
     }
@@ -85,21 +91,39 @@ export default function PayCreditBillModal({
       toast.error("Enter a valid amount");
       return;
     }
-    if (balanceAfter != null && balanceAfter < 0) {
+    if (!alreadyPaid && balanceAfter != null && balanceAfter < 0) {
       toast.error("Insufficient balance in the selected account");
       return;
     }
     setSubmitting(true);
-    await addPayment(
-      fromAccountId,
-      creditAccountId,
-      num,
-      date,
-      note || `Bill payment — ${creditAccountName}`
-    );
+    if (alreadyPaid) {
+      await addExternalPayment(
+        creditAccountId,
+        num,
+        date,
+        note || `Already paid — ${creditAccountName}`,
+        {
+          appliedCycleStart: targetCycleStart,
+          appliedCycleEnd: targetCycleEnd,
+        }
+      );
+    } else {
+      await addPayment(
+        fromAccountId,
+        creditAccountId,
+        num,
+        date,
+        note || `Bill payment — ${creditAccountName}`,
+        {
+          appliedCycleStart: targetCycleStart,
+          appliedCycleEnd: targetCycleEnd,
+        }
+      );
+    }
     setSubmitting(false);
     setAmount("");
     setNote("");
+    setAlreadyPaid(false);
     onClose();
   };
 
@@ -117,27 +141,44 @@ export default function PayCreditBillModal({
           </p>
         ) : (
           <>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                Pay from account
-              </label>
-              <select
-                value={fromAccountId}
-                onChange={(e) => setFromAccountId(e.target.value)}
-                className="w-full rounded-xl border border-border bg-muted/50 px-3 py-2.5 text-sm font-bold"
-              >
-                <option value="">Select account</option>
-                {sourceAccounts.map((a) => {
-                  const typeName = accountTypes.find((t) => t.id === a.typeId)?.name || "";
-                  const bal = computeBankBalance(a, expenses, incomes, payments, entries);
-                  return (
-                    <option key={a.id} value={a.id}>
-                      {a.name} ({typeName}) — ₹{bal.toLocaleString()}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
+            <label className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={alreadyPaid}
+                onChange={(e) => setAlreadyPaid(e.target.checked)}
+              />
+              Already paid (mark settled without deducting from an account)
+            </label>
+
+            {targetCycleStart && targetCycleEnd && (
+              <p className="text-[11px] font-medium text-muted-foreground">
+                Applying to bill cycle: {targetCycleStart} to {targetCycleEnd}
+              </p>
+            )}
+
+            {!alreadyPaid && (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Pay from account
+                </label>
+                <select
+                  value={fromAccountId}
+                  onChange={(e) => setFromAccountId(e.target.value)}
+                  className="w-full rounded-xl border border-border bg-muted/50 px-3 py-2.5 text-sm font-bold"
+                >
+                  <option value="">Select account</option>
+                  {sourceAccounts.map((a) => {
+                    const typeName = accountTypes.find((t) => t.id === a.typeId)?.name || "";
+                    const bal = computeBankBalance(a, expenses, incomes, payments, entries);
+                    return (
+                      <option key={a.id} value={a.id}>
+                        {a.name} ({typeName}) — ₹{bal.toLocaleString()}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
@@ -187,11 +228,15 @@ export default function PayCreditBillModal({
 
             <button
               type="button"
-              disabled={submitting || !fromAccountId || !amount}
+              disabled={submitting || (!alreadyPaid && !fromAccountId) || !amount}
               onClick={handleSubmit}
               className="w-full rounded-xl bg-primary py-3 text-sm font-black text-primary-foreground disabled:opacity-50"
             >
-              {submitting ? "Recording…" : "Record bill payment"}
+              {submitting
+                ? "Recording…"
+                : alreadyPaid
+                  ? "Mark bill as already paid"
+                  : "Record bill payment"}
             </button>
           </>
         )}

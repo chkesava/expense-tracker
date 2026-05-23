@@ -47,7 +47,8 @@ export function useAccountPayments() {
     toAccountId: string,
     amount: number,
     date: string,
-    note?: string
+    note?: string,
+    opts?: { appliedCycleStart?: string; appliedCycleEnd?: string }
   ) => {
     if (!user || !fromAccountId || !toAccountId || amount <= 0) return;
     try {
@@ -57,12 +58,46 @@ export function useAccountPayments() {
         amount,
         date,
         note: note?.trim() || "",
+        sourceType: "account",
+        ...(opts?.appliedCycleStart
+          ? { appliedCycleStart: opts.appliedCycleStart }
+          : {}),
+        ...(opts?.appliedCycleEnd ? { appliedCycleEnd: opts.appliedCycleEnd } : {}),
         createdAt: serverTimestamp(),
       });
       toast.success("Bill payment recorded");
     } catch (err) {
       console.error(err);
       toast.error("Failed to record payment");
+    }
+  };
+
+  const addExternalPayment = async (
+    toAccountId: string,
+    amount: number,
+    date: string,
+    note?: string,
+    opts?: { appliedCycleStart?: string; appliedCycleEnd?: string }
+  ) => {
+    if (!user || !toAccountId || amount <= 0) return;
+    try {
+      await addDoc(collection(db, "users", user.uid, "accountPayments"), {
+        fromAccountId: "external",
+        toAccountId,
+        amount,
+        date,
+        note: note?.trim() || "",
+        sourceType: "external",
+        ...(opts?.appliedCycleStart
+          ? { appliedCycleStart: opts.appliedCycleStart }
+          : {}),
+        ...(opts?.appliedCycleEnd ? { appliedCycleEnd: opts.appliedCycleEnd } : {}),
+        createdAt: serverTimestamp(),
+      });
+      toast.success("Marked as already paid");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to mark as paid");
     }
   };
 
@@ -77,5 +112,5 @@ export function useAccountPayments() {
     }
   };
 
-  return { payments, loading, addPayment, deletePayment };
+  return { payments, loading, addPayment, addExternalPayment, deletePayment };
 }

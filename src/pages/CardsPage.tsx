@@ -9,7 +9,11 @@ import { useAccountTypes } from "../hooks/useAccountTypes";
 import { useExpenses } from "../hooks/useExpenses";
 import Amount from "../components/common/Amount";
 import { isCreditAccount } from "../utils/accountKind";
-import { computeCreditUsage, getCreditBillHistory } from "../utils/accountBalance";
+import {
+  computeCreditUsage,
+  getCreditBillHistory,
+  toLocalDateKey,
+} from "../utils/accountBalance";
 
 export default function CardsPage({ hideHeader }: { hideHeader?: boolean }) {
   const { accounts } = useAccounts();
@@ -20,6 +24,8 @@ export default function CardsPage({ hideHeader }: { hideHeader?: boolean }) {
     cardId: string;
     suggestedAmount?: number;
     suggestedNote?: string;
+    targetCycleStart?: string;
+    targetCycleEnd?: string;
   } | null>(null);
 
   const formatCycleRange = (from: Date, to: Date) =>
@@ -90,6 +96,12 @@ export default function CardsPage({ hideHeader }: { hideHeader?: boolean }) {
             <div className="absolute -bottom-24 -left-24 h-56 w-56 rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
 
             <div className="relative z-10 flex flex-col h-full">
+              {(() => {
+                const latestOutstandingBill = card.billHistory.find(
+                  (bill) => bill.outstandingAmount > 0
+                );
+                return (
+                  <>
               <div className="flex items-start justify-between mb-10">
                 <div className="flex items-center gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 shadow-inner">
@@ -148,6 +160,8 @@ export default function CardsPage({ hideHeader }: { hideHeader?: boolean }) {
                                   bill.cycleStart,
                                   bill.cycleEnd
                                 )}`,
+                                targetCycleStart: toLocalDateKey(bill.cycleStart),
+                                targetCycleEnd: toLocalDateKey(bill.cycleEnd),
                               })
                             }
                             className="mt-2 w-full rounded-lg border border-white/15 bg-white/10 py-1.5 text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/20 transition-colors"
@@ -177,20 +191,26 @@ export default function CardsPage({ hideHeader }: { hideHeader?: boolean }) {
               </div>
 
               <div className="mt-4 flex flex-col gap-2">
-                {card.usedThisCycle > 0 && (
+                {latestOutstandingBill ? (
                   <button
                     type="button"
                     onClick={() =>
                       setPayRequest({
                         cardId: card.id,
-                        suggestedAmount: card.usedThisCycle > 0 ? card.usedThisCycle : undefined,
+                        suggestedAmount: latestOutstandingBill.outstandingAmount,
+                        suggestedNote: `Bill payment — ${formatCycleRange(
+                          latestOutstandingBill.cycleStart,
+                          latestOutstandingBill.cycleEnd
+                        )}`,
+                        targetCycleStart: toLocalDateKey(latestOutstandingBill.cycleStart),
+                        targetCycleEnd: toLocalDateKey(latestOutstandingBill.cycleEnd),
                       })
                     }
                     className="w-full rounded-xl bg-white/15 py-2.5 text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/25 transition-colors"
                   >
                     Pay bill from account
                   </button>
-                )}
+                ) : null}
                 <Link
                   to={`/accounts/${card.id}`}
                   className="text-center text-[10px] font-black uppercase tracking-widest text-blue-300 hover:text-white transition-colors"
@@ -198,6 +218,9 @@ export default function CardsPage({ hideHeader }: { hideHeader?: boolean }) {
                   View history →
                 </Link>
               </div>
+                  </>
+                );
+              })()}
             </div>
           </motion.div>
         ))}
@@ -214,6 +237,8 @@ export default function CardsPage({ hideHeader }: { hideHeader?: boolean }) {
             creditAccountName={card.name}
             suggestedAmount={payRequest.suggestedAmount}
             suggestedNote={payRequest.suggestedNote}
+            targetCycleStart={payRequest.targetCycleStart}
+            targetCycleEnd={payRequest.targetCycleEnd}
           />
         );
       })()}

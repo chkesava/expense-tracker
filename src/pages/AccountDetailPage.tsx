@@ -17,6 +17,8 @@ import {
   buildAccountActivities,
   computeBankBalance,
   computeCreditUsage,
+  getCreditBillHistory,
+  toLocalDateKey,
 } from "../utils/accountBalance";
 
 export default function AccountDetailPage() {
@@ -56,6 +58,13 @@ export default function AccountDetailPage() {
   const creditUsage = useMemo(() => {
     if (!account || kind !== "credit" || !account.billGenerationDay) return null;
     return computeCreditUsage(account, expenses, payments);
+  }, [account, kind, expenses, payments]);
+
+  const latestOutstandingBill = useMemo(() => {
+    if (!account || kind !== "credit" || !account.billGenerationDay) return null;
+    return getCreditBillHistory(account, expenses, payments, 6).find(
+      (bill) => bill.outstandingAmount > 0
+    ) ?? null;
   }, [account, kind, expenses, payments]);
 
   const activities = useMemo(() => {
@@ -179,7 +188,7 @@ export default function AccountDetailPage() {
               Limit resets {creditUsage.nextResetDate.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
               {" "}({creditUsage.daysRemaining} days)
             </p>
-            {creditUsage.usedThisCycle > 0 && (
+            {latestOutstandingBill && (
               <button
                 type="button"
                 onClick={() => setShowPayBill(true)}
@@ -283,7 +292,30 @@ export default function AccountDetailPage() {
           onClose={() => setShowPayBill(false)}
           creditAccountId={account.id}
           creditAccountName={account.name}
-          suggestedAmount={creditUsage && creditUsage.usedThisCycle > 0 ? creditUsage.usedThisCycle : undefined}
+          suggestedAmount={latestOutstandingBill?.outstandingAmount}
+          suggestedNote={
+            latestOutstandingBill
+              ? `Bill payment — ${latestOutstandingBill.cycleStart.toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })} - ${latestOutstandingBill.cycleEnd.toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}`
+              : undefined
+          }
+          targetCycleStart={
+            latestOutstandingBill
+              ? toLocalDateKey(latestOutstandingBill.cycleStart)
+              : undefined
+          }
+          targetCycleEnd={
+            latestOutstandingBill
+              ? toLocalDateKey(latestOutstandingBill.cycleEnd)
+              : undefined
+          }
         />
       )}
 

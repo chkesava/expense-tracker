@@ -59,6 +59,9 @@ export interface AccountPayment {
   amount: number;
   date: string;
   note?: string;
+  sourceType?: "account" | "external";
+  appliedCycleStart?: string;
+  appliedCycleEnd?: string;
   createdAt?: unknown;
 }
 

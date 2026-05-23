@@ -9,12 +9,65 @@ import type {
 import { getAccountKind } from "./accountKind";
 import { getBillingCycleDates, getDaysUntilReset } from "./billingCycle";
 
+export function toLocalDateKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function paymentBelongsToCycle(
+  payment: AccountPayment,
+  cycleStart: Date,
+  cycleEnd: Date
+): boolean {
+  const startKey = toLocalDateKey(cycleStart);
+  const endKey = toLocalDateKey(cycleEnd);
+  if (payment.appliedCycleStart || payment.appliedCycleEnd) {
+    return (
+      payment.appliedCycleStart === startKey &&
+      payment.appliedCycleEnd === endKey
+    );
+  }
+  const note = payment.note || "";
+  const noteRangeMatch = note.match(/(.+?)\s-\s(.+)$/);
+  if (noteRangeMatch) {
+    const parsedStart = new Date(noteRangeMatch[1].replace(/^.*?—\s*/, "").trim());
+    const parsedEnd = new Date(noteRangeMatch[2].trim());
+    if (
+      Number.isFinite(parsedStart.getTime()) &&
+      Number.isFinite(parsedEnd.getTime())
+    ) {
+      return (
+        toLocalDateKey(parsedStart) === startKey &&
+        toLocalDateKey(parsedEnd) === endKey
+      );
+    }
+  }
+  const d = new Date(payment.date);
+  return d >= cycleStart && d < cycleEnd;
+}
+
 function paymentsFromAccount(accountId: string, payments: AccountPayment[]) {
   return payments.filter((p) => p.fromAccountId === accountId);
 }
 
 function paymentsToAccount(accountId: string, payments: AccountPayment[]) {
   return payments.filter((p) => p.toAccountId === accountId);
+}
+
+function getPaymentCounterpartyName(
+  payment: AccountPayment,
+  direction: "incoming" | "outgoing",
+  accountNameById?: Record<string, string>
+): string {
+  if (payment.sourceType === "external" || payment.fromAccountId === "external") {
+    return "Already paid";
+  }
+  if (direction === "outgoing") {
+    return accountNameById?.[payment.toAccountId] ?? "Credit card";
+  }
+  return accountNameById?.[payment.fromAccountId] ?? "Bank account";
 }
 
 function entriesForAccount(accountId: string, entries: AccountEntry[]) {
@@ -24,12 +77,11 @@ function entriesForAccount(accountId: string, entries: AccountEntry[]) {
 function paymentsInBillingCycle(
   accountId: string,
   payments: AccountPayment[],
-  previousBillDate: Date,
-  nextBillDate: Date
+  cycleStart: Date,
+  cycleEnd: Date
 ) {
   return paymentsToAccount(accountId, payments).filter((p) => {
-    const d = new Date(p.date);
-    return d >= previousBillDate && d < nextBillDate;
+    return paymentBelongsToCycle(p, cycleStart, cycleEnd);
   });
 }
 
@@ -146,8 +198,7 @@ export function getCreditBillHistory(
     const paidAmount = payments
       .filter((p) => {
         if (p.toAccountId !== account.id) return false;
-        const d = new Date(p.date);
-        return d >= cycleStart && d < cycleEnd;
+        return paymentBelongsToCycle(p, cycleStart, cycleEnd);
       })
       .reduce((sum, p) => sum + p.amount, 0);
 
@@ -164,7 +215,7 @@ export function getCreditBillHistory(
           : "unpaid";
 
     history.push({
-      id: `${account.id}-${cycleStart.toISOString().slice(0, 10)}`,
+      id: `${account.id}-${toLocalDateKey(cycleStart)}`,
       accountId: account.id,
       cycleStart,
       cycleEnd,
@@ -233,7 +284,7 @@ export function buildAccountActivities(
       note: p.note || "Credit card bill payment",
       isBillPayment: true,
       linkedPaymentId: p.id,
-      counterpartyName: accountNameById?.[p.toAccountId] ?? "Credit card",
+      counterpartyName: getPaymentCounterpartyName(p, "outgoing", accountNameById),
     })),
     ...(kind === "credit"
       ? incomingPayments.map((p) => ({
@@ -244,7 +295,7 @@ export function buildAccountActivities(
           note: p.note || "Bill payment received",
           isBillPayment: true,
           linkedPaymentId: p.id,
-          counterpartyName: accountNameById?.[p.fromAccountId] ?? "Bank account",
+          counterpartyName: getPaymentCounterpartyName(p, "incoming", accountNameById),
         }))
       : []),
   ];
