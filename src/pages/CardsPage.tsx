@@ -9,14 +9,29 @@ import { useAccountTypes } from "../hooks/useAccountTypes";
 import { useExpenses } from "../hooks/useExpenses";
 import Amount from "../components/common/Amount";
 import { isCreditAccount } from "../utils/accountKind";
-import { computeCreditUsage } from "../utils/accountBalance";
+import { computeCreditUsage, getCreditBillHistory } from "../utils/accountBalance";
 
 export default function CardsPage({ hideHeader }: { hideHeader?: boolean }) {
   const { accounts } = useAccounts();
   const { accountTypes } = useAccountTypes();
   const { expenses } = useExpenses();
   const { payments } = useAccountPayments();
-  const [payCardId, setPayCardId] = useState<string | null>(null);
+  const [payRequest, setPayRequest] = useState<{
+    cardId: string;
+    suggestedAmount?: number;
+    suggestedNote?: string;
+  } | null>(null);
+
+  const formatCycleRange = (from: Date, to: Date) =>
+    `${from.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    })} - ${to.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    })}`;
 
   const creditCards = useMemo(() => {
     return accounts.filter((a) => {
@@ -31,6 +46,7 @@ export default function CardsPage({ hideHeader }: { hideHeader?: boolean }) {
       return {
         ...card,
         ...usage,
+        billHistory: getCreditBillHistory(card, expenses, payments, 6),
       };
     });
   }, [creditCards, expenses, payments]);
@@ -104,6 +120,47 @@ export default function CardsPage({ hideHeader }: { hideHeader?: boolean }) {
                 )}
               </div>
 
+              {card.billHistory.length > 0 && (
+                <div className="mb-4 rounded-2xl border border-white/10 bg-white/5 p-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    Previous bills
+                  </p>
+                  <div className="mt-2 space-y-2">
+                    {card.billHistory.slice(0, 3).map((bill) => (
+                      <div key={bill.id} className="rounded-xl border border-white/10 bg-black/10 px-3 py-2">
+                        <p className="text-[10px] font-bold text-slate-300">
+                          {formatCycleRange(bill.cycleStart, bill.cycleEnd)}
+                        </p>
+                        <p className="mt-1 text-xs font-bold text-slate-200">
+                          Bill: <Amount value={bill.billedAmount} /> · Paid: <Amount value={bill.paidAmount} />
+                        </p>
+                        <p className="text-[10px] font-semibold text-slate-400">
+                          Outstanding: <Amount value={bill.outstandingAmount} />
+                        </p>
+                        {bill.outstandingAmount > 0 && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPayRequest({
+                                cardId: card.id,
+                                suggestedAmount: bill.outstandingAmount,
+                                suggestedNote: `Bill payment — ${formatCycleRange(
+                                  bill.cycleStart,
+                                  bill.cycleEnd
+                                )}`,
+                              })
+                            }
+                            className="mt-2 w-full rounded-lg border border-white/15 bg-white/10 py-1.5 text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/20 transition-colors"
+                          >
+                            Pay this bill
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="mt-auto pt-6 border-t border-white/10 flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Limit resets</p>
@@ -123,10 +180,15 @@ export default function CardsPage({ hideHeader }: { hideHeader?: boolean }) {
                 {card.usedThisCycle > 0 && (
                   <button
                     type="button"
-                    onClick={() => setPayCardId(card.id)}
+                    onClick={() =>
+                      setPayRequest({
+                        cardId: card.id,
+                        suggestedAmount: card.usedThisCycle > 0 ? card.usedThisCycle : undefined,
+                      })
+                    }
                     className="w-full rounded-xl bg-white/15 py-2.5 text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/25 transition-colors"
                   >
-                    Pay bill from savings
+                    Pay bill from account
                   </button>
                 )}
                 <Link
@@ -140,16 +202,18 @@ export default function CardsPage({ hideHeader }: { hideHeader?: boolean }) {
           </motion.div>
         ))}
       </div>
-      {payCardId && (() => {
-        const card = cardsData.find((c) => c.id === payCardId);
+      {payRequest && (() => {
+        const card = cardsData.find((c) => c.id === payRequest.cardId);
         if (!card) return null;
         return (
           <PayCreditBillModal
+            key={`${card.id}-${payRequest.suggestedAmount ?? "none"}-${payRequest.suggestedNote ?? "none"}`}
             isOpen
-            onClose={() => setPayCardId(null)}
+            onClose={() => setPayRequest(null)}
             creditAccountId={card.id}
             creditAccountName={card.name}
-            suggestedAmount={card.usedThisCycle > 0 ? card.usedThisCycle : undefined}
+            suggestedAmount={payRequest.suggestedAmount}
+            suggestedNote={payRequest.suggestedNote}
           />
         );
       })()}

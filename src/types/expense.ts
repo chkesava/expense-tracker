@@ -62,6 +62,17 @@ export interface AccountPayment {
   createdAt?: unknown;
 }
 
+/** Manual account adjustment entry for non-credit account tracking */
+export interface AccountEntry {
+  id: string;
+  accountId: string;
+  amount: number;
+  direction: "credit" | "debit";
+  date: string;
+  note?: string;
+  createdAt?: unknown;
+}
+
 export interface AccountActivity {
   id: string;
   date: string;
@@ -73,7 +84,9 @@ export interface AccountActivity {
   linkedExpenseId?: string;
   linkedIncomeId?: string;
   linkedPaymentId?: string;
+  linkedAccountEntryId?: string;
   isBillPayment?: boolean;
+  isManualEntry?: boolean;
   counterpartyName?: string;
   runningBalance?: number;
 }

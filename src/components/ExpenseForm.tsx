@@ -8,6 +8,7 @@ import { useAccountTypes } from "../hooks/useAccountTypes";
 import { useExpenses } from "../hooks/useExpenses";
 import { useIncomes } from "../hooks/useIncomes";
 import { useAccountPayments } from "../hooks/useAccountPayments";
+import { useAccountEntries } from "../hooks/useAccountEntries";
 import { getAccountKind } from "../utils/accountKind";
 import { previewBalanceAfterTransaction } from "../utils/accountBalance";
 import { useCategories } from "../hooks/useCategories";
@@ -60,6 +61,7 @@ export default function ExpenseForm({
   const { expenses } = useExpenses();
   const { incomes } = useIncomes();
   const { payments } = useAccountPayments();
+  const { entries } = useAccountEntries();
   const { categories: userCategories } = useCategories();
   const { rules } = useCategorizationRules();
   const { trips, syncTripSpentAmount } = useTrips();
@@ -120,6 +122,7 @@ export default function ExpenseForm({
       type === "income" ? "income" : "expense",
       num,
       payments,
+      entries,
       excludeId
     );
   }, [
@@ -130,6 +133,7 @@ export default function ExpenseForm({
     expenses,
     incomes,
     payments,
+    entries,
     editingExpense?.id,
     editingIncome?.id,
   ]);
@@ -213,6 +217,7 @@ export default function ExpenseForm({
             "expense",
             Number(amount),
             payments,
+            entries,
             editingExpense?.id
           );
           if (preview != null && preview < 0) {

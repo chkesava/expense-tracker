@@ -1,11 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Modal from "./common/Modal";
 import { useAccounts } from "../hooks/useAccounts";
 import { useAccountTypes } from "../hooks/useAccountTypes";
 import { useExpenses } from "../hooks/useExpenses";
 import { useIncomes } from "../hooks/useIncomes";
 import { useAccountPayments } from "../hooks/useAccountPayments";
-import { isBankAccount } from "../utils/accountKind";
+import { useAccountEntries } from "../hooks/useAccountEntries";
+import { getAccountKind } from "../utils/accountKind";
 import { computeBankBalance, previewBalanceAfterBillPayment } from "../utils/accountBalance";
 import Amount from "./common/Amount";
 import { toast } from "react-toastify";
@@ -16,6 +17,7 @@ type PayCreditBillModalProps = {
   creditAccountId: string;
   creditAccountName: string;
   suggestedAmount?: number;
+  suggestedNote?: string;
 };
 
 export default function PayCreditBillModal({
@@ -24,23 +26,33 @@ export default function PayCreditBillModal({
   creditAccountId,
   creditAccountName,
   suggestedAmount,
+  suggestedNote,
 }: PayCreditBillModalProps) {
   const { accounts } = useAccounts();
   const { accountTypes } = useAccountTypes();
   const { expenses } = useExpenses();
   const { incomes } = useIncomes();
   const { payments, addPayment } = useAccountPayments();
+  const { entries } = useAccountEntries();
 
   const [fromAccountId, setFromAccountId] = useState("");
   const [amount, setAmount] = useState(suggestedAmount?.toString() ?? "");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [note, setNote] = useState("");
+  const [note, setNote] = useState(suggestedNote ?? "");
   const [submitting, setSubmitting] = useState(false);
 
-  const bankAccounts = useMemo(() => {
+  useEffect(() => {
+    setAmount(suggestedAmount?.toString() ?? "");
+  }, [suggestedAmount]);
+
+  useEffect(() => {
+    setNote(suggestedNote ?? "");
+  }, [suggestedNote]);
+
+  const sourceAccounts = useMemo(() => {
     return accounts.filter((a) => {
       const typeName = accountTypes.find((t) => t.id === a.typeId)?.name || "";
-      return isBankAccount(typeName) && a.balanceInitialized;
+      return getAccountKind(typeName) !== "credit" && a.balanceInitialized;
     });
   }, [accounts, accountTypes]);
 
@@ -58,13 +70,14 @@ export default function PayCreditBillModal({
       expenses,
       incomes,
       payments,
+      entries,
       num
     );
-  }, [selectedFrom, amount, expenses, incomes, payments]);
+  }, [selectedFrom, amount, expenses, incomes, payments, entries]);
 
   const handleSubmit = async () => {
     if (!fromAccountId) {
-      toast.error("Select a savings or bank account to pay from");
+      toast.error("Select an account to pay from");
       return;
     }
     const num = Number(amount);
@@ -94,19 +107,19 @@ export default function PayCreditBillModal({
     <Modal isOpen={isOpen} onClose={onClose} title="Pay credit card bill">
       <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Pay <span className="font-bold text-foreground">{creditAccountName}</span> from a savings or
-          bank account. This deducts your account balance only — it does not add an expense.
+          Pay <span className="font-bold text-foreground">{creditAccountName}</span> from a non-credit
+          account. This deducts your account balance only — it does not add an expense.
         </p>
 
-        {bankAccounts.length === 0 ? (
+        {sourceAccounts.length === 0 ? (
           <p className="rounded-xl bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-800 dark:text-amber-200">
-            Add a savings or bank account with an opening balance in Settings → Accounts first.
+            Add a non-credit account with an opening balance in Settings → Accounts first.
           </p>
         ) : (
           <>
             <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                Pay from (savings / bank)
+                Pay from account
               </label>
               <select
                 value={fromAccountId}
@@ -114,9 +127,9 @@ export default function PayCreditBillModal({
                 className="w-full rounded-xl border border-border bg-muted/50 px-3 py-2.5 text-sm font-bold"
               >
                 <option value="">Select account</option>
-                {bankAccounts.map((a) => {
+                {sourceAccounts.map((a) => {
                   const typeName = accountTypes.find((t) => t.id === a.typeId)?.name || "";
-                  const bal = computeBankBalance(a, expenses, incomes, payments);
+                  const bal = computeBankBalance(a, expenses, incomes, payments, entries);
                   return (
                     <option key={a.id} value={a.id}>
                       {a.name} ({typeName}) — ₹{bal.toLocaleString()}

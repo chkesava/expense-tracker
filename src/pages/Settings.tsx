@@ -27,7 +27,7 @@ import { useBiometrics } from "../hooks/useBiometrics";
 
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import { cn } from "../lib/utils";
-import { getAccountKind, isBankAccount, isCreditAccount } from "../utils/accountKind";
+import { getAccountKind, isCreditAccount } from "../utils/accountKind";
 
 const TIMEZONES = [
   "UTC",
@@ -727,7 +727,7 @@ export default function SettingsPage() {
                 <details className="rounded-2xl border border-slate-100/80 bg-white/60 p-4 dark:border-slate-800 dark:bg-slate-950/30">
                   <summary className="cursor-pointer list-none">
                     <div className="text-sm font-black text-slate-900 dark:text-slate-100">Accounts ({accounts.length})</div>
-                    <div className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">Savings and bank accounts need a starting balance. Pay credit bills from savings only.</div>
+                    <div className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">Any non-credit account can set a starting balance. Pay credit bills from non-credit accounts.</div>
                   </summary>
                   <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <input value={newAccountName} onChange={(e) => setNewAccountName(e.target.value)} placeholder="Account name" className={fieldClass} />
@@ -764,7 +764,7 @@ export default function SettingsPage() {
                           </>
                         );
                       }
-                      if (isBankAccount(typeName)) {
+                      if (!isCreditAccount(typeName)) {
                         return (
                           <input
                             type="number"
@@ -772,7 +772,7 @@ export default function SettingsPage() {
                             step="0.01"
                             value={newAccountOpeningBalance}
                             onChange={(e) => setNewAccountOpeningBalance(e.target.value)}
-                            placeholder="Current balance (required for savings / bank)"
+                            placeholder="Current balance (required for non-credit account)"
                             className={fieldClass}
                           />
                         );
@@ -784,8 +784,8 @@ export default function SettingsPage() {
                     onClick={async () => {
                       const typeName = accountTypes.find((t) => t.id === selectedAccountType)?.name || "";
                       const kind = getAccountKind(typeName);
-                      if (kind === "bank" && !newAccountOpeningBalance) {
-                        toast.error("Current balance is required for savings and bank accounts");
+                      if (kind !== "credit" && !newAccountOpeningBalance) {
+                        toast.error("Current balance is required for non-credit accounts");
                         return;
                       }
                       if (kind === "credit" && (!newAccountCreditLimit || !newAccountBillDay)) {
@@ -793,8 +793,8 @@ export default function SettingsPage() {
                         return;
                       }
                       await addAccount(newAccountName, selectedAccountType, {
-                        openingBalance: kind === "bank" ? Number(newAccountOpeningBalance) : undefined,
-                        balanceInitialized: kind === "bank" ? true : undefined,
+                        openingBalance: kind !== "credit" ? Number(newAccountOpeningBalance) : undefined,
+                        balanceInitialized: kind !== "credit" ? true : undefined,
                         creditLimit: kind === "credit" ? Number(newAccountCreditLimit) : undefined,
                         billGenerationDay: kind === "credit" ? Number(newAccountBillDay) : undefined,
                       });
@@ -813,7 +813,7 @@ export default function SettingsPage() {
                     {accounts.map((a) => {
                       const typeName = accountTypes.find((t) => t.id === a.typeId)?.name || "Unknown";
                       const kind = getAccountKind(typeName);
-                      const needsBalance = kind === "bank" && !a.balanceInitialized;
+                      const needsBalance = kind !== "credit" && !a.balanceInitialized;
                       const needsCreditLimit = kind === "credit" && !a.creditLimit;
                       return (
                         <div key={a.id} className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/60">
@@ -828,7 +828,7 @@ export default function SettingsPage() {
                           </div>
                           {needsBalance && (
                             <p className="text-xs font-bold text-amber-700 dark:text-amber-300">
-                              Set your current balance below so debits and bill payments track correctly.
+                              Set your current balance below so account tracking works correctly.
                             </p>
                           )}
                           {needsCreditLimit && (
@@ -843,7 +843,7 @@ export default function SettingsPage() {
                               Set credit limit
                             </button>
                           )}
-                          {kind === "bank" && (
+                          {kind !== "credit" && (
                             <div className="flex flex-wrap items-center gap-2">
                               <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
                                 Current balance:
@@ -904,20 +904,20 @@ export default function SettingsPage() {
                       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
                         <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl dark:bg-slate-900">
                           <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                            {kind === "bank" ? "Set opening balance" : "Set credit limit"}
+                            {kind !== "credit" ? "Set opening balance" : "Set credit limit"}
                           </h3>
                           <input
                             type="number"
                             min="0"
                             step="0.01"
-                            value={kind === "bank" ? setupBalanceValue : setupCreditLimit}
+                            value={kind !== "credit" ? setupBalanceValue : setupCreditLimit}
                             onChange={(e) =>
-                              kind === "bank"
+                              kind !== "credit"
                                 ? setSetupBalanceValue(e.target.value)
                                 : setSetupCreditLimit(e.target.value)
                             }
                             className={cn(fieldClass, "mt-3")}
-                            placeholder={kind === "bank" ? "Current balance" : "Credit limit"}
+                            placeholder={kind !== "credit" ? "Current balance" : "Credit limit"}
                           />
                           <div className="mt-4 flex gap-2">
                             <button
@@ -930,7 +930,7 @@ export default function SettingsPage() {
                             <button
                               type="button"
                               onClick={async () => {
-                                if (kind === "bank") {
+                                if (kind !== "credit") {
                                   await updateAccount(setupAccountId, {
                                     openingBalance: Number(setupBalanceValue) || 0,
                                     balanceInitialized: true,

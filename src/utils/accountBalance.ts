@@ -1,6 +1,7 @@
 import type {
   Account,
   AccountActivity,
+  AccountEntry,
   AccountPayment,
   Expense,
   Income,
@@ -14,6 +15,10 @@ function paymentsFromAccount(accountId: string, payments: AccountPayment[]) {
 
 function paymentsToAccount(accountId: string, payments: AccountPayment[]) {
   return payments.filter((p) => p.toAccountId === accountId);
+}
+
+function entriesForAccount(accountId: string, entries: AccountEntry[]) {
+  return entries.filter((e) => e.accountId === accountId);
 }
 
 function paymentsInBillingCycle(
@@ -32,7 +37,8 @@ export function computeBankBalance(
   account: Account,
   expenses: Expense[],
   incomes: Income[],
-  payments: AccountPayment[] = []
+  payments: AccountPayment[] = [],
+  entries: AccountEntry[] = []
 ): number {
   const opening = account.openingBalance ?? 0;
   const totalExpenses = expenses
@@ -45,7 +51,11 @@ export function computeBankBalance(
     (sum, p) => sum + p.amount,
     0
   );
-  return opening + totalIncomes - totalExpenses - billPaymentsOut;
+  const manualAdjustments = entriesForAccount(account.id, entries).reduce(
+    (sum, entry) => sum + (entry.direction === "credit" ? entry.amount : -entry.amount),
+    0
+  );
+  return opening + totalIncomes - totalExpenses - billPaymentsOut + manualAdjustments;
 }
 
 export function computeCreditUsage(
@@ -90,16 +100,96 @@ export function computeCreditUsage(
   };
 }
 
+export type CreditBillStatus = "unpaid" | "partiallyPaid" | "paid";
+
+export interface CreditBillSummary {
+  id: string;
+  accountId: string;
+  cycleStart: Date;
+  cycleEnd: Date;
+  billedAmount: number;
+  paidAmount: number;
+  outstandingAmount: number;
+  status: CreditBillStatus;
+}
+
+export function getCreditBillHistory(
+  account: Account,
+  expenses: Expense[],
+  payments: AccountPayment[] = [],
+  cycles = 6
+): CreditBillSummary[] {
+  const billDay = account.billGenerationDay ?? 1;
+  const { previousBillDate } = getBillingCycleDates(billDay);
+  const history: CreditBillSummary[] = [];
+
+  for (let i = 0; i < cycles; i += 1) {
+    const cycleEnd = new Date(
+      previousBillDate.getFullYear(),
+      previousBillDate.getMonth() - i,
+      billDay
+    );
+    const cycleStart = new Date(
+      previousBillDate.getFullYear(),
+      previousBillDate.getMonth() - i - 1,
+      billDay
+    );
+
+    const billedAmount = expenses
+      .filter((e) => {
+        if (e.accountId !== account.id) return false;
+        const d = new Date(e.date);
+        return d >= cycleStart && d < cycleEnd;
+      })
+      .reduce((sum, e) => sum + e.amount, 0);
+
+    const paidAmount = payments
+      .filter((p) => {
+        if (p.toAccountId !== account.id) return false;
+        const d = new Date(p.date);
+        return d >= cycleStart && d < cycleEnd;
+      })
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    if (billedAmount <= 0 && paidAmount <= 0) {
+      continue;
+    }
+
+    const outstandingAmount = Math.max(0, billedAmount - paidAmount);
+    const status: CreditBillStatus =
+      outstandingAmount === 0
+        ? "paid"
+        : paidAmount > 0
+          ? "partiallyPaid"
+          : "unpaid";
+
+    history.push({
+      id: `${account.id}-${cycleStart.toISOString().slice(0, 10)}`,
+      accountId: account.id,
+      cycleStart,
+      cycleEnd,
+      billedAmount,
+      paidAmount,
+      outstandingAmount,
+      status,
+    });
+  }
+
+  return history;
+}
+
 export function buildAccountActivities(
   account: Account,
   typeName: string,
   expenses: Expense[],
   incomes: Income[],
   payments: AccountPayment[] = [],
+  entries: AccountEntry[] = [],
   accountNameById?: Record<string, string>
 ): AccountActivity[] {
   const accountExpenses = expenses.filter((e) => e.accountId === account.id);
   const accountIncomes = incomes.filter((i) => i.accountId === account.id);
+  const accountEntries = entriesForAccount(account.id, entries);
   const kind = getAccountKind(typeName);
 
   const outgoingPayments = paymentsFromAccount(account.id, payments);
@@ -123,6 +213,17 @@ export function buildAccountActivities(
       note: i.note,
       source: i.source,
       linkedIncomeId: i.id,
+    })),
+    ...accountEntries.map((entry) => ({
+      id: `entry-${entry.id}`,
+      date: entry.date,
+      amount: entry.amount,
+      type: entry.direction,
+      note:
+        entry.note ||
+        (entry.direction === "credit" ? "Manual funds added" : "Manual account debit"),
+      linkedAccountEntryId: entry.id,
+      isManualEntry: true,
     })),
     ...outgoingPayments.map((p) => ({
       id: p.id,
@@ -152,7 +253,7 @@ export function buildAccountActivities(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  if (kind === "bank") {
+  if (kind !== "credit") {
     const opening = account.openingBalance ?? 0;
     let running = opening;
     const chronological = [...activities].sort((a, b) => {
@@ -179,10 +280,11 @@ export function previewBalanceAfterTransaction(
   transactionType: "expense" | "income",
   amount: number,
   payments: AccountPayment[] = [],
+  entries: AccountEntry[] = [],
   excludeId?: string
 ): number | null {
   const kind = getAccountKind(typeName);
-  if (kind === "bank") {
+  if (kind !== "credit") {
     const filteredExpenses = excludeId
       ? expenses.filter((e) => e.id !== excludeId)
       : expenses;
@@ -193,7 +295,8 @@ export function previewBalanceAfterTransaction(
       account,
       filteredExpenses,
       filteredIncomes,
-      payments
+      payments,
+      entries
     );
     if (transactionType === "expense") balance -= amount;
     else balance += amount;
@@ -211,7 +314,8 @@ export function previewBalanceAfterBillPayment(
   expenses: Expense[],
   incomes: Income[],
   payments: AccountPayment[],
+  entries: AccountEntry[],
   amount: number
 ): number {
-  return computeBankBalance(fromAccount, expenses, incomes, payments) - amount;
+  return computeBankBalance(fromAccount, expenses, incomes, payments, entries) - amount;
 }

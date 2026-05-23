@@ -7,6 +7,7 @@ import { useAccountTypes } from "../hooks/useAccountTypes";
 import { useExpenses } from "../hooks/useExpenses";
 import { useIncomes } from "../hooks/useIncomes";
 import { useAccountPayments } from "../hooks/useAccountPayments";
+import { useAccountEntries } from "../hooks/useAccountEntries";
 import Amount from "../components/common/Amount";
 import { getAccountKind } from "../utils/accountKind";
 import { computeBankBalance, computeCreditUsage } from "../utils/accountBalance";
@@ -18,20 +19,19 @@ export default function AccountsPage({ hideHeader }: { hideHeader?: boolean }) {
   const { expenses } = useExpenses();
   const { incomes } = useIncomes();
   const { payments } = useAccountPayments();
+  const { entries } = useAccountEntries();
 
   const grouped = useMemo(() => {
-    const bank: typeof accounts = [];
+    const cashLike: typeof accounts = [];
     const credit: typeof accounts = [];
-    const other: typeof accounts = [];
 
     for (const acc of accounts) {
       const typeName = accountTypes.find((t) => t.id === acc.typeId)?.name || "";
       const kind = getAccountKind(typeName);
-      if (kind === "bank") bank.push(acc);
-      else if (kind === "credit") credit.push(acc);
-      else other.push(acc);
+      if (kind !== "credit") cashLike.push(acc);
+      else credit.push(acc);
     }
-    return { bank, credit, other };
+    return { cashLike, credit };
   }, [accounts, accountTypes]);
 
   const renderAccountCard = (acc: (typeof accounts)[0]) => {
@@ -42,10 +42,10 @@ export default function AccountsPage({ hideHeader }: { hideHeader?: boolean }) {
     let primaryValue: number | null = null;
     let secondaryLabel = "";
 
-    if (kind === "bank") {
+    if (kind !== "credit") {
       primaryLabel = acc.balanceInitialized ? "Balance" : "Balance not set";
       primaryValue = acc.balanceInitialized
-        ? computeBankBalance(acc, expenses, incomes, payments)
+        ? computeBankBalance(acc, expenses, incomes, payments, entries)
         : null;
     } else if (kind === "credit" && acc.billGenerationDay) {
       const usage = computeCreditUsage(acc, expenses, payments);
@@ -108,13 +108,13 @@ export default function AccountsPage({ hideHeader }: { hideHeader?: boolean }) {
         </div>
       )}
 
-      {grouped.bank.length > 0 && (
+      {grouped.cashLike.length > 0 && (
         <section>
           <div className="mb-3 flex items-center gap-2">
             <Landmark className="h-4 w-4 text-primary" />
-            <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Bank & Savings</h3>
+            <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Non-Credit Accounts</h3>
           </div>
-          <div className="space-y-2">{grouped.bank.map(renderAccountCard)}</div>
+          <div className="space-y-2">{grouped.cashLike.map(renderAccountCard)}</div>
         </section>
       )}
 
@@ -128,15 +128,6 @@ export default function AccountsPage({ hideHeader }: { hideHeader?: boolean }) {
         </section>
       )}
 
-      {grouped.other.length > 0 && (
-        <section>
-          <div className="mb-3 flex items-center gap-2">
-            <Wallet className="h-4 w-4 text-primary" />
-            <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Other</h3>
-          </div>
-          <div className="space-y-2">{grouped.other.map(renderAccountCard)}</div>
-        </section>
-      )}
     </div>
   );
 }

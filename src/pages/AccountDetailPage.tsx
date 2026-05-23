@@ -7,8 +7,10 @@ import { useAccountTypes } from "../hooks/useAccountTypes";
 import { useExpenses } from "../hooks/useExpenses";
 import { useIncomes } from "../hooks/useIncomes";
 import { useAccountPayments } from "../hooks/useAccountPayments";
+import { useAccountEntries } from "../hooks/useAccountEntries";
 import Amount from "../components/common/Amount";
 import PayCreditBillModal from "../components/PayCreditBillModal";
+import AddAccountEntryModal from "../components/AddAccountEntryModal";
 import { cn } from "../lib/utils";
 import { getAccountKind } from "../utils/accountKind";
 import {
@@ -25,7 +27,9 @@ export default function AccountDetailPage() {
   const { expenses } = useExpenses();
   const { incomes } = useIncomes();
   const { payments } = useAccountPayments();
+  const { entries } = useAccountEntries();
   const [showPayBill, setShowPayBill] = useState(false);
+  const [showManualEntry, setShowManualEntry] = useState(false);
 
   const account = useMemo(
     () => accounts.find((a) => a.id === accountId),
@@ -45,9 +49,9 @@ export default function AccountDetailPage() {
   );
 
   const bankBalance = useMemo(() => {
-    if (!account || kind !== "bank") return null;
-    return computeBankBalance(account, expenses, incomes, payments);
-  }, [account, kind, expenses, incomes, payments]);
+    if (!account || kind === "credit") return null;
+    return computeBankBalance(account, expenses, incomes, payments, entries);
+  }, [account, kind, expenses, incomes, payments, entries]);
 
   const creditUsage = useMemo(() => {
     if (!account || kind !== "credit" || !account.billGenerationDay) return null;
@@ -62,9 +66,10 @@ export default function AccountDetailPage() {
       expenses,
       incomes,
       payments,
+      entries,
       accountNameById
     );
-  }, [account, typeName, expenses, incomes, payments, accountNameById]);
+  }, [account, typeName, expenses, incomes, payments, entries, accountNameById]);
 
   if (accountsLoading) {
     return (
@@ -108,7 +113,7 @@ export default function AccountDetailPage() {
         <h1 className="text-2xl font-black text-foreground">{account.name}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{typeName}</p>
 
-        {kind === "bank" && (
+        {kind !== "credit" && (
           <div className="mt-6">
             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Current balance</p>
             {account.balanceInitialized ? (
@@ -116,7 +121,7 @@ export default function AccountDetailPage() {
                 <Amount value={bankBalance ?? 0} className="mt-2 text-4xl font-black" />
                 <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
                   Starts from your entered balance, then adds income and subtracts expenses and credit-card
-                  bill payments on this account. It will not stay at ₹29,999 if transactions are linked here.
+                  bill payments on this account. It updates automatically as transactions are linked here.
                 </p>
               </>
             ) : (
@@ -128,6 +133,15 @@ export default function AccountDetailPage() {
               <p className="mt-2 text-xs text-muted-foreground">
                 Starting balance (when set): <Amount value={account.openingBalance} />
               </p>
+            )}
+            {account.balanceInitialized && (
+              <button
+                type="button"
+                onClick={() => setShowManualEntry(true)}
+                className="mt-4 w-full rounded-xl border border-border bg-muted/50 py-2.5 text-xs font-black uppercase tracking-wider text-foreground"
+              >
+                Add funds or debit
+              </button>
             )}
           </div>
         )}
@@ -171,7 +185,7 @@ export default function AccountDetailPage() {
                 onClick={() => setShowPayBill(true)}
                 className="w-full rounded-xl bg-primary py-3 text-sm font-black text-primary-foreground"
               >
-                Pay bill from savings / bank
+                Pay bill from account
               </button>
             )}
           </div>
@@ -198,8 +212,12 @@ export default function AccountDetailPage() {
                       act.type === "debit"
                         ? act.isBillPayment
                           ? "bg-indigo-500/10 text-indigo-600"
+                          : act.isManualEntry
+                            ? "bg-amber-500/10 text-amber-600"
                           : "bg-rose-500/10 text-rose-600"
-                        : "bg-emerald-500/10 text-emerald-600"
+                        : act.isManualEntry
+                          ? "bg-cyan-500/10 text-cyan-600"
+                          : "bg-emerald-500/10 text-emerald-600"
                     )}
                   >
                     {act.type === "debit" ? (
@@ -212,6 +230,9 @@ export default function AccountDetailPage() {
                     <p className="truncate text-sm font-bold text-foreground">
                       {act.isBillPayment
                         ? act.note || (act.type === "debit" ? "Credit card bill payment" : "Bill payment received")
+                        : act.isManualEntry
+                          ? act.note ||
+                            (act.type === "debit" ? "Manual account debit" : "Manual funds added")
                         : act.note || act.category || act.source || (act.type === "debit" ? "Expense" : "Income")}
                     </p>
                     <p className="text-[10px] font-medium text-muted-foreground">
@@ -220,6 +241,8 @@ export default function AccountDetailPage() {
                         ? act.type === "debit"
                           ? ` · Paid to ${act.counterpartyName}`
                           : ` · From ${act.counterpartyName}`
+                        : act.isManualEntry
+                          ? " · Manual entry"
                         : act.type === "debit"
                           ? " · Debit"
                           : " · Credit"}
@@ -234,8 +257,12 @@ export default function AccountDetailPage() {
                       act.type === "debit"
                         ? act.isBillPayment
                           ? "text-indigo-600"
+                          : act.isManualEntry
+                            ? "text-amber-600"
                           : "text-rose-600"
-                        : "text-emerald-600"
+                        : act.isManualEntry
+                          ? "text-cyan-600"
+                          : "text-emerald-600"
                     )}
                   />
                   {act.runningBalance != null && (
@@ -257,6 +284,14 @@ export default function AccountDetailPage() {
           creditAccountId={account.id}
           creditAccountName={account.name}
           suggestedAmount={creditUsage && creditUsage.usedThisCycle > 0 ? creditUsage.usedThisCycle : undefined}
+        />
+      )}
+
+      {kind !== "credit" && (
+        <AddAccountEntryModal
+          isOpen={showManualEntry}
+          onClose={() => setShowManualEntry(false)}
+          account={account}
         />
       )}
     </motion.main>
