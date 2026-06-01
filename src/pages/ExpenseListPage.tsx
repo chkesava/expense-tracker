@@ -5,7 +5,7 @@ import { useCategories } from "../hooks/useCategories";
 import { useAccountTypes } from "../hooks/useAccountTypes";
 import { useCategorizationRules } from "../hooks/useCategorizationRules";
 import { useTrips } from "../hooks/useTrips";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback, memo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { doc, getDoc, setDoc, deleteDoc, writeBatch, addDoc, collection, serverTimestamp, updateDoc } from "firebase/firestore";
@@ -414,7 +414,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
     };
 
     // --- COMMON LOGIC ---
-    const toggleSelection = (id: string) => {
+    const toggleSelection = useCallback((id: string) => {
         setSelectedIds(prev => {
             const next = new Set(prev);
             if (next.has(id)) next.delete(id);
@@ -422,7 +422,31 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
             if (next.size === 0) setIsSelectionMode(false);
             return next;
         });
-    };
+    }, []);
+
+    const handleSelectExpense = useCallback((e: any) => {
+        if (isSelectionMode) {
+            toggleSelection(e.id);
+        } else {
+            setViewingTransaction({ data: e, type: "expense" });
+        }
+    }, [isSelectionMode, toggleSelection]);
+
+    const handleDeleteExpense = useCallback((e: any) => {
+        setDeleteTarget({ id: e.id!, type: "expense", tripId: e.tripId });
+    }, []);
+
+    const handleSelectIncome = useCallback((i: any) => {
+        if (isSelectionMode) {
+            toggleSelection(i.id);
+        } else {
+            setViewingTransaction({ data: i, type: "income" });
+        }
+    }, [isSelectionMode, toggleSelection]);
+
+    const handleDeleteIncome = useCallback((i: any) => {
+        setDeleteTarget({ id: i.id!, type: "income" });
+    }, []);
 
     const handleBulkDelete = async () => {
         if (!user || !selectedIds.size) return;
@@ -685,9 +709,9 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                     expense={e}
                                                                     accounts={accounts}
                                                                     isSelected={selectedIds.has(e.id!)}
-                                                                    onSelect={() => isSelectionMode ? toggleSelection(e.id!) : setViewingTransaction({ data: e, type: "expense" })}
-                                                                    onEdit={() => setEditingExpense(e)}
-                                                                    onDelete={() => setDeleteTarget({ id: e.id!, type: "expense", tripId: e.tripId })}
+                                                                    onSelect={handleSelectExpense}
+                                                                    onEdit={setEditingExpense}
+                                                                    onDelete={handleDeleteExpense}
                                                                 />
                                                             ))}
                                                         </div>
@@ -706,9 +730,9 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                     expense={e}
                                                                     accounts={accounts}
                                                                     isSelected={selectedIds.has(e.id!)}
-                                                                    onSelect={() => isSelectionMode ? toggleSelection(e.id!) : setViewingTransaction({ data: e, type: "expense" })}
-                                                                    onEdit={() => setEditingExpense(e)}
-                                                                    onDelete={() => setDeleteTarget({ id: e.id!, type: "expense", tripId: e.tripId })}
+                                                                    onSelect={handleSelectExpense}
+                                                                    onEdit={setEditingExpense}
+                                                                    onDelete={handleDeleteExpense}
                                                                 />
                                                             ))}
                                                         </div>
@@ -727,9 +751,9 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                     expense={e}
                                                                     accounts={accounts}
                                                                     isSelected={selectedIds.has(e.id!)}
-                                                                    onSelect={() => isSelectionMode ? toggleSelection(e.id!) : setViewingTransaction({ data: e, type: "expense" })}
-                                                                    onEdit={() => setEditingExpense(e)}
-                                                                    onDelete={() => setDeleteTarget({ id: e.id!, type: "expense", tripId: e.tripId })}
+                                                                    onSelect={handleSelectExpense}
+                                                                    onEdit={setEditingExpense}
+                                                                    onDelete={handleDeleteExpense}
                                                                 />
                                                             ))}
                                                         </div>
@@ -837,9 +861,10 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                         key={i.id}
                                                                         income={i}
                                                                         accounts={accounts}
-                                                                        onSelect={() => isSelectionMode ? toggleSelection(i.id!) : setViewingTransaction({ data: i, type: "income" })}
-                                                                        onEdit={() => setEditingIncome(i)}
-                                                                        onDelete={() => setDeleteTarget({ id: i.id!, type: "income" })}
+                                                                        isSelected={selectedIds.has(i.id!)}
+                                                                        onSelect={handleSelectIncome}
+                                                                        onEdit={setEditingIncome}
+                                                                        onDelete={handleDeleteIncome}
                                                                     />
                                                                 ))}
                                                             </div>
@@ -857,9 +882,10 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                         key={i.id}
                                                                         income={i}
                                                                         accounts={accounts}
-                                                                        onSelect={() => isSelectionMode ? toggleSelection(i.id!) : setViewingTransaction({ data: i, type: "income" })}
-                                                                        onEdit={() => setEditingIncome(i)}
-                                                                        onDelete={() => setDeleteTarget({ id: i.id!, type: "income" })}
+                                                                        isSelected={selectedIds.has(i.id!)}
+                                                                        onSelect={handleSelectIncome}
+                                                                        onEdit={setEditingIncome}
+                                                                        onDelete={handleDeleteIncome}
                                                                     />
                                                                 ))}
                                                             </div>
@@ -877,9 +903,10 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                         key={i.id}
                                                                         income={i}
                                                                         accounts={accounts}
-                                                                        onSelect={() => isSelectionMode ? toggleSelection(i.id!) : setViewingTransaction({ data: i, type: "income" })}
-                                                                        onEdit={() => setEditingIncome(i)}
-                                                                        onDelete={() => setDeleteTarget({ id: i.id!, type: "income" })}
+                                                                        isSelected={selectedIds.has(i.id!)}
+                                                                        onSelect={handleSelectIncome}
+                                                                        onEdit={setEditingIncome}
+                                                                        onDelete={handleDeleteIncome}
                                                                     />
                                                                 ))}
                                                             </div>
@@ -1292,7 +1319,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
     );
 }
 
-function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete }: any) {
+const ExpenseRow = memo(({ expense, accounts, isSelected, onSelect, onEdit, onDelete }: any) => {
     const acc = accounts.find((a: any) => a.id === expense.accountId);
     const [showMenu, setShowMenu] = useState(false);
     const { theme } = useTheme();
@@ -1330,7 +1357,7 @@ function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete 
 
     return (
         <div
-            onClick={onSelect}
+            onClick={() => onSelect(expense)}
             className={cn(
                 "group relative flex flex-col p-4 sm:p-5 mx-3 my-2 sm:mx-5 sm:my-3 transition-all cursor-pointer rounded-3xl border",
                 isSelected
@@ -1391,7 +1418,7 @@ function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete 
                                 )}
                             >
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); onEdit(); setShowMenu(false); }}
+                                    onClick={(e) => { e.stopPropagation(); onEdit(expense); setShowMenu(false); }}
                                     className={cn(
                                         "w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-blue-600 transition-colors border-b",
                                         isClay
@@ -1402,7 +1429,7 @@ function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete 
                                     <Edit2 size={12} /> Edit
                                 </button>
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); onDelete(); setShowMenu(false); }}
+                                    onClick={(e) => { e.stopPropagation(); onDelete(expense); setShowMenu(false); }}
                                     className={cn(
                                         "w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-rose-600 transition-colors",
                                         isClay ? "hover:bg-rose-50/50 dark:hover:bg-rose-500/10" : "hover:bg-rose-50 dark:hover:bg-rose-500/10"
@@ -1445,9 +1472,22 @@ function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete 
             </div>
         </div>
     );
-}
+}, (prevProps, nextProps) => {
+    return (
+        prevProps.expense.id === nextProps.expense.id &&
+        prevProps.expense.amount === nextProps.expense.amount &&
+        prevProps.expense.category === nextProps.expense.category &&
+        prevProps.expense.note === nextProps.expense.note &&
+        prevProps.expense.date === nextProps.expense.date &&
+        prevProps.expense.accountId === nextProps.expense.accountId &&
+        prevProps.expense.tripId === nextProps.expense.tripId &&
+        prevProps.expense.isAudited === nextProps.expense.isAudited &&
+        prevProps.isSelected === nextProps.isSelected &&
+        prevProps.accounts === nextProps.accounts
+    );
+});
 
-function IncomeRow({ income, accounts, onEdit, onDelete, onSelect }: any) {
+const IncomeRow = memo(({ income, accounts, isSelected, onEdit, onDelete, onSelect }: any) => {
     const acc = accounts.find((a: any) => a.id === income.accountId);
     const [showMenu, setShowMenu] = useState(false);
     const { theme } = useTheme();
@@ -1468,16 +1508,27 @@ function IncomeRow({ income, accounts, onEdit, onDelete, onSelect }: any) {
         clayBadgeClass = "clay-badge-freelance";
     }
 
-    let iconClass = isClay ? clayBadgeClass : badgeColorClass;
+    let iconClass = "";
+    if (isSelected) {
+        iconClass = "bg-slate-900 dark:bg-white text-white dark:text-slate-900";
+    } else if (isClay) {
+        iconClass = clayBadgeClass;
+    } else {
+        iconClass = badgeColorClass;
+    }
 
     return (
         <div
-            onClick={onSelect}
+            onClick={() => onSelect(income)}
             className={cn(
                 "group relative flex flex-col p-4 sm:p-5 mx-3 my-2 sm:mx-5 sm:my-3 transition-all cursor-pointer rounded-3xl border",
-                isClay
-                    ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card hover:shadow-clay-card-hover"
-                    : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-lg hover:border-slate-200 dark:hover:border-slate-700"
+                isSelected
+                    ? isClay
+                        ? "bg-blue-500/10 dark:bg-blue-500/20 ring-2 ring-inset ring-blue-500 border-transparent shadow-[0_8px_16px_rgba(59,130,246,0.15)]"
+                        : "bg-blue-50/80 dark:bg-blue-500/10 ring-2 ring-inset ring-blue-500 border-transparent shadow-md"
+                    : isClay
+                        ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card hover:shadow-clay-card-hover"
+                        : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-lg hover:border-slate-200 dark:hover:border-slate-700"
             )}
         >
             {/* Account Tag Inline */}
@@ -1529,7 +1580,7 @@ function IncomeRow({ income, accounts, onEdit, onDelete, onSelect }: any) {
                                 )}
                             >
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); onEdit(); setShowMenu(false); }}
+                                    onClick={(e) => { e.stopPropagation(); onEdit(income); setShowMenu(false); }}
                                     className={cn(
                                         "w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-blue-600 transition-colors border-b",
                                         isClay
@@ -1540,7 +1591,7 @@ function IncomeRow({ income, accounts, onEdit, onDelete, onSelect }: any) {
                                     <Edit2 size={12} /> Edit
                                 </button>
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); onDelete(); setShowMenu(false); }}
+                                    onClick={(e) => { e.stopPropagation(); onDelete(income); setShowMenu(false); }}
                                     className={cn(
                                         "w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-rose-600 transition-colors",
                                         isClay ? "hover:bg-rose-50/50 dark:hover:bg-rose-500/10" : "hover:bg-rose-50 dark:hover:bg-rose-500/10"
@@ -1583,4 +1634,15 @@ function IncomeRow({ income, accounts, onEdit, onDelete, onSelect }: any) {
             </div>
         </div>
     );
-}
+}, (prevProps, nextProps) => {
+    return (
+        prevProps.income.id === nextProps.income.id &&
+        prevProps.income.amount === nextProps.income.amount &&
+        prevProps.income.source === nextProps.income.source &&
+        prevProps.income.note === nextProps.income.note &&
+        prevProps.income.date === nextProps.income.date &&
+        prevProps.income.accountId === nextProps.income.accountId &&
+        prevProps.isSelected === nextProps.isSelected &&
+        prevProps.accounts === nextProps.accounts
+    );
+});

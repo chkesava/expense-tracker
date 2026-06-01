@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import { useEffect, useId, useRef } from "react";
 import { cn } from "../../lib/utils";
 import { useFocusTrap } from "../../hooks/useFocusTrap";
+import { useTheme } from "../../hooks/useTheme";
 
 interface ModalProps {
   isOpen: boolean;
@@ -16,6 +17,8 @@ export default function Modal({ isOpen, onClose, title, children, className }: M
   const panelRef = useRef<HTMLDivElement | null>(null);
   const titleId = useId();
   useFocusTrap(isOpen, panelRef);
+  const { theme } = useTheme();
+  const isClay = theme === "claymorphism";
 
   // Close on Esc key
   useEffect(() => {
@@ -74,7 +77,9 @@ export default function Modal({ isOpen, onClose, title, children, className }: M
               // Mobile: full-width sheet from bottom with rounded top corners
               // Desktop: centered card with full rounded corners
               "relative w-full sm:max-w-lg premium-glass shadow-2xl overflow-hidden flex flex-col border border-white/20",
-              "rounded-t-[2rem] sm:rounded-[2rem]",
+              isClay 
+                ? "rounded-t-[2.5rem] sm:rounded-[2.5rem]" 
+                : "rounded-t-[2rem] sm:rounded-[2rem]",
               // Height: on mobile leave space for bottom nav (~80px) + safe area
               "max-h-[85dvh] sm:max-h-[90dvh]",
               className

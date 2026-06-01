@@ -69,7 +69,9 @@ export default function PageHeader({
             return (
               <button
                 key={tab.id}
-                onClick={() => onTabChange?.(tab.id)}
+                onClick={() => {
+                  if (!isActive) onTabChange?.(tab.id);
+                }}
                 role="tab"
                 id={`tab-${tab.id}`}
                 aria-selected={isActive}

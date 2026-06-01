@@ -1,35 +1,15 @@
+import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
-import { AuthProvider, useAuth } from "./hooks/useAuth";
+import { useAuth } from "./hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useEffect } from "react";
 
-import AddExpense from "./pages/AddExpense";
-import ExpenseListPage from "./pages/ExpenseListPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
-import Dashboard from "./pages/Dashboard";
-import SeedDataPage from "./pages/SeedData";
 import Header from "./components/Header";
 import MobileActionDock from "./components/MobileActionDock";
 import BottomNav from "./components/BottomNav";
 import PrivacyLock from "./components/PrivacyLock";
-import AnalysisLab from "./pages/AnalysisLab";
-import SettingsPage from "./pages/Settings";
-import SubscriptionsPage from "./pages/SubscriptionsPage";
 import useSettings, { SettingsProvider } from "./hooks/useSettings";
-import SplitPage from "./pages/SplitPage";
-import SplitDetailPage from "./pages/SplitDetailPage";
-import CreateTripWizard from "./pages/CreateTripWizard";
-import TripDetailPage from "./pages/TripDetailPage";
-import NotFound from "./pages/NotFound";
-import LedgerHub from "./pages/LedgerHub";
-import AccountDetailPage from "./pages/AccountDetailPage";
-import InvestmentDetailPage from "./pages/InvestmentDetailPage";
-import InsightsHub from "./pages/InsightsHub";
-import VaultsPage from "./pages/VaultsPage";
-import VaultDetailPage from "./pages/VaultDetailPage";
-import PaymentRequestPage from "./pages/PaymentRequestPage";
 
 import { useSubscriptions } from "./hooks/useSubscriptions";
 import { useTheme } from "./hooks/useTheme";
@@ -40,11 +20,37 @@ import ExpenseForm from "./components/ExpenseForm";
 import MonthDrawer from "./components/MonthDrawer";
 import CelebrationOverlay from "./components/CelebrationOverlay";
 
-import AdminDashboard from "./admin/pages/AdminDashboard";
-import AdminUsers from "./admin/pages/AdminUsers";
-import AdminUserDetail from "./admin/pages/AdminUserDetail";
 import AdminRouteGuard from "./guards/AdminRouteGuard";
 import AuthPage from "./pages/AuthPage";
+import AuraBackground from "./components/layout/AuraBackground";
+import { LedgerStateProvider } from "./hooks/useLedgerState";
+
+const AddExpense = lazy(() => import("./pages/AddExpense"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const SeedDataPage = lazy(() => import("./pages/SeedData"));
+const SettingsPage = lazy(() => import("./pages/Settings"));
+const SplitDetailPage = lazy(() => import("./pages/SplitDetailPage"));
+const CreateTripWizard = lazy(() => import("./pages/CreateTripWizard"));
+const TripDetailPage = lazy(() => import("./pages/TripDetailPage"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const LedgerHub = lazy(() => import("./pages/LedgerHub"));
+const AccountDetailPage = lazy(() => import("./pages/AccountDetailPage"));
+const InvestmentDetailPage = lazy(() => import("./pages/InvestmentDetailPage"));
+const InsightsHub = lazy(() => import("./pages/InsightsHub"));
+const VaultsPage = lazy(() => import("./pages/VaultsPage"));
+const VaultDetailPage = lazy(() => import("./pages/VaultDetailPage"));
+const PaymentRequestPage = lazy(() => import("./pages/PaymentRequestPage"));
+const AdminDashboard = lazy(() => import("./admin/pages/AdminDashboard"));
+const AdminUsers = lazy(() => import("./admin/pages/AdminUsers"));
+const AdminUserDetail = lazy(() => import("./admin/pages/AdminUserDetail"));
+
+function RouteFallback() {
+  return (
+    <div className="flex min-h-[50dvh] items-center justify-center px-6">
+      <div className="h-9 w-9 animate-spin rounded-full border-2 border-muted border-t-primary" />
+    </div>
+  );
+}
 
 function PaySlugRedirect() {
   const { slug } = useParams<{ slug: string }>();
@@ -89,8 +95,6 @@ function AppContent() {
   );
 }
 
-import AuraBackground from "./components/layout/AuraBackground";
-
 function AppRoutes() {
   const location = useLocation();
   const { settings } = useSettings();
@@ -124,37 +128,39 @@ function AppRoutes() {
 
         <div id="main-content" className="flex-1 w-full pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
           <AnimatePresence mode="wait">
-            <Routes location={location} key={location.pathname}>
-              <Route path="/" element={<Navigate to={`/${settings.defaultView || 'dashboard'}`} replace />} />
-              <Route path="/add" element={<AddExpense />} />
-              <Route path="/ledger" element={<LedgerHub />} />
-              <Route path="/accounts/:accountId" element={<AccountDetailPage />} />
-              <Route path="/investments/:investmentId" element={<InvestmentDetailPage />} />
-              <Route path="/insights" element={<InsightsHub />} />
-              <Route path="/vaults" element={<VaultsPage />} />
-              <Route path="/vaults/:vaultId" element={<VaultDetailPage />} />
+            <Suspense fallback={<RouteFallback />}>
+              <Routes location={location} key={location.pathname}>
+                <Route path="/" element={<Navigate to={`/${settings.defaultView || 'dashboard'}`} replace />} />
+                <Route path="/add" element={<AddExpense />} />
+                <Route path="/ledger" element={<LedgerHub />} />
+                <Route path="/accounts/:accountId" element={<AccountDetailPage />} />
+                <Route path="/investments/:investmentId" element={<InvestmentDetailPage />} />
+                <Route path="/insights" element={<InsightsHub />} />
+                <Route path="/vaults" element={<VaultsPage />} />
+                <Route path="/vaults/:vaultId" element={<VaultDetailPage />} />
 
-              {/* Legacy redirects */}
-              <Route path="/expenses" element={<Navigate to="/ledger?tab=expenses" replace />} />
-              <Route path="/split" element={<Navigate to="/ledger?tab=splits" replace />} />
-              <Route path="/subscriptions" element={<Navigate to="/ledger?tab=subscriptions" replace />} />
-              <Route path="/analytics" element={<Navigate to="/insights?tab=analytics" replace />} />
-              <Route path="/analysis" element={<Navigate to="/insights?tab=search" replace />} />
+                {/* Legacy redirects */}
+                <Route path="/expenses" element={<Navigate to="/ledger?tab=expenses" replace />} />
+                <Route path="/split" element={<Navigate to="/ledger?tab=splits" replace />} />
+                <Route path="/subscriptions" element={<Navigate to="/ledger?tab=subscriptions" replace />} />
+                <Route path="/analytics" element={<Navigate to="/insights?tab=analytics" replace />} />
+                <Route path="/analysis" element={<Navigate to="/insights?tab=search" replace />} />
 
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/collect" element={<Navigate to="/ledger?tab=collect" replace />} />
-              <Route path="/split/:id" element={<SplitDetailPage />} />
-              <Route path="/travel/new" element={<CreateTripWizard />} />
-              <Route path="/travel/:tripId" element={<TripDetailPage />} />
-              {import.meta.env.DEV && (
-                <Route path="/seed" element={<SeedDataPage />} />
-              )}
-              <Route path="/admin" element={<AdminRouteGuard><AdminDashboard /></AdminRouteGuard>} />
-              <Route path="/admin/users" element={<AdminRouteGuard><AdminUsers /></AdminRouteGuard>} />
-              <Route path="/admin/user/:userId" element={<AdminRouteGuard><AdminUserDetail /></AdminRouteGuard>} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/collect" element={<Navigate to="/ledger?tab=collect" replace />} />
+                <Route path="/split/:id" element={<SplitDetailPage />} />
+                <Route path="/travel/new" element={<CreateTripWizard />} />
+                <Route path="/travel/:tripId" element={<TripDetailPage />} />
+                {import.meta.env.DEV && (
+                  <Route path="/seed" element={<SeedDataPage />} />
+                )}
+                <Route path="/admin" element={<AdminRouteGuard><AdminDashboard /></AdminRouteGuard>} />
+                <Route path="/admin/users" element={<AdminRouteGuard><AdminUsers /></AdminRouteGuard>} />
+                <Route path="/admin/user/:userId" element={<AdminRouteGuard><AdminUserDetail /></AdminRouteGuard>} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
           </AnimatePresence>
         </div>
 
@@ -163,8 +169,6 @@ function AppRoutes() {
     </>
   );
 }
-
-import { LedgerStateProvider } from "./hooks/useLedgerState";
 
 export default function App() {
   const { theme } = useTheme();
@@ -176,11 +180,13 @@ export default function App() {
         <ModalProvider>
           <LedgerStateProvider>
             <CelebrationProvider>
-              <Routes>
-                <Route path="/payment/:slug" element={<PaymentRequestPage />} />
-                <Route path="/pay/:slug" element={<PaySlugRedirect />} />
-                <Route path="*" element={<AppContent />} />
-              </Routes>
+              <Suspense fallback={<RouteFallback />}>
+                <Routes>
+                  <Route path="/payment/:slug" element={<PaymentRequestPage />} />
+                  <Route path="/pay/:slug" element={<PaySlugRedirect />} />
+                  <Route path="*" element={<AppContent />} />
+                </Routes>
+              </Suspense>
             </CelebrationProvider>
           </LedgerStateProvider>
         </ModalProvider>

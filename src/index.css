@@ -817,7 +817,7 @@
       inset -8px -8px 20px rgba(165, 140, 220, 0.12),
       /* Soft external floating glow shadow */
       0 12px 32px -8px rgba(165, 140, 220, 0.3);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2), box-shadow 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2), background 0.4s ease, border-color 0.4s ease;
   }
 
   .theme-claymorphism .bento-card:hover,
@@ -844,7 +844,7 @@
       inset 4px 4px 12px rgba(165, 140, 220, 0.15),
       /* Bottom-right light highlight */
       inset -2px -2px 6px rgba(255, 255, 255, 0.85);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .theme-claymorphism input:focus,
@@ -865,7 +865,7 @@
 
   /* Base transitions and font settings for all claymorphic buttons */
   .theme-claymorphism button {
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   }
 
   /* 1. CLAY PRIMARY BUTTONS (Indigo/Blue/Purple gradients) */
@@ -1084,7 +1084,7 @@
 
   .theme-claymorphism [role="tab"] {
     border-radius: 1rem;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2), box-shadow 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2), background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
   }
 
   .theme-claymorphism [role="tab"][data-state="active"],

@@ -1,19 +1,28 @@
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import ExpenseListPage from "./ExpenseListPage";
-import SplitPage from "./SplitPage";
-import SubscriptionsPage from "./SubscriptionsPage";
-import TripsPage from "./TripsPage";
-import CardsPage from "./CardsPage";
-import AccountsPage from "./AccountsPage";
-import InvestmentsPage from "./InvestmentsPage";
-import PaymentRequestsPage from "./PaymentRequestsPage";
 import { Wallet, Users, RefreshCw, Plane, CreditCard, Landmark, QrCode, TrendingUp } from "lucide-react";
 import PageHeader from "../components/layout/PageHeader";
 import PageShell from "../components/layout/PageShell";
 
 type LedgerTab = "expenses" | "splits" | "subscriptions" | "travel" | "cards" | "accounts" | "investments" | "collect";
+
+const ExpenseListPage = lazy(() => import("./ExpenseListPage"));
+const SplitPage = lazy(() => import("./SplitPage"));
+const SubscriptionsPage = lazy(() => import("./SubscriptionsPage"));
+const TripsPage = lazy(() => import("./TripsPage"));
+const CardsPage = lazy(() => import("./CardsPage"));
+const AccountsPage = lazy(() => import("./AccountsPage"));
+const InvestmentsPage = lazy(() => import("./InvestmentsPage"));
+const PaymentRequestsPage = lazy(() => import("./PaymentRequestsPage"));
+
+function TabFallback() {
+  return (
+    <div className="flex min-h-64 items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+    </div>
+  );
+}
 
 export default function LedgerHub() {
   const location = useLocation();
@@ -25,13 +34,15 @@ export default function LedgerHub() {
     ? (tabFromUrl as LedgerTab)
     : "expenses";
 
-  const handleTabChange = (tabId: string) => {
+  const handleTabChange = useCallback((tabId: string) => {
+    if (tabId === activeTab) return;
+
     const params = new URLSearchParams(location.search);
     params.set("tab", tabId);
     navigate({ search: params.toString() }, { replace: true });
-  };
+  }, [activeTab, location.search, navigate]);
 
-  const tabs = [
+  const tabs = useMemo(() => [
     { id: "expenses", label: "Journal", icon: <Wallet size={16} /> },
     { id: "splits", label: "Splits", icon: <Users size={16} /> },
     { id: "subscriptions", label: "Recurring", icon: <RefreshCw size={16} /> },
@@ -40,7 +51,7 @@ export default function LedgerHub() {
     { id: "accounts", label: "Accounts", icon: <Landmark size={16} /> },
     { id: "investments", label: "Investments", icon: <TrendingUp size={16} /> },
     { id: "collect", label: "Collect", icon: <QrCode size={16} /> },
-  ];
+  ], []);
 
   return (
     <PageShell width="standard">
@@ -67,14 +78,16 @@ export default function LedgerHub() {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
           >
-            {activeTab === "expenses" && <ExpenseListPage hideHeader />}
-            {activeTab === "splits" && <SplitPage hideHeader />}
-            {activeTab === "subscriptions" && <SubscriptionsPage hideHeader />}
-            {activeTab === "travel" && <TripsPage hideHeader />}
-            {activeTab === "cards" && <CardsPage hideHeader />}
-            {activeTab === "accounts" && <AccountsPage hideHeader />}
-            {activeTab === "investments" && <InvestmentsPage hideHeader />}
-            {activeTab === "collect" && <PaymentRequestsPage hideHeader />}
+            <Suspense fallback={<TabFallback />}>
+              {activeTab === "expenses" && <ExpenseListPage hideHeader />}
+              {activeTab === "splits" && <SplitPage hideHeader />}
+              {activeTab === "subscriptions" && <SubscriptionsPage hideHeader />}
+              {activeTab === "travel" && <TripsPage hideHeader />}
+              {activeTab === "cards" && <CardsPage hideHeader />}
+              {activeTab === "accounts" && <AccountsPage hideHeader />}
+              {activeTab === "investments" && <InvestmentsPage hideHeader />}
+              {activeTab === "collect" && <PaymentRequestsPage hideHeader />}
+            </Suspense>
           </motion.div>
         </AnimatePresence>
       </motion.div>

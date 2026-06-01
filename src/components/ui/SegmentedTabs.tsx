@@ -36,7 +36,9 @@ export default function SegmentedTabs<T extends string>({
             id={`tab-${item.id}`}
             aria-selected={isActive}
             aria-controls={`panel-${item.id}`}
-            onClick={() => onChange(item.id)}
+            onClick={() => {
+              if (!isActive) onChange(item.id);
+            }}
             className={cn(
               "relative flex items-center gap-2 rounded-2xl border px-4 py-2 text-xs font-black uppercase tracking-widest transition-all",
               isActive

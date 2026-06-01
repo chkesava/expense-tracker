@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { cn } from "../../lib/utils";
 import { useFocusTrap } from "../../hooks/useFocusTrap";
 import Button from "../ui/Button";
+import { useTheme } from "../../hooks/useTheme";
 
 export default function ConfirmDialog({
   open,
@@ -26,6 +27,8 @@ export default function ConfirmDialog({
 }) {
   const panelRef = useRef<HTMLDivElement | null>(null);
   useFocusTrap(open, panelRef);
+  const { theme } = useTheme();
+  const isClay = theme === "claymorphism";
   const icon = variant === "destructive" ? <Trash2 size={20} /> : <AlertTriangle size={20} />;
 
   return (
@@ -38,7 +41,7 @@ export default function ConfirmDialog({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onCancel}
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
           />
 
           {/* Dialog */}
@@ -47,7 +50,12 @@ export default function ConfirmDialog({
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-border bg-card text-card-foreground shadow-2xl"
+            className={cn(
+              "relative w-full max-w-sm overflow-hidden text-card-foreground shadow-2xl",
+              isClay 
+                ? "premium-glass border-2 border-white/90 rounded-[2.5rem] shadow-clay-card shadow-[inset_4px_4px_10px_rgba(255,255,255,0.95)]" 
+                : "rounded-3xl border border-border bg-card"
+            )}
             role="dialog"
             aria-modal="true"
             aria-labelledby="confirm-dialog-title"

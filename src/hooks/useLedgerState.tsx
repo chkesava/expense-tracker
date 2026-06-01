@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useMemo, useState } from "react";
 
 export type ExpensesTab = "history" | "income" | "audit" | "data";
 export type SplitTab = "activity" | "management";
@@ -58,35 +58,48 @@ export function LedgerStateProvider({ children }: { children: React.ReactNode })
 
   const [collectTab, setCollectTab] = useState<CollectTab>("requests");
 
+  const value = useMemo(() => ({
+    expensesTab,
+    setExpensesTab,
+    selectedCategory,
+    setSelectedCategory,
+    selectedAccountId,
+    setSelectedAccountId,
+    selectedAccountTypeId,
+    setSelectedAccountTypeId,
+    showFilters,
+    setShowFilters,
+    query,
+    setQuery,
+    sortField,
+    setSortField,
+    sortOrder,
+    setSortOrder,
+    splitTab,
+    setSplitTab,
+    splitActivityFilter,
+    setSplitActivityFilter,
+    subscriptionsTab,
+    setSubscriptionsTab,
+    collectTab,
+    setCollectTab,
+  }), [
+    expensesTab,
+    selectedCategory,
+    selectedAccountId,
+    selectedAccountTypeId,
+    showFilters,
+    query,
+    sortField,
+    sortOrder,
+    splitTab,
+    splitActivityFilter,
+    subscriptionsTab,
+    collectTab,
+  ]);
+
   return (
-    <LedgerStateContext.Provider
-      value={{
-        expensesTab,
-        setExpensesTab,
-        selectedCategory,
-        setSelectedCategory,
-        selectedAccountId,
-        setSelectedAccountId,
-        selectedAccountTypeId,
-        setSelectedAccountTypeId,
-        showFilters,
-        setShowFilters,
-        query,
-        setQuery,
-        sortField,
-        setSortField,
-        sortOrder,
-        setSortOrder,
-        splitTab,
-        setSplitTab,
-        splitActivityFilter,
-        setSplitActivityFilter,
-        subscriptionsTab,
-        setSubscriptionsTab,
-        collectTab,
-        setCollectTab,
-      }}
-    >
+    <LedgerStateContext.Provider value={value}>
       {children}
     </LedgerStateContext.Provider>
   );

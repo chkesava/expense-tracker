@@ -1,14 +1,23 @@
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart3, Search, CalendarDays } from "lucide-react";
 import PageHeader from "../components/layout/PageHeader";
-import AnalyticsPage from "./AnalyticsPage";
-import AnalysisLab from "./AnalysisLab";
-import YearlyAnalytics from "./YearlyAnalytics";
 import PageShell from "../components/layout/PageShell";
 
 type InsightsTab = "analytics" | "yearly" | "search";
+
+const AnalyticsPage = lazy(() => import("./AnalyticsPage"));
+const AnalysisLab = lazy(() => import("./AnalysisLab"));
+const YearlyAnalytics = lazy(() => import("./YearlyAnalytics"));
+
+function TabFallback() {
+  return (
+    <div className="flex min-h-64 items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+    </div>
+  );
+}
 
 export default function InsightsHub() {
   const location = useLocation();
@@ -20,17 +29,19 @@ export default function InsightsHub() {
     ? (tabFromUrl as InsightsTab)
     : "analytics";
 
-  const handleTabChange = (tabId: string) => {
+  const handleTabChange = useCallback((tabId: string) => {
+    if (tabId === activeTab) return;
+
     const params = new URLSearchParams(location.search);
     params.set("tab", tabId);
     navigate({ search: params.toString() }, { replace: true });
-  };
+  }, [activeTab, location.search, navigate]);
 
-  const tabs = [
+  const tabs = useMemo(() => [
     { id: "analytics", label: "Performance", icon: <BarChart3 size={16} /> },
     { id: "yearly",    label: "Yearly",      icon: <CalendarDays size={16} /> },
     { id: "search",    label: "Discovery",   icon: <Search size={16} /> },
-  ];
+  ], []);
 
   return (
     <PageShell width="standard">
@@ -57,9 +68,11 @@ export default function InsightsHub() {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
           >
-            {activeTab === "analytics" && <AnalyticsPage hideHeader />}
-            {activeTab === "yearly" && <YearlyAnalytics />}
-            {activeTab === "search" && <AnalysisLab hideHeader />}
+            <Suspense fallback={<TabFallback />}>
+              {activeTab === "analytics" && <AnalyticsPage hideHeader />}
+              {activeTab === "yearly" && <YearlyAnalytics />}
+              {activeTab === "search" && <AnalysisLab hideHeader />}
+            </Suspense>
           </motion.div>
         </AnimatePresence>
       </motion.div>
