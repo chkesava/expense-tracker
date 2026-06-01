@@ -14,18 +14,17 @@ export default function InsightsHub() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<InsightsTab>(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const tab = searchParams.get("tab") as InsightsTab;
-    if (tab && ["analytics", "yearly", "search"].includes(tab)) return tab;
-    return "analytics";
-  });
+  const searchParams = new URLSearchParams(location.search);
+  const tabFromUrl = searchParams.get("tab");
+  const activeTab = (tabFromUrl && ["analytics", "yearly", "search"].includes(tabFromUrl))
+    ? (tabFromUrl as InsightsTab)
+    : "analytics";
 
-  useEffect(() => {
+  const handleTabChange = (tabId: string) => {
     const params = new URLSearchParams(location.search);
-    params.set("tab", activeTab);
+    params.set("tab", tabId);
     navigate({ search: params.toString() }, { replace: true });
-  }, [activeTab, navigate, location.search]);
+  };
 
   const tabs = [
     { id: "analytics", label: "Performance", icon: <BarChart3 size={16} /> },
@@ -42,7 +41,7 @@ export default function InsightsHub() {
           icon={<BarChart3 size={24} />}
           tabs={tabs}
           activeTab={activeTab}
-          onTabChange={(id) => setActiveTab(id as InsightsTab)}
+          onTabChange={handleTabChange}
           tabAriaLabel="Insights sections"
           tabLayoutId="insights-tab-pill"
         />

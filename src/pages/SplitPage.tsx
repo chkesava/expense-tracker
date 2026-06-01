@@ -31,17 +31,24 @@ import { CATEGORIES } from "../types/expense";
 import type { Participant } from "../types/split";
 import type { UserProfile } from "../hooks/useUsers";
 
-type SplitTab = "activity" | "management";
+import { useLedgerState, type SplitTab } from "../hooks/useLedgerState";
 
 export default function SplitPage({ hideHeader }: { hideHeader?: boolean }) {
   const { splits, loading, createSplit } = useSplits();
   const { user } = useAuth();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState<SplitTab>(() => {
-    if (location.state?.tab) return location.state.tab as SplitTab;
-    return "activity";
-  });
-  const [activityFilter, setActivityFilter] = useState<"active" | "settled">("active");
+  const {
+    splitTab: activeTab,
+    setSplitTab: setActiveTab,
+    splitActivityFilter: activityFilter,
+    setSplitActivityFilter: setActivityFilter,
+  } = useLedgerState();
+
+  useEffect(() => {
+    if (location.state?.tab) {
+      setActiveTab(location.state.tab as SplitTab);
+    }
+  }, [location.state, setActiveTab]);
 
   // Create Split State (Consolidated)
   const [title, setTitle] = useState("");

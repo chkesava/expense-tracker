@@ -47,7 +47,7 @@ export default function AuditCard({ expense, onSwipe }: AuditCardProps) {
       onDragEnd={handleDragEnd}
       animate={controls}
       style={{ x, y, rotate, opacity }}
-      className="absolute inset-0 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden cursor-grab active:cursor-grabbing flex flex-col"
+      className="absolute inset-0 premium-glass rounded-3xl overflow-hidden cursor-grab active:cursor-grabbing flex flex-col"
     >
       {/* Visual Feedback Badges */}
       <motion.div 

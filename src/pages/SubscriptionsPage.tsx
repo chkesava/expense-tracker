@@ -24,7 +24,7 @@ import Amount from "../components/common/Amount";
 import SegmentedTabs from "../components/ui/SegmentedTabs";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 
-type SubTab = "recurring" | "stats";
+import { useLedgerState, type SubTab } from "../hooks/useLedgerState";
 
 export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean }) {
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
     useSubscriptions();
   const { accounts } = useAccounts();
 
-  const [activeTab, setActiveTab] = useState<SubTab>("recurring");
+  const { subscriptionsTab: activeTab, setSubscriptionsTab: setActiveTab } = useLedgerState();
   const [isAddingSub, setIsAddingSub] = useState(false);
 
   const INITIAL_FORM_DATA = {
@@ -211,28 +211,25 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
                 <StatCard
                   label="Monthly Cost"
                   value={<Amount value={stats.totalMonthly} />}
-                  accent="bg-slate-900 dark:bg-white text-white dark:text-slate-900"
+                  isPrimary
                 />
                 <StatCard
                   label="Yearly Cost"
                   value={<Amount value={stats.totalYearly} />}
-                  accent="bg-white dark:bg-slate-900/40 text-slate-900 dark:text-white"
                 />
                 <StatCard
                   label="Subscriptions"
                   value={String(stats.subCount)}
-                  accent="bg-white dark:bg-slate-900/40 text-slate-900 dark:text-white"
                 />
                 <StatCard
                   label="Installments"
                   value={String(stats.emiCount)}
-                  accent="bg-white dark:bg-slate-900/40 text-slate-900 dark:text-white"
                 />
               </div>
 
               {/* Per-subscription breakdown */}
               {subscriptions.filter((s) => s.isActive).length > 0 && (
-                <div className="rounded-[2rem] bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 p-5">
+                <div className="premium-card p-5">
                   <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">
                     Breakdown
                   </h3>
@@ -465,7 +462,7 @@ function SubscriptionRow({ sub, accounts, onEdit, onToggle, onDelete }: any) {
   return (
     <div
       className={cn(
-        "bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm transition-all overflow-hidden",
+        "bento-card overflow-hidden transition-all",
         !sub.isActive && "opacity-50 grayscale"
       )}
     >
@@ -533,10 +530,10 @@ function SubscriptionRow({ sub, accounts, onEdit, onToggle, onDelete }: any) {
 }
 
 /* ─────────────── Stat Card ─────────────── */
-function StatCard({ label, value, accent }: { label: string; value: React.ReactNode; accent: string }) {
+function StatCard({ label, value, isPrimary }: { label: string; value: React.ReactNode; isPrimary?: boolean }) {
   return (
-    <div className={cn("p-5 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm", accent)}>
-      <div className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-2">{label}</div>
+    <div className={cn("p-5 bento-card flex flex-col justify-between", isPrimary && "bg-primary text-primary-foreground")}>
+      <div className={cn("text-[10px] font-black uppercase tracking-widest opacity-60 mb-2", isPrimary ? "text-primary-foreground/75" : "text-slate-400")}>{label}</div>
       <div className="text-2xl font-black tracking-tighter">{value}</div>
     </div>
   );

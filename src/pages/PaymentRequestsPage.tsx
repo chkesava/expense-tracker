@@ -20,11 +20,11 @@ import EmptyState from "../components/common/EmptyState";
 import SegmentedTabs from "../components/ui/SegmentedTabs";
 import { getPaymentRequestShareUrl } from "../utils/paymentRequestUrl";
 
-type CollectTab = "requests" | "new";
+import { useLedgerState, type CollectTab } from "../hooks/useLedgerState";
 
 export default function PaymentRequestsPage({ hideHeader }: { hideHeader?: boolean }) {
   const { requests, loading, deletePaymentRequest } = usePaymentRequests();
-  const [activeTab, setActiveTab] = useState<CollectTab>("requests");
+  const { collectTab: activeTab, setCollectTab: setActiveTab } = useLedgerState();
   const [deleteSlug, setDeleteSlug] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 

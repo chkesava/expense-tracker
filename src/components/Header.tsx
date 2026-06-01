@@ -248,7 +248,7 @@ function VaultMemberIndicator() {
     <motion.div 
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="hidden sm:flex items-center gap-1.5 px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700"
+      className="hidden sm:flex items-center gap-1.5 px-3 py-1 premium-glass rounded-full"
     >
       <div className="flex -space-x-2">
         {vault.memberIds.slice(0, 3).map((id, i) => (

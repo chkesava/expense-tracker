@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../lib/utils";
 import { useModals } from "../hooks/useModals";
 import useSettings from "../hooks/useSettings";
+import { useLedgerState, type ExpensesTab } from "../hooks/useLedgerState";
 
 import {
     Filter,
@@ -63,7 +64,7 @@ import { INCOME_SOURCES } from "../types/expense";
 import AuditCard from "../components/audit/AuditCard";
 import AuditControls from "../components/audit/AuditControls";
 
-type ExpensesTab = "history" | "income" | "audit" | "data";
+
 
 function splitCsvLine(line: string): string[] {
     const result: string[] = [];
@@ -111,23 +112,42 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
     const navigate = useNavigate();
     const location = useLocation();
 
-    const [activeTab, setActiveTab] = useState<ExpensesTab>(() => {
-        if (location.state?.tab) return location.state.tab as ExpensesTab;
-        return "history";
-    });
+    const {
+        expensesTab: activeTab,
+        setExpensesTab: setActiveTab,
+        selectedCategory,
+        setSelectedCategory,
+        selectedAccountId,
+        setSelectedAccountId,
+        selectedAccountTypeId,
+        setSelectedAccountTypeId,
+        showFilters,
+        setShowFilters,
+        query,
+        setQuery,
+        sortField,
+        setSortField,
+        sortOrder,
+        setSortOrder
+    } = useLedgerState();
+
+    useEffect(() => {
+        if (location.state?.tab) {
+            setActiveTab(location.state.tab as ExpensesTab);
+        }
+    }, [location.state, setActiveTab]);
 
     // --- HISTORY STATE ---
-    const months = useMemo(() => [...new Set(expenses.map((e) => e.month))].sort().reverse(), [expenses]);
+    const months = useMemo(() => {
+        const allMonths = [...new Set(expenses.map((e) => e.month))];
+        const current = currentMonthKey(settings.timezone);
+        if (!allMonths.includes(current)) {
+            allMonths.push(current);
+        }
+        return allMonths.sort().reverse();
+    }, [expenses, settings.timezone]);
     const selectedMonth = globalMonth ?? months[0] ?? "";
     const currentMonth = currentMonthKey(settings.timezone);
-
-    const [selectedCategory, setSelectedCategory] = useState<string>("");
-    const [selectedAccountId, setSelectedAccountId] = useState<string>("");
-    const [selectedAccountTypeId, setSelectedAccountTypeId] = useState<string>("");
-    const [showFilters, setShowFilters] = useState(false);
-    const [query, setQuery] = useState("");
-    const [sortField, setSortField] = useState<"date" | "amount">("date");
-    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
     // --- AUDIT STATE ---
     const [auditIndex, setAuditIndex] = useState(0);

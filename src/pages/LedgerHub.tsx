@@ -19,18 +19,17 @@ export default function LedgerHub() {
   const location = useLocation();
   const navigate = useNavigate();
   
-  const [activeTab, setActiveTab] = useState<LedgerTab>(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const tab = searchParams.get("tab") as LedgerTab;
-    if (tab && ["expenses", "splits", "subscriptions", "travel", "cards", "accounts", "investments", "collect"].includes(tab)) return tab;
-    return "expenses";
-  });
+  const searchParams = new URLSearchParams(location.search);
+  const tabFromUrl = searchParams.get("tab");
+  const activeTab = (tabFromUrl && ["expenses", "splits", "subscriptions", "travel", "cards", "accounts", "investments", "collect"].includes(tabFromUrl))
+    ? (tabFromUrl as LedgerTab)
+    : "expenses";
 
-  useEffect(() => {
+  const handleTabChange = (tabId: string) => {
     const params = new URLSearchParams(location.search);
-    params.set("tab", activeTab);
+    params.set("tab", tabId);
     navigate({ search: params.toString() }, { replace: true });
-  }, [activeTab, navigate, location.search]);
+  };
 
   const tabs = [
     { id: "expenses", label: "Journal", icon: <Wallet size={16} /> },
@@ -52,7 +51,7 @@ export default function LedgerHub() {
           icon={<Wallet size={24} />}
           tabs={tabs}
           activeTab={activeTab}
-          onTabChange={(id) => setActiveTab(id as LedgerTab)}
+          onTabChange={handleTabChange}
           tabAriaLabel="Ledger sections"
           tabLayoutId="ledger-tab-pill"
         />

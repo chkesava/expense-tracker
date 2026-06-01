@@ -164,6 +164,8 @@ function AppRoutes() {
   );
 }
 
+import { LedgerStateProvider } from "./hooks/useLedgerState";
+
 export default function App() {
   const { theme } = useTheme();
   const darkToastThemes = new Set(["dark", "midnight", "midnight-olive", "cyberpunk", "deep-sea", "glass-3d"]);
@@ -173,13 +175,15 @@ export default function App() {
       <AuthProvider>
         <SettingsProvider>
           <ModalProvider>
-            <CelebrationProvider>
-              <Routes>
-                <Route path="/payment/:slug" element={<PaymentRequestPage />} />
-                <Route path="/pay/:slug" element={<PaySlugRedirect />} />
-                <Route path="*" element={<AppContent />} />
-              </Routes>
-            </CelebrationProvider>
+            <LedgerStateProvider>
+              <CelebrationProvider>
+                <Routes>
+                  <Route path="/payment/:slug" element={<PaymentRequestPage />} />
+                  <Route path="/pay/:slug" element={<PaySlugRedirect />} />
+                  <Route path="*" element={<AppContent />} />
+                </Routes>
+              </CelebrationProvider>
+            </LedgerStateProvider>
           </ModalProvider>
         </SettingsProvider>
       </AuthProvider>

@@ -10,11 +10,12 @@ export default function MonthDrawer() {
   const { expenses } = useExpenses();
 
   const months = useMemo(() => {
-    const allMonths = [...new Set(expenses.map((e) => e.month))].sort().reverse();
-    // Ensure current month is always there if data exists
+    const allMonths = [...new Set(expenses.map((e) => e.month))];
     const current = new Date().toISOString().slice(0, 7);
-    if (allMonths.length === 0) return [current];
-    return allMonths;
+    if (!allMonths.includes(current)) {
+      allMonths.push(current);
+    }
+    return allMonths.sort().reverse();
   }, [expenses]);
 
   const selectedMonth = globalMonth ?? months[0] ?? "";

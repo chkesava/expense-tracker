@@ -33,9 +33,12 @@ export default function AnalyticsPage({ hideHeader }: { hideHeader?: boolean }) 
   const { globalMonth, setGlobalMonth } = useModals();
 
   const months = useMemo(() => {
-    return Array.from(new Set(expenses.map((e) => e.month)))
-      .sort()
-      .reverse();
+    const allMonths = Array.from(new Set(expenses.map((e) => e.month)));
+    const current = new Date().toISOString().slice(0, 7);
+    if (!allMonths.includes(current)) {
+      allMonths.push(current);
+    }
+    return allMonths.sort().reverse();
   }, [expenses]);
 
   const selectedMonth = globalMonth ?? months[0] ?? "";
