@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { cn } from "../lib/utils";
 import { useExpenses } from "../hooks/useExpenses";
+import { useIncomes } from "../hooks/useIncomes";
 import { groupByCategory, groupByMonth } from "../utils/analytics";
 import { groupByDay } from "../utils/groupByDay";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,10 +12,8 @@ import MonthlyBar from "../components/charts/MonthlyBar";
 import TrendLine from "../components/charts/TrendLine";
 import DailyTrend from "../components/charts/DailyTrend";
 
-import SmartSummary from "../components/analytics/SmartSummary";
+import InsightBentoGrid from "../components/analytics/InsightBentoGrid";
 import CategoryBars from "../components/analytics/CategoryBars";
-import MonthlyComparison from "../components/analytics/MonthlyComparison";
-import WeeklySummary from "../components/analytics/WeeklySummary";
 import AccountSpendingBars from "../components/analytics/AccountSpendingBars";
 import { useAccounts } from "../hooks/useAccounts";
 import { Skeleton } from "../components/common/Skeleton";
@@ -25,7 +24,9 @@ import SegmentedTabs from "../components/ui/SegmentedTabs";
 type AnalyticsTab = "overview" | "distribution" | "trends";
 
 export default function AnalyticsPage({ hideHeader }: { hideHeader?: boolean }) {
-  const { expenses, loading } = useExpenses();
+  const { expenses, loading: expensesLoading } = useExpenses();
+  const { incomes, loading: incomesLoading } = useIncomes();
+  const loading = expensesLoading || incomesLoading;
   const { accounts } = useAccounts();
   const [activeTab, setActiveTab] = useState<AnalyticsTab>("overview");
 
@@ -123,27 +124,22 @@ export default function AnalyticsPage({ hideHeader }: { hideHeader?: boolean }) 
           className="space-y-6"
         >
           {activeTab === "overview" && (
-            <section className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 p-8 shadow-sm">
-              <h2 className="mb-8 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">
-                Operational Intelligence
-              </h2>
-              <div className="space-y-6">
-                {loading ? (
-                  <div className="space-y-4">
-                    <Skeleton className="h-20 w-full" />
-                    <Skeleton className="h-32 w-full" />
-                  </div>
-                ) : (
-                  <>
-                    <SmartSummary expenses={filteredExpenses} />
-                    <div className="h-px bg-slate-100 dark:bg-slate-800" />
-                    <MonthlyComparison expenses={expenses} selectedMonth={selectedMonth} />
-                    <div className="h-px bg-slate-100 dark:bg-slate-800" />
-                    <WeeklySummary expenses={expenses} month={selectedMonth} />
-                  </>
-                )}
-              </div>
-            </section>
+            <div className="space-y-6">
+              {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Skeleton className="h-[250px] w-full rounded-3xl" />
+                  <Skeleton className="h-[250px] w-full rounded-3xl" />
+                  <Skeleton className="h-[250px] w-full rounded-3xl" />
+                  <Skeleton className="h-[250px] w-full rounded-3xl" />
+                </div>
+              ) : (
+                <InsightBentoGrid
+                  expenses={expenses}
+                  incomes={incomes}
+                  selectedMonth={selectedMonth}
+                />
+              )}
+            </div>
           )}
 
           {activeTab === "distribution" && (
