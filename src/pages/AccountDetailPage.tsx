@@ -231,9 +231,9 @@ export default function AccountDetailPage() {
                     )}
                   >
                     {act.type === "debit" ? (
-                      <ArrowDownLeft className="h-4 w-4" />
-                    ) : (
                       <ArrowUpRight className="h-4 w-4" />
+                    ) : (
+                      <ArrowDownLeft className="h-4 w-4" />
                     )}
                   </div>
                   <div className="min-w-0">

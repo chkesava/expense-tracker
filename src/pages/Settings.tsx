@@ -535,6 +535,7 @@ export default function SettingsPage() {
                     <option value="nordic">Nordic Frost</option>
                     <option value="deep-sea">Deep Sea Abyss</option>
                     <option value="glass-3d">Custom Glass</option>
+                    <option value="claymorphism">Claymorphism</option>
                   </select>
                 </SettingsRow>
 

@@ -290,6 +290,30 @@
   --glass-shadow: 0 8px 9px 14px -2.5px hsl(205 20% 10% / 0.2);
 }
 
+/* Claymorphism Theme (Soft Pastel Rainbow, Playful) */
+.theme-claymorphism {
+  --background: 260 80% 98%;
+  --foreground: 260 50% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 260 40% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 260 40% 15%;
+  --primary: 262 83% 68%; /* Vibrant Pastel Purple */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 260 40% 94%;
+  --secondary-foreground: 260 40% 20%;
+  --muted: 260 20% 95%;
+  --muted-foreground: 260 15% 55%;
+  --accent: 320 80% 90%;
+  --accent-foreground: 320 80% 40%;
+  --destructive: 350 85% 65%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 260 30% 92%;
+  --input: 260 30% 92%;
+  --ring: 262 83% 68%;
+  --radius: 2rem;
+}
+
 
 @layer base {
   * {
@@ -771,6 +795,134 @@
 
   .privacy-blur {
     transition: filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Claymorphism Theme Component Styling */
+  
+  /* Cards & Bento boxes */
+  .theme-claymorphism .bento-card,
+  .theme-claymorphism .premium-glass,
+  .theme-claymorphism .premium-card {
+    background: rgba(255, 255, 255, 0.65);
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    border-radius: 2.25rem;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow:
+      /* Top-left inner white highlight for 3D look */
+      inset 4px 4px 10px rgba(255, 255, 255, 0.95),
+      inset 8px 8px 24px rgba(255, 255, 255, 0.6),
+      /* Bottom-right inner soft shadow using a tint of secondary color */
+      inset -4px -4px 10px rgba(165, 140, 220, 0.22),
+      inset -8px -8px 20px rgba(165, 140, 220, 0.12),
+      /* Soft external floating glow shadow */
+      0 12px 32px -8px rgba(165, 140, 220, 0.3);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+  }
+
+  .theme-claymorphism .bento-card:hover,
+  .theme-claymorphism .premium-card:hover {
+    transform: translateY(-5px);
+    box-shadow:
+      inset 4px 4px 10px rgba(255, 255, 255, 0.98),
+      inset 8px 8px 24px rgba(255, 255, 255, 0.7),
+      inset -4px -4px 10px rgba(165, 140, 220, 0.18),
+      inset -8px -8px 20px rgba(165, 140, 220, 0.08),
+      0 20px 40px -10px rgba(165, 140, 220, 0.42);
+  }
+
+  /* Sunken look for Inputs, Selects, Textareas */
+  .theme-claymorphism input,
+  .theme-claymorphism select,
+  .theme-claymorphism textarea {
+    background: rgba(255, 255, 255, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.75);
+    border-radius: 1.25rem;
+    box-shadow:
+      /* Sunken inner shadows */
+      inset 2px 2px 6px rgba(0, 0, 0, 0.04),
+      inset 4px 4px 12px rgba(165, 140, 220, 0.15),
+      /* Bottom-right light highlight */
+      inset -2px -2px 6px rgba(255, 255, 255, 0.85);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .theme-claymorphism input:focus,
+  .theme-claymorphism select:focus,
+  .theme-claymorphism textarea:focus {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: hsl(var(--primary) / 0.45);
+    box-shadow:
+      inset 2px 2px 6px rgba(0, 0, 0, 0.02),
+      inset 4px 4px 10px rgba(165, 140, 220, 0.1),
+      inset -2px -2px 6px rgba(255, 255, 255, 0.95),
+      0 0 0 4px hsl(var(--primary) / 0.15);
+  }
+
+  /* Primary Button Styling */
+  .theme-claymorphism button:not([class*="bg-transparent"]):not([class*="border-"]):not([class*="bg-card"]):not([class*="text-slate-"]):not([class*="text-zinc-"]),
+  .theme-claymorphism .bg-primary {
+    background: linear-gradient(135deg, hsl(262 83% 72%) 0%, hsl(262 83% 62%) 100%);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 1.25rem;
+    color: white;
+    font-weight: 600;
+    box-shadow:
+      /* Top-left inner white highlight for 3D button */
+      inset 2px 2px 5px rgba(255, 255, 255, 0.4),
+      inset 4px 4px 10px rgba(255, 255, 255, 0.25),
+      /* Bottom-right inner shadow for depth */
+      inset -2px -2px 5px rgba(0, 0, 0, 0.2),
+      inset -4px -4px 10px rgba(0, 0, 0, 0.15),
+      /* Soft colored drop shadow */
+      0 8px 20px -6px rgba(124, 58, 237, 0.4);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .theme-claymorphism button:not([class*="bg-transparent"]):not([class*="border-"]):not([class*="bg-card"]):not([class*="text-slate-"]):not([class*="text-zinc-"]):hover,
+  .theme-claymorphism .bg-primary:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      inset 2px 2px 5px rgba(255, 255, 255, 0.5),
+      inset 4px 4px 10px rgba(255, 255, 255, 0.35),
+      inset -2px -2px 5px rgba(0, 0, 0, 0.15),
+      inset -4px -4px 10px rgba(0, 0, 0, 0.15),
+      0 12px 24px -6px rgba(124, 58, 237, 0.55);
+  }
+
+  .theme-claymorphism button:not([class*="bg-transparent"]):not([class*="border-"]):not([class*="bg-card"]):not([class*="text-slate-"]):not([class*="text-zinc-"]):active,
+  .theme-claymorphism .bg-primary:active {
+    transform: translateY(1px);
+    box-shadow:
+      inset 1px 1px 3px rgba(255, 255, 255, 0.3),
+      inset -1px -1px 3px rgba(0, 0, 0, 0.3),
+      0 4px 10px -4px rgba(124, 58, 237, 0.3);
+  }
+
+  /* Segmented tabs active states and background */
+  .theme-claymorphism .bg-muted\/80,
+  .theme-claymorphism .bg-muted\/50 {
+    background-color: rgba(165, 140, 220, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 1.25rem;
+    padding: 3px;
+  }
+
+  .theme-claymorphism [role="tab"] {
+    border-radius: 1rem;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+  }
+
+  .theme-claymorphism [role="tab"][data-state="active"],
+  .theme-claymorphism .bg-background\/80[class*="shadow"] {
+    background-color: white !important;
+    color: hsl(var(--primary)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow:
+      inset 2px 2px 5px rgba(255, 255, 255, 0.95),
+      inset -2px -2px 5px rgba(165, 140, 220, 0.15),
+      0 4px 12px -3px rgba(165, 140, 220, 0.25) !important;
   }
 }
 

@@ -75,6 +75,13 @@ function isOnOrAfter(date: string, baseline?: string): boolean {
   return date >= baseline;
 }
 
+function compareActivitiesChronologically(a: AccountActivity, b: AccountActivity) {
+  const dateDiff = parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime();
+  if (dateDiff !== 0) return dateDiff;
+  if (a.type !== b.type) return a.type === "credit" ? -1 : 1;
+  return 0;
+}
+
 function paymentsInBillingCycle(
   accountId: string,
   payments: AccountPayment[],
@@ -313,19 +320,11 @@ export function buildAccountActivities(
       : []),
   ];
 
-  activities.sort(
-    (a, b) => parseLocalDate(b.date).getTime() - parseLocalDate(a.date).getTime()
-  );
+  const chronological = [...activities].sort(compareActivitiesChronologically);
 
   if (kind !== "credit") {
     const opening = account.openingBalance ?? 0;
     let running = opening;
-    const chronological = [...activities].sort((a, b) => {
-      const diff = parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime();
-      if (diff !== 0) return diff;
-      if (a.type !== b.type) return a.type === "credit" ? -1 : 1;
-      return 0;
-    });
     for (const act of chronological) {
       if (act.type === "debit") running -= act.amount;
       else running += act.amount;
@@ -333,7 +332,7 @@ export function buildAccountActivities(
     }
   }
 
-  return activities;
+  return chronological.reverse();
 }
 
 export function previewBalanceAfterTransaction(

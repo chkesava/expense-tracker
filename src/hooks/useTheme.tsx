@@ -10,7 +10,8 @@ type Theme =
   | "cyberpunk" 
   | "nordic" 
   | "deep-sea"
-  | "glass-3d";
+  | "glass-3d"
+  | "claymorphism";
 
 type ThemeContextType = {
   theme: Theme;
@@ -34,7 +35,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const themeClasses = [
       "light", "dark", "theme-midnight", "theme-midnight-olive", 
       "theme-vintage-parchment", "theme-sakura-bloom", 
-      "theme-cyberpunk", "theme-nordic", "theme-deep-sea", "theme-glass-3d"
+      "theme-cyberpunk", "theme-nordic", "theme-deep-sea", "theme-glass-3d",
+      "theme-claymorphism"
     ];
     root.classList.remove(...themeClasses);
     root.classList.remove("dark");
