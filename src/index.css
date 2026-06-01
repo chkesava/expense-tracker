@@ -859,14 +859,30 @@
       0 0 0 4px hsl(var(--primary) / 0.15);
   }
 
-  /* Primary Button Styling */
-  .theme-claymorphism button:not([class*="bg-transparent"]):not([class*="border-"]):not([class*="bg-card"]):not([class*="text-slate-"]):not([class*="text-zinc-"]),
-  .theme-claymorphism .bg-primary {
-    background: linear-gradient(135deg, hsl(262 83% 72%) 0%, hsl(262 83% 62%) 100%);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+  /* ==========================================
+     NEW PREMIUM SEMANTIC CLAYMORPHIC BUTTONS
+     ========================================== */
+
+  /* Base transitions and font settings for all claymorphic buttons */
+  .theme-claymorphism button {
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.2s ease, border-color 0.2s ease;
+  }
+
+  /* 1. CLAY PRIMARY BUTTONS (Indigo/Blue/Purple gradients) */
+  .theme-claymorphism .bg-primary,
+  .theme-claymorphism .bg-blue-600,
+  .theme-claymorphism button.bg-blue-600,
+  .theme-claymorphism button.bg-blue-700,
+  .theme-claymorphism button.bg-indigo-600,
+  .theme-claymorphism button.bg-violet-600,
+  .theme-claymorphism button.clay-btn-primary,
+  .theme-claymorphism button.bg-gradient-to-r.from-blue-600,
+  .theme-claymorphism button[type="submit"]:not(.bg-secondary):not(.bg-muted):not([class*="bg-slate-"]):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="bg-rose-"]):not([class*="bg-amber-"]) {
+    background: linear-gradient(135deg, hsl(262 83% 72%) 0%, hsl(262 83% 62%) 100%) !important;
+    border: 2px solid rgba(255, 255, 255, 0.35) !important;
     border-radius: 1.25rem;
-    color: white;
-    font-weight: 600;
+    color: white !important;
+    font-weight: 800 !important;
     box-shadow:
       /* Top-left inner white highlight for 3D button */
       inset 2px 2px 5px rgba(255, 255, 255, 0.4),
@@ -875,29 +891,186 @@
       inset -2px -2px 5px rgba(0, 0, 0, 0.2),
       inset -4px -4px 10px rgba(0, 0, 0, 0.15),
       /* Soft colored drop shadow */
-      0 8px 20px -6px rgba(124, 58, 237, 0.4);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      0 8px 20px -6px rgba(124, 58, 237, 0.45) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   }
 
-  .theme-claymorphism button:not([class*="bg-transparent"]):not([class*="border-"]):not([class*="bg-card"]):not([class*="text-slate-"]):not([class*="text-zinc-"]):hover,
-  .theme-claymorphism .bg-primary:hover {
+  .theme-claymorphism .bg-primary:hover,
+  .theme-claymorphism .bg-blue-600:hover,
+  .theme-claymorphism button.bg-blue-600:hover,
+  .theme-claymorphism button.bg-blue-700:hover,
+  .theme-claymorphism button.bg-indigo-600:hover,
+  .theme-claymorphism button.bg-violet-600:hover,
+  .theme-claymorphism button.clay-btn-primary:hover,
+  .theme-claymorphism button.bg-gradient-to-r.from-blue-600:hover,
+  .theme-claymorphism button[type="submit"]:not(.bg-secondary):not(.bg-muted):not([class*="bg-slate-"]):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="bg-rose-"]):not([class*="bg-amber-"]):hover {
     transform: translateY(-2px);
     box-shadow:
       inset 2px 2px 5px rgba(255, 255, 255, 0.5),
       inset 4px 4px 10px rgba(255, 255, 255, 0.35),
       inset -2px -2px 5px rgba(0, 0, 0, 0.15),
       inset -4px -4px 10px rgba(0, 0, 0, 0.15),
-      0 12px 24px -6px rgba(124, 58, 237, 0.55);
+      0 12px 24px -6px rgba(124, 58, 237, 0.6) !important;
   }
 
-  .theme-claymorphism button:not([class*="bg-transparent"]):not([class*="border-"]):not([class*="bg-card"]):not([class*="text-slate-"]):not([class*="text-zinc-"]):active,
-  .theme-claymorphism .bg-primary:active {
+  .theme-claymorphism .bg-primary:active,
+  .theme-claymorphism .bg-blue-600:active,
+  .theme-claymorphism button.bg-blue-600:active,
+  .theme-claymorphism button.bg-blue-700:active,
+  .theme-claymorphism button.bg-indigo-600:active,
+  .theme-claymorphism button.bg-violet-600:active,
+  .theme-claymorphism button.clay-btn-primary:active,
+  .theme-claymorphism button.bg-gradient-to-r.from-blue-600:active,
+  .theme-claymorphism button[type="submit"]:not(.bg-secondary):not(.bg-muted):not([class*="bg-slate-"]):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="bg-rose-"]):not([class*="bg-amber-"]):active {
     transform: translateY(1px);
     box-shadow:
       inset 1px 1px 3px rgba(255, 255, 255, 0.3),
       inset -1px -1px 3px rgba(0, 0, 0, 0.3),
-      0 4px 10px -4px rgba(124, 58, 237, 0.3);
+      0 4px 10px -4px rgba(124, 58, 237, 0.3) !important;
+  }
+
+  /* 2. CLAY SUCCESS BUTTONS (Emerald/Green/Mint gradients) */
+  .theme-claymorphism .bg-success,
+  .theme-claymorphism .bg-emerald-500,
+  .theme-claymorphism .bg-emerald-600,
+  .theme-claymorphism button.bg-emerald-500,
+  .theme-claymorphism button.bg-emerald-600,
+  .theme-claymorphism button.bg-green-600 {
+    background: linear-gradient(135deg, hsl(145 70% 60%) 0%, hsl(145 70% 48%) 100%) !important;
+    border: 2px solid rgba(255, 255, 255, 0.35) !important;
+    border-radius: 1.25rem;
+    color: white !important;
+    font-weight: 800 !important;
+    box-shadow:
+      inset 2px 2px 5px rgba(255, 255, 255, 0.4),
+      inset 4px 4px 10px rgba(255, 255, 255, 0.25),
+      inset -2px -2px 5px rgba(0, 0, 0, 0.15),
+      inset -4px -4px 10px rgba(0, 0, 0, 0.1),
+      0 8px 20px -6px rgba(16, 185, 129, 0.45) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  }
+
+  .theme-claymorphism .bg-success:hover,
+  .theme-claymorphism .bg-emerald-500:hover,
+  .theme-claymorphism button.bg-emerald-500:hover,
+  .theme-claymorphism button.bg-emerald-600:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      inset 2px 2px 5px rgba(255, 255, 255, 0.5),
+      inset 4px 4px 10px rgba(255, 255, 255, 0.35),
+      inset -2px -2px 5px rgba(0, 0, 0, 0.1),
+      0 12px 24px -6px rgba(16, 185, 129, 0.6) !important;
+  }
+
+  /* 3. CLAY DANGER/DESTRUCTIVE BUTTONS (Red/Rose gradients) */
+  .theme-claymorphism .bg-destructive,
+  .theme-claymorphism .bg-red-500,
+  .theme-claymorphism .bg-red-600,
+  .theme-claymorphism .bg-rose-500,
+  .theme-claymorphism .bg-rose-600,
+  .theme-claymorphism button.bg-destructive,
+  .theme-claymorphism button.bg-red-500,
+  .theme-claymorphism button.bg-red-600,
+  .theme-claymorphism button.bg-rose-500 {
+    background: linear-gradient(135deg, hsl(355 80% 68%) 0%, hsl(355 80% 56%) 100%) !important;
+    border: 2px solid rgba(255, 255, 255, 0.35) !important;
+    border-radius: 1.25rem;
+    color: white !important;
+    font-weight: 800 !important;
+    box-shadow:
+      inset 2px 2px 5px rgba(255, 255, 255, 0.45),
+      inset 4px 4px 10px rgba(255, 255, 255, 0.25),
+      inset -2px -2px 5px rgba(0, 0, 0, 0.2),
+      inset -4px -4px 10px rgba(0, 0, 0, 0.15),
+      0 8px 20px -6px rgba(239, 68, 68, 0.45) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  }
+
+  .theme-claymorphism .bg-destructive:hover,
+  .theme-claymorphism button.bg-destructive:hover,
+  .theme-claymorphism button.bg-red-500:hover,
+  .theme-claymorphism button.bg-red-600:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      inset 2px 2px 5px rgba(255, 255, 255, 0.5),
+      inset 4px 4px 10px rgba(255, 255, 255, 0.35),
+      inset -2px -2px 5px rgba(0, 0, 0, 0.15),
+      0 12px 24px -6px rgba(239, 68, 68, 0.6) !important;
+  }
+
+  /* 4. CLAY WARNING BUTTONS (Amber/Orange gradients) */
+  .theme-claymorphism .bg-warning,
+  .theme-claymorphism .bg-amber-500,
+  .theme-claymorphism .bg-amber-600,
+  .theme-claymorphism button.bg-amber-500,
+  .theme-claymorphism button.bg-amber-600 {
+    background: linear-gradient(135deg, hsl(35 90% 65%) 0%, hsl(35 90% 52%) 100%) !important;
+    border: 2px solid rgba(255, 255, 255, 0.35) !important;
+    border-radius: 1.25rem;
+    color: white !important;
+    font-weight: 800 !important;
+    box-shadow:
+      inset 2px 2px 5px rgba(255, 255, 255, 0.45),
+      inset 4px 4px 10px rgba(255, 255, 255, 0.25),
+      inset -2px -2px 5px rgba(0, 0, 0, 0.15),
+      0 8px 20px -6px rgba(245, 158, 11, 0.45) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  }
+
+  /* 5. CLAY SECONDARY / NEUTRAL BUTTONS / INACTIVE SIDEBAR TABS (Pearl Glass Style) */
+  .theme-claymorphism button.bg-secondary,
+  .theme-claymorphism button.bg-muted,
+  .theme-claymorphism button.hover\:bg-muted\/60,
+  .theme-claymorphism button:not([class*="bg-primary"]):not([class*="bg-blue-"]):not([class*="bg-red-"]):not([class*="bg-rose-"]):not([class*="bg-emerald-"]):not([class*="bg-green-"]):not([class*="bg-amber-"]):not([class*="bg-transparent"]):not([class*="text-white"]):not(.bg-success):not(.bg-destructive):not(.bg-foreground) {
+    background: rgba(255, 255, 255, 0.6) !important;
+    border: 2px solid rgba(255, 255, 255, 0.75) !important;
+    border-radius: 1.25rem;
+    color: hsl(260 55% 25%) !important;
+    font-weight: 700 !important;
+    box-shadow:
+      inset 2px 2px 4px rgba(255, 255, 255, 0.95),
+      inset -2px -2px 4px rgba(165, 140, 220, 0.12),
+      0 4px 10px -3px rgba(165, 140, 220, 0.18) !important;
+    text-shadow: none;
+  }
+
+  .theme-claymorphism button.bg-secondary:hover,
+  .theme-claymorphism button.bg-muted:hover,
+  .theme-claymorphism button.hover\:bg-muted\/60:hover,
+  .theme-claymorphism button:not([class*="bg-primary"]):not([class*="bg-blue-"]):not([class*="bg-red-"]):not([class*="bg-rose-"]):not([class*="bg-emerald-"]):not([class*="bg-green-"]):not([class*="bg-amber-"]):not([class*="bg-transparent"]):not([class*="text-white"]):not(.bg-success):not(.bg-destructive):not(.bg-foreground):hover {
+    background: rgba(255, 255, 255, 0.85) !important;
+    border-color: rgba(255, 255, 255, 0.9) !important;
+    transform: translateY(-1px);
+    box-shadow:
+      inset 2px 2px 5px rgba(255, 255, 255, 0.95),
+      inset -2px -2px 5px rgba(165, 140, 220, 0.15),
+      0 6px 14px -3px rgba(165, 140, 220, 0.24) !important;
+  }
+
+  /* 5.1 CLAY NEUTRAL BUTTONS - DARK MODE OVERRIDES */
+  .dark.theme-claymorphism button.bg-secondary,
+  .dark.theme-claymorphism button.bg-muted,
+  .dark.theme-claymorphism button.hover\:bg-muted\/60,
+  .dark.theme-claymorphism button:not([class*="bg-primary"]):not([class*="bg-blue-"]):not([class*="bg-red-"]):not([class*="bg-rose-"]):not([class*="bg-emerald-"]):not([class*="bg-green-"]):not([class*="bg-amber-"]):not([class*="bg-transparent"]):not([class*="text-white"]):not(.bg-success):not(.bg-destructive):not(.bg-foreground) {
+    background: rgba(25, 22, 40, 0.6) !important;
+    border: 2px solid rgba(255, 255, 255, 0.08) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    box-shadow:
+      inset 2px 2px 5px rgba(255, 255, 255, 0.08),
+      inset -2px -2px 5px rgba(0, 0, 0, 0.45),
+      0 4px 10px -3px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  .dark.theme-claymorphism button.bg-secondary:hover,
+  .dark.theme-claymorphism button.bg-muted:hover,
+  .dark.theme-claymorphism button.hover\:bg-muted\/60:hover,
+  .dark.theme-claymorphism button:not([class*="bg-primary"]):not([class*="bg-blue-"]):not([class*="bg-red-"]):not([class*="bg-rose-"]):not([class*="bg-emerald-"]):not([class*="bg-green-"]):not([class*="bg-amber-"]):not([class*="bg-transparent"]):not([class*="text-white"]):not(.bg-success):not(.bg-destructive):not(.bg-foreground):hover {
+    background: rgba(35, 30, 55, 0.75) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow:
+      inset 2px 2px 5px rgba(255, 255, 255, 0.12),
+      inset -2px -2px 5px rgba(0, 0, 0, 0.45),
+      0 6px 14px -3px rgba(0, 0, 0, 0.5) !important;
   }
 
   /* Segmented tabs active states and background */
@@ -915,15 +1088,76 @@
   }
 
   .theme-claymorphism [role="tab"][data-state="active"],
-  .theme-claymorphism .bg-background\/80[class*="shadow"] {
-    background-color: white !important;
-    color: hsl(var(--primary)) !important;
-    border: 1px solid rgba(255, 255, 255, 0.9);
+  .theme-claymorphism .bg-background\/80[class*="shadow"],
+  .theme-claymorphism header nav button.text-primary div,
+  .theme-claymorphism button.bg-foreground,
+  .theme-claymorphism [aria-selected="true"] {
+    background: linear-gradient(135deg, hsl(262, 83%, 68%) 0%, hsl(262, 80%, 53%) 100%) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.35) !important;
     box-shadow:
-      inset 2px 2px 5px rgba(255, 255, 255, 0.95),
-      inset -2px -2px 5px rgba(165, 140, 220, 0.15),
-      0 4px 12px -3px rgba(165, 140, 220, 0.25) !important;
+      inset 2px 2px 5px rgba(255, 255, 255, 0.45),
+      inset 4px 4px 10px rgba(255, 255, 255, 0.25),
+      inset -2px -2px 5px rgba(0, 0, 0, 0.15),
+      0 8px 20px -6px rgba(124, 58, 237, 0.45) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
   }
+
+  /* Force white text/icon inside active tabs/headers */
+  .theme-claymorphism [role="tab"][data-state="active"] *,
+  .theme-claymorphism header nav button.text-primary *,
+  .theme-claymorphism button.bg-foreground,
+  .theme-claymorphism button.bg-foreground * {
+    color: white !important;
+  }
+
+  .dark.theme-claymorphism [role="tab"][data-state="active"],
+  .dark.theme-claymorphism .bg-background\/80[class*="shadow"],
+  .dark.theme-claymorphism header nav button.text-primary div,
+  .dark.theme-claymorphism button.bg-foreground,
+  .dark.theme-claymorphism [aria-selected="true"] {
+    background: linear-gradient(135deg, hsl(262, 83%, 62%) 0%, hsl(262, 80%, 48%) 100%) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow:
+      inset 2px 2px 5px rgba(255, 255, 255, 0.25),
+      inset -2px -2px 5px rgba(0, 0, 0, 0.35),
+      0 8px 20px -6px rgba(0, 0, 0, 0.5) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Dropdown selects and input focus styling */
+  .theme-claymorphism select:focus,
+  .theme-claymorphism input:focus,
+  .theme-claymorphism textarea:focus {
+    background-color: rgba(165, 140, 220, 0.12) !important;
+    border-color: hsl(262 80% 53%) !important;
+    box-shadow:
+      inset 1px 1px 3px rgba(255, 255, 255, 0.2),
+      inset -1px -1px 3px rgba(0, 0, 0, 0.05),
+      0 0 0 3px rgba(124, 58, 237, 0.25) !important;
+  }
+
+  .dark.theme-claymorphism select:focus,
+  .dark.theme-claymorphism input:focus,
+  .dark.theme-claymorphism textarea:focus {
+    background-color: rgba(165, 140, 220, 0.08) !important;
+    border-color: hsl(262 80% 60%) !important;
+    box-shadow:
+      inset 1px 1px 3px rgba(255, 255, 255, 0.1),
+      inset -1px -1px 3px rgba(0, 0, 0, 0.3),
+      0 0 0 3px rgba(124, 58, 237, 0.3) !important;
+  }
+
+  .theme-claymorphism select option {
+    background-color: white !important;
+    color: hsl(260, 55%, 25%) !important;
+  }
+  .dark.theme-claymorphism select option {
+    background-color: hsl(250, 40%, 15%) !important;
+    color: white !important;
+  }
+
 }
 
 /* Custom Glass 3D page backdrop */
@@ -943,4 +1177,90 @@ html.theme-glass-3d body {
   pointer-events: none;
   background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png");
   filter: sepia(0.2);
+}
+
+/* Animations and custom styles for Ledger */
+@keyframes bounceSlow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes shimmerLoop {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-bounce-slow {
+  animation: bounceSlow 3s ease-in-out infinite;
+}
+
+.animate-shimmer-loop {
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+  animation: shimmerLoop 2s infinite linear;
+}
+
+/* Claymorphism Category & Source Gradients */
+.theme-claymorphism .clay-badge-food {
+  background: linear-gradient(135deg, hsl(355 85% 72%) 0%, hsl(355 80% 58%) 100%) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: inset 1px 1px 3px rgba(255,255,255,0.4), inset -1px -1px 3px rgba(0,0,0,0.15) !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+}
+.theme-claymorphism .clay-badge-travel {
+  background: linear-gradient(135deg, hsl(200 90% 68%) 0%, hsl(200 85% 52%) 100%) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: inset 1px 1px 3px rgba(255,255,255,0.4), inset -1px -1px 3px rgba(0,0,0,0.15) !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+}
+.theme-claymorphism .clay-badge-shopping {
+  background: linear-gradient(135deg, hsl(38 95% 68%) 0%, hsl(35 90% 52%) 100%) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: inset 1px 1px 3px rgba(255,255,255,0.4), inset -1px -1px 3px rgba(0,0,0,0.15) !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+}
+.theme-claymorphism .clay-badge-bills {
+  background: linear-gradient(135deg, hsl(262 85% 72%) 0%, hsl(262 80% 58%) 100%) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: inset 1px 1px 3px rgba(255,255,255,0.4), inset -1px -1px 3px rgba(0,0,0,0.15) !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+}
+.theme-claymorphism .clay-badge-health {
+  background: linear-gradient(135deg, hsl(145 75% 62%) 0%, hsl(145 70% 48%) 100%) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: inset 1px 1px 3px rgba(255,255,255,0.4), inset -1px -1px 3px rgba(0,0,0,0.15) !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+}
+.theme-claymorphism .clay-badge-salary {
+  background: linear-gradient(135deg, hsl(150 80% 50%) 0%, hsl(160 85% 38%) 100%) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: inset 1px 1px 3px rgba(255,255,255,0.4), inset -1px -1px 3px rgba(0,0,0,0.15) !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+}
+.theme-claymorphism .clay-badge-investments {
+  background: linear-gradient(135deg, hsl(210 95% 62%) 0%, hsl(220 90% 48%) 100%) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: inset 1px 1px 3px rgba(255,255,255,0.4), inset -1px -1px 3px rgba(0,0,0,0.15) !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+}
+.theme-claymorphism .clay-badge-freelance {
+  background: linear-gradient(135deg, hsl(280 90% 70%) 0%, hsl(290 85% 55%) 100%) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: inset 1px 1px 3px rgba(255,255,255,0.4), inset -1px -1px 3px rgba(0,0,0,0.15) !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+}
+.theme-claymorphism .clay-badge-default {
+  background: linear-gradient(135deg, hsl(220 20% 72%) 0%, hsl(220 15% 58%) 100%) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: inset 1px 1px 3px rgba(255,255,255,0.4), inset -1px -1px 3px rgba(0,0,0,0.15) !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
 }

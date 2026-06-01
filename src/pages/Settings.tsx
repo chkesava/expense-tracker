@@ -378,12 +378,18 @@ export default function SettingsPage() {
     }
   };
 
+  const isClay = theme === "claymorphism";
+
   const pill = (isActive: boolean) =>
     cn(
-      "flex items-center gap-2 rounded-2xl px-3 py-2 text-sm font-black transition-all",
+      "flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-black uppercase tracking-wider transition-all duration-300 shrink-0",
       isActive
-        ? "bg-foreground text-background shadow-sm"
-        : "bg-card/70 text-muted-foreground hover:bg-card"
+        ? isClay
+          ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-clay-card shadow-[inset_1px_1px_2px_rgba(255,255,255,0.4)] scale-105"
+          : "bg-foreground text-background shadow-sm"
+        : isClay
+          ? "bg-white/60 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 shadow-[inset_2px_2px_6px_rgba(165,140,220,0.15)] hover:bg-white"
+          : "bg-card/70 text-muted-foreground hover:bg-card"
     );
 
   return (
@@ -413,11 +419,34 @@ export default function SettingsPage() {
                     <button
                       key={s.id}
                       onClick={() => setActive(s.id)}
-                      className={cn("w-full rounded-2xl px-3 py-2 text-left transition-all", isActive ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-muted/60")}
+                      className={cn(
+                        "w-full rounded-2xl px-4 py-3 text-left transition-all duration-300",
+                        isActive
+                          ? isClay
+                            ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-clay-card shadow-[inset_1px_1px_2px_rgba(255,255,255,0.4)] scale-[1.02]"
+                            : "bg-primary text-primary-foreground shadow-sm"
+                          : isClay
+                            ? "hover:bg-white/40 dark:hover:bg-slate-800/40 text-slate-500 dark:text-slate-400"
+                            : "hover:bg-muted/60"
+                      )}
                     >
-                      <div className="flex items-center gap-2">
-                        <s.icon className={cn("h-4 w-4", isActive ? "text-white" : "text-slate-500 dark:text-slate-400")} />
-                        <div className={cn("text-sm font-black", isActive ? "text-white" : "text-slate-900 dark:text-slate-100")}>{s.label}</div>
+                      <div className="flex items-center gap-3">
+                        <s.icon className={cn(
+                          "h-4.5 w-4.5 transition-colors",
+                          isActive
+                            ? "text-white"
+                            : isClay
+                              ? "text-slate-400"
+                              : "text-slate-500 dark:text-slate-400"
+                        )} />
+                        <div className={cn(
+                          "text-sm font-black uppercase tracking-wider",
+                          isActive
+                            ? "text-white"
+                            : isClay
+                              ? "text-slate-600 dark:text-slate-300"
+                              : "text-slate-900 dark:text-slate-100"
+                        )}>{s.label}</div>
                       </div>
                     </button>
                   );

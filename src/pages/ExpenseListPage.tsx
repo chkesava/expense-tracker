@@ -16,6 +16,7 @@ import { cn } from "../lib/utils";
 import { useModals } from "../hooks/useModals";
 import useSettings from "../hooks/useSettings";
 import { useLedgerState, type ExpensesTab } from "../hooks/useLedgerState";
+import { useTheme } from "../hooks/useTheme";
 
 import {
     Filter,
@@ -99,6 +100,8 @@ function normalizeHeader(header: string): string {
 
 export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }) {
     const { settings } = useSettings();
+    const { theme } = useTheme();
+    const isClay = theme === "claymorphism";
     const { expenses, loading: expensesLoading } = useExpenses();
     const { incomes, loading: incomesLoading } = useIncomes();
     const loading = expensesLoading || incomesLoading;
@@ -471,7 +474,12 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Tabs Navigation */}
-                <div className="flex p-1.5 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl rounded-[2rem] border border-white/20 dark:border-white/5 mb-10 w-fit mx-auto sm:mx-0">
+                <div className={cn(
+                    "flex p-1.5 mb-10 w-fit mx-auto sm:mx-0",
+                    isClay
+                        ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-[2rem]"
+                        : "bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl rounded-[2rem] border border-white/20 dark:border-white/5"
+                )}>
                     {(["history", "income", "audit", "data"] as const).map((tab) => (
                         <button
                             key={tab}
@@ -479,8 +487,12 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                             className={cn(
                                 "px-6 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all duration-300",
                                 activeTab === tab
-                                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl scale-105"
-                                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                    ? isClay
+                                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-clay-card shadow-[inset_1px_1px_2px_rgba(255,255,255,0.4)] scale-105"
+                                        : "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl scale-105"
+                                    : isClay
+                                        ? "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100/30 dark:hover:bg-slate-800/30"
+                                        : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                             )}
                         >
                             {{ history: "Expenses", income: "Income", audit: "Review", data: "Import & export" }[tab]}
@@ -498,8 +510,92 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                     >
                         {activeTab === "history" && (
                             <div className="space-y-6">
+                                {/* Bento Mini-Stats Dashboard */}
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                                    {/* Monthly Burn Card */}
+                                    <div className={cn(
+                                        "p-6 flex flex-col justify-between min-h-[120px] transition-all",
+                                        isClay
+                                            ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-3xl"
+                                            : "bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm rounded-3xl"
+                                    )}>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Monthly Burn</span>
+                                            <span className="p-2 rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                                                <ArrowDownRight size={18} />
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <div className="text-2xl font-black tracking-tight text-slate-900 dark:text-white mt-2">
+                                                <Amount value={historySummary.total} />
+                                            </div>
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 inline-block">Active Selection</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Activity Log Card */}
+                                    <div className={cn(
+                                        "p-6 flex flex-col justify-between min-h-[120px] transition-all",
+                                        isClay
+                                            ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-3xl"
+                                            : "bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm rounded-3xl"
+                                    )}>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Activity Log</span>
+                                            <span className="p-2 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                                                <History size={18} />
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <div className="text-2xl font-black tracking-tight text-slate-900 dark:text-white mt-2">
+                                                {searchedExpenses.length} <span className="text-sm font-bold text-slate-400">entries</span>
+                                            </div>
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 inline-block">Processed Logs</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Heavy Category Card */}
+                                    <div className={cn(
+                                        "p-6 flex flex-col justify-between min-h-[120px] transition-all",
+                                        isClay
+                                            ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-3xl"
+                                            : "bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm rounded-3xl"
+                                    )}>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Top Burner</span>
+                                            <span className="p-2 rounded-2xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                                <Sparkles size={18} />
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <div className="text-2xl font-black tracking-tight text-slate-900 dark:text-white mt-2 truncate">
+                                                {(() => {
+                                                    if (!historySummary.byCategory || Object.keys(historySummary.byCategory).length === 0) return "None";
+                                                    let maxCat = "";
+                                                    let maxVal = -1;
+                                                    Object.entries(historySummary.byCategory).forEach(([cat, val]) => {
+                                                        if (val > maxVal) {
+                                                            maxVal = val;
+                                                            maxCat = cat;
+                                                        }
+                                                    });
+                                                    return maxCat;
+                                                })()}
+                                            </div>
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 inline-block">
+                                                Max spent category
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 {/* Filters & Search */}
-                                <div className="bento-card p-4 sm:p-6">
+                                <div className={cn(
+                                    "p-4 sm:p-6 transition-all",
+                                    isClay
+                                        ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-3xl"
+                                        : "bento-card"
+                                )}>
                                     <div className="flex flex-col md:flex-row gap-4 items-center">
                                         <div className="relative flex-1 w-full">
                                             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -511,10 +607,26 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                             />
                                         </div>
                                         <div className="flex gap-2 w-full md:w-auto">
-                                            <button onClick={() => setShowFilters(!showFilters)} className={cn("flex-1 md:flex-none flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border transition-all", showFilters ? "bg-blue-50 border-blue-200 text-blue-600" : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800")}>
+                                            <button
+                                                onClick={() => setShowFilters(!showFilters)}
+                                                className={cn(
+                                                    "flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border transition-all",
+                                                    showFilters
+                                                        ? isClay
+                                                            ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-transparent shadow-[inset_1px_1px_2px_rgba(255,255,255,0.4)]"
+                                                            : "bg-blue-50 border-blue-200 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
+                                                        : isClay
+                                                            ? "bg-slate-100/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-0 hover:bg-slate-100/80"
+                                                            : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800"
+                                                )}
+                                            >
                                                 <Filter size={14} /> Filters
                                             </button>
-                                            <select value={sortOrder} onChange={e => setSortOrder(e.target.value as any)} className="flex-1 md:w-32 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none">
+                                            <select
+                                                value={sortOrder}
+                                                onChange={e => setSortOrder(e.target.value as any)}
+                                                className="flex-1 md:w-32 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none"
+                                            >
                                                 <option value="desc">Newest</option>
                                                 <option value="asc">Oldest</option>
                                             </select>
@@ -633,7 +745,12 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                         {activeTab === "income" && (
                             <div className="space-y-6">
                                 {/* Top Filter Bar */}
-                                <div className="bento-card p-4 sm:p-6">
+                                <div className={cn(
+                                    "p-4 sm:p-6 transition-all",
+                                    isClay
+                                        ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-3xl"
+                                        : "bento-card"
+                                )}>
                                     <div className="flex flex-col md:flex-row gap-4 items-center">
                                         <div className="relative flex-1 w-full">
                                             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -641,11 +758,25 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                 value={incomeQuery}
                                                 onChange={e => setIncomeQuery(e.target.value)}
                                                 placeholder="Search earnings..."
-                                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 ring-emerald-500/20"
+                                                className={cn(
+                                                    "w-full pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 transition-all",
+                                                    isClay
+                                                        ? "bg-slate-50/50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/60 rounded-xl focus:ring-emerald-500/20"
+                                                        : "bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-emerald-500/20"
+                                                )}
                                             />
                                         </div>
                                         <div className="flex gap-2 w-full md:w-auto">
-                                            <select value={selectedSource} onChange={e => setSelectedSource(e.target.value)} className="flex-1 md:w-48 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none">
+                                            <select
+                                                value={selectedSource}
+                                                onChange={e => setSelectedSource(e.target.value)}
+                                                className={cn(
+                                                    "flex-1 md:w-48 px-3 py-2 text-xs font-bold focus:outline-none transition-all",
+                                                    isClay
+                                                        ? "bg-slate-50/50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/60 rounded-xl focus:ring-emerald-500/20"
+                                                        : "bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl"
+                                                )}
+                                            >
                                                 <option value="">All Sources</option>
                                                 {INCOME_SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
                                             </select>
@@ -656,21 +787,36 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
 
                                 <div className="space-y-6">
                                     {/* Summary */}
-                                    <div className="bento-card p-6 sm:p-8 bg-emerald-600/5 border-emerald-500/20">
+                                    <div className={cn(
+                                        "p-6 sm:p-8 transition-all duration-300",
+                                        isClay
+                                            ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-0 shadow-[inset_2px_2px_5px_rgba(255,255,255,0.45),inset_-2px_-2px_5px_rgba(0,0,0,0.15),0_8px_20px_-6px_rgba(16,185,129,0.45)] rounded-[2.5rem]"
+                                            : "bento-card bg-emerald-600/5 border-emerald-500/20"
+                                    )}>
                                         <div className="flex items-center justify-between mb-6">
-                                            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">Monthly Earnings Pulse</h3>
-                                            <span className="text-[9px] font-black bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-2 py-1 rounded-md uppercase tracking-widest">
+                                            <h3 className={cn("text-[10px] font-black uppercase tracking-[0.2em]", isClay ? "text-emerald-100" : "text-emerald-600 dark:text-emerald-400")}>Monthly Earnings Pulse</h3>
+                                            <span className={cn(
+                                                "text-[9px] font-black px-2 py-1 rounded-md uppercase tracking-widest",
+                                                isClay
+                                                    ? "bg-white/20 text-white"
+                                                    : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+                                            )}>
                                                 {selectedMonth}
                                             </span>
                                         </div>
                                         <div className="flex items-baseline gap-2">
-                                            <span className="text-4xl sm:text-5xl font-black text-emerald-600 dark:text-emerald-400 tracking-tighter"><Amount value={incomeSummary.total} /></span>
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">total earned</span>
+                                            <span className={cn("text-4xl sm:text-5xl font-black tracking-tighter", isClay ? "text-white" : "text-emerald-600 dark:text-emerald-400")}><Amount value={incomeSummary.total} /></span>
+                                            <span className={cn("text-[10px] font-black uppercase tracking-widest", isClay ? "text-emerald-100" : "text-slate-400")}>total earned</span>
                                         </div>
                                     </div>
 
                                     {/* Income Items */}
-                                    <div className="bento-card min-h-[400px] overflow-hidden">
+                                    <div className={cn(
+                                        "min-h-[400px] overflow-hidden transition-all",
+                                        isClay
+                                            ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-[2.5rem]"
+                                            : "bento-card"
+                                    )}>
                                         {loading ? <Skeleton className="h-full w-full" /> : (
 
                                             <div className="flex flex-col pb-4">
@@ -749,13 +895,28 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
 
                         {activeTab === "audit" && (
                             <div className="flex flex-col items-center">
-                                <div className="w-full max-w-md mb-8 flex justify-between items-center bg-white/80 dark:bg-slate-900/80 p-4 rounded-3xl border border-white/20">
+                                <div className={cn(
+                                    "w-full max-w-md mb-8 flex justify-between items-center p-4 transition-all duration-300",
+                                    isClay
+                                        ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-[2rem]"
+                                        : "bg-white/80 dark:bg-slate-900/80 rounded-3xl border border-white/20"
+                                )}>
                                     <div className="text-left">
                                         <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">Audit Mode</h3>
-                                        <p className="text-xs font-bold">{auditRemaining} tasks left</p>
+                                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400">{auditRemaining} tasks left</p>
                                     </div>
-                                    <div className="h-1.5 w-32 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                        <motion.div initial={{ width: 0 }} animate={{ width: `${(auditIndex / auditTotal) * 100}%` }} className="h-full bg-blue-600" />
+                                    <div className={cn(
+                                        "h-2 w-32 rounded-full overflow-hidden transition-all duration-300",
+                                        isClay ? "bg-slate-100 dark:bg-slate-800 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.1)]" : "bg-slate-100 dark:bg-slate-800"
+                                    )}>
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${(auditIndex / auditTotal) * 100}%` }}
+                                            className={cn(
+                                                "h-full transition-all duration-300",
+                                                isClay ? "bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full" : "bg-blue-600"
+                                            )}
+                                        />
                                     </div>
                                 </div>
 
@@ -772,7 +933,12 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                             }}
                                         />
                                     ) : (
-                                        <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-white/80 dark:bg-slate-900/80 rounded-[3rem] border-2 border-dashed border-slate-200">
+                                        <div className={cn(
+                                            "h-full flex flex-col items-center justify-center text-center p-8 transition-all duration-300",
+                                            isClay
+                                                ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-[3rem]"
+                                                : "bg-white/80 dark:bg-slate-900/80 rounded-[3rem] border-2 border-dashed border-slate-200"
+                                        )}>
                                             <CheckCircle2 size={48} className="text-emerald-500 mb-4" />
                                             <h3 className="text-xl font-black">Laboratory Clean!</h3>
                                             <p className="text-sm text-slate-500 mt-2 text-balance">All expenses have been categorized and confirmed.</p>
@@ -786,12 +952,22 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
 
                         {activeTab === "data" && (
                             <div className="space-y-8">
-                                <section className="bento-card p-6">
+                                <section className={cn(
+                                    "p-6 transition-all duration-300",
+                                    isClay
+                                        ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-[2.5rem]"
+                                        : "bento-card"
+                                )}>
                                     <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-6">Import / Export Hub</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-4">
-                                            <label className="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                                <Upload className="text-blue-500" />
+                                            <label className={cn(
+                                                "flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed cursor-pointer transition-all duration-300",
+                                                isClay
+                                                    ? "bg-slate-50/50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800 rounded-3xl hover:shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] hover:bg-slate-100/50 dark:hover:bg-slate-800/20"
+                                                    : "border-slate-200 dark:border-slate-700 rounded-3xl hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                                            )}>
+                                                <Upload className="text-blue-500 animate-bounce" />
                                                 <span className="text-sm font-bold">Upload CSV</span>
                                                 <input type="file" className="hidden" accept=".csv" onChange={e => e.target.files?.[0] && handleCsvFile(e.target.files[0])} />
                                             </label>
@@ -799,7 +975,12 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                             <select
                                                 value={defaultImportAccountId}
                                                 onChange={e => setDefaultImportAccountId(e.target.value)}
-                                                className="w-full bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl px-3 py-3 text-sm font-bold"
+                                                className={cn(
+                                                    "w-full px-3 py-3 text-sm font-bold focus:outline-none focus:ring-2 transition-all duration-300",
+                                                    isClay
+                                                        ? "bg-slate-50/50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/60 rounded-xl focus:ring-blue-500/20"
+                                                        : "bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl"
+                                                )}
                                             >
                                                 <option value="">Default Import Account</option>
                                                 {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
@@ -807,15 +988,30 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                         </div>
 
                                         <div className="space-y-6">
-                                            <div className="bento-card p-8 bg-slate-900 text-white border-none relative overflow-hidden">
+                                            <div className={cn(
+                                                "p-8 relative overflow-hidden transition-all duration-300",
+                                                isClay
+                                                    ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white border-0 shadow-[inset_2px_2px_5px_rgba(255,255,255,0.45),inset_-2px_-2px_5px_rgba(0,0,0,0.15),0_8px_20px_-6px_rgba(37,99,235,0.45)] rounded-[2.5rem]"
+                                                    : "bento-card bg-slate-900 text-white border-none"
+                                            )}>
                                                 {/* Decorative Background Elements */}
-                                                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-16 -mt-16" />
-                                                <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl -ml-12 -mb-12" />
+                                                {!isClay && (
+                                                    <>
+                                                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-16 -mt-16" />
+                                                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl -ml-12 -mb-12" />
+                                                    </>
+                                                )}
+                                                {isClay && (
+                                                    <>
+                                                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16 animate-pulse" />
+                                                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full blur-xl -ml-12 -mb-12" />
+                                                    </>
+                                                )}
 
                                                 <div className="relative z-10">
                                                     <div className="flex items-center justify-between mb-8">
                                                         <div>
-                                                            <h4 className="font-black text-xs uppercase tracking-[0.2em] text-blue-400 mb-1">Vault Intelligence</h4>
+                                                            <h4 className={cn("font-black text-xs uppercase tracking-[0.2em] mb-1", isClay ? "text-blue-100" : "text-blue-400")}>Vault Intelligence</h4>
                                                             <h3 className="text-xl font-black tracking-tight">Generate Financial Report</h3>
                                                         </div>
                                                         <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-xl">
@@ -828,7 +1024,9 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                             onClick={() => setReportType("pdf")}
                                                             className={cn(
                                                                 "flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
-                                                                reportType === "pdf" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10"
+                                                                reportType === "pdf"
+                                                                    ? (isClay ? "bg-white text-blue-600 shadow-[inset_1px_1px_3px_rgba(255,255,255,0.8),inset_-1px_-1px_3px_rgba(0,0,0,0.1),0_8px_16px_rgba(0,0,0,0.1)] border-0" : "bg-blue-600 text-white shadow-lg shadow-blue-600/20")
+                                                                    : (isClay ? "bg-white/15 text-white/80 hover:bg-white/25 hover:text-white" : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10")
                                                             )}
                                                         >
                                                             PDF Document
@@ -837,7 +1035,9 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                             onClick={() => setReportType("csv")}
                                                             className={cn(
                                                                 "flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
-                                                                reportType === "csv" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10"
+                                                                reportType === "csv"
+                                                                    ? (isClay ? "bg-white text-blue-600 shadow-[inset_1px_1px_3px_rgba(255,255,255,0.8),inset_-1px_-1px_3px_rgba(0,0,0,0.1),0_8px_16px_rgba(0,0,0,0.1)] border-0" : "bg-blue-600 text-white shadow-lg shadow-blue-600/20")
+                                                                    : (isClay ? "bg-white/15 text-white/80 hover:bg-white/25 hover:text-white" : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10")
                                                             )}
                                                         >
                                                             CSV Spreadsheet
@@ -847,7 +1047,12 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                     <button
                                                         onClick={generateReport}
                                                         disabled={isGenerating}
-                                                        className="w-full relative group h-16 rounded-[2rem] bg-gradient-to-r from-blue-600 to-indigo-600 font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 overflow-hidden"
+                                                        className={cn(
+                                                            "w-full relative group h-16 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] transition-all disabled:opacity-50 disabled:scale-100 overflow-hidden",
+                                                            isClay
+                                                                ? "bg-white text-blue-600 shadow-[inset_1px_1px_3px_rgba(255,255,255,0.8),inset_-1px_-1px_3px_rgba(0,0,0,0.1),0_8px_16px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-95 border-0"
+                                                                : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-95"
+                                                        )}
                                                     >
                                                         <AnimatePresence mode="wait">
                                                             {isGenerating ? (
@@ -883,14 +1088,24 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
 
                                             <button
                                                 onClick={() => exportExpensesToCSV(expenses, `Vault_Backup_${todayDateKey(settings.timezone)}.csv`)}
-                                                className="flex w-full items-center justify-between p-6 rounded-[2.5rem] bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 transition-all group"
+                                                className={cn(
+                                                    "flex w-full items-center justify-between p-6 rounded-[2.5rem] transition-all group",
+                                                    isClay
+                                                        ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card hover:translate-y-[-2px]"
+                                                        : "bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700"
+                                                )}
                                             >
                                                 <div className="text-left">
-                                                    <h4 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-400 group-hover:text-slate-600 transition-colors">Data Management</h4>
+                                                    <h4 className={cn("font-black text-[10px] uppercase tracking-[0.2em]", isClay ? "text-blue-500" : "text-slate-400 group-hover:text-slate-600 transition-colors")}>Data Management</h4>
                                                     <h3 className="font-black text-sm uppercase tracking-widest mt-1">Full System Backup</h3>
                                                     <p className="text-[10px] text-slate-400 mt-1">Export all {expenses.length} records</p>
                                                 </div>
-                                                <div className="h-12 w-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center group-hover:bg-slate-900 group-hover:text-white transition-all">
+                                                <div className={cn(
+                                                    "h-12 w-12 rounded-2xl flex items-center justify-center transition-all",
+                                                    isClay
+                                                        ? "bg-blue-50 dark:bg-blue-950/50 text-blue-600 shadow-[inset_1px_1px_3px_rgba(255,255,255,0.8),inset_-1px_-1px_3px_rgba(0,0,0,0.1)]"
+                                                        : "bg-slate-50 dark:bg-white/5 group-hover:bg-slate-900 group-hover:text-white"
+                                                )}>
                                                     <Download size={20} />
                                                 </div>
                                             </button>
@@ -898,7 +1113,12 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                 <button
                                                     onClick={executeImport}
                                                     disabled={isImporting}
-                                                    className="flex w-full items-center justify-between p-6 rounded-3xl bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20"
+                                                    className={cn(
+                                                        "flex w-full items-center justify-between p-6 rounded-3xl transition-all shadow-lg",
+                                                        isClay
+                                                            ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-0 shadow-[inset_2px_2px_5px_rgba(255,255,255,0.45),inset_-2px_-2px_5px_rgba(0,0,0,0.15),0_8px_20px_rgba(37,99,235,0.3)] hover:translate-y-[-2px] active:translate-y-[1px]"
+                                                            : "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-500/20"
+                                                    )}
                                                 >
                                                     <div className="text-left">
                                                         <h4 className="font-black text-sm uppercase tracking-widest">{isImporting ? "Processing..." : "Commit Import"}</h4>
@@ -915,7 +1135,12 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                             <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Import Preview</h4>
                                             <div className="max-h-64 overflow-y-auto space-y-2 pr-2">
                                                 {importRows.map((r, i) => (
-                                                    <div key={i} className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                                    <div key={i} className={cn(
+                                                        "flex justify-between items-center p-4 transition-all duration-300",
+                                                        isClay
+                                                            ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-2xl"
+                                                            : "bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800"
+                                                    )}>
                                                         <div>
                                                             <div className="text-xs font-black uppercase">{r.category}</div>
                                                             <div className="text-[10px] text-slate-400">{r.note || "No note"} • {r.date}</div>
@@ -1070,19 +1295,62 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
 function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete }: any) {
     const acc = accounts.find((a: any) => a.id === expense.accountId);
     const [showMenu, setShowMenu] = useState(false);
+    const { theme } = useTheme();
+    const isClay = theme === "claymorphism";
+
+    const catLower = (expense.category || "").toLowerCase();
+    let badgeColorClass = "bg-slate-100 dark:bg-slate-800 text-slate-500";
+    let clayBadgeClass = "clay-badge-default";
+
+    if (catLower.includes("food") || catLower.includes("dining")) {
+        badgeColorClass = "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400";
+        clayBadgeClass = "clay-badge-food";
+    } else if (catLower.includes("travel") || catLower.includes("transport") || catLower.includes("fuel")) {
+        badgeColorClass = "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400";
+        clayBadgeClass = "clay-badge-travel";
+    } else if (catLower.includes("shop") || catLower.includes("buy") || catLower.includes("clothing")) {
+        badgeColorClass = "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400";
+        clayBadgeClass = "clay-badge-shopping";
+    } else if (catLower.includes("bill") || catLower.includes("utilities") || catLower.includes("rent") || catLower.includes("subscription")) {
+        badgeColorClass = "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400";
+        clayBadgeClass = "clay-badge-bills";
+    } else if (catLower.includes("health") || catLower.includes("medical") || catLower.includes("gym")) {
+        badgeColorClass = "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+        clayBadgeClass = "clay-badge-health";
+    }
+
+    let iconClass = "";
+    if (isSelected) {
+        iconClass = "bg-slate-900 dark:bg-white text-white dark:text-slate-900";
+    } else if (isClay) {
+        iconClass = clayBadgeClass;
+    } else {
+        iconClass = badgeColorClass;
+    }
 
     return (
         <div
             onClick={onSelect}
             className={cn(
                 "group relative flex flex-col p-4 sm:p-5 mx-3 my-2 sm:mx-5 sm:my-3 transition-all cursor-pointer rounded-3xl border",
-                isSelected ? "bg-blue-50/80 dark:bg-blue-500/10 ring-2 ring-inset ring-blue-500 border-transparent shadow-md" : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-lg hover:border-slate-200 dark:hover:border-slate-700"
+                isSelected
+                    ? isClay
+                        ? "bg-blue-500/10 dark:bg-blue-500/20 ring-2 ring-inset ring-blue-500 border-transparent shadow-[0_8px_16px_rgba(59,130,246,0.15)]"
+                        : "bg-blue-50/80 dark:bg-blue-500/10 ring-2 ring-inset ring-blue-500 border-transparent shadow-md"
+                    : isClay
+                        ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card hover:shadow-clay-card-hover"
+                        : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-lg hover:border-slate-200 dark:hover:border-slate-700"
             )}
         >
-            {/* Account Tag Inline (Replaces Ribbon) */}
+            {/* Account Tag Inline */}
             {acc && (
                 <div className="absolute top-0 right-6 -translate-y-1/2">
-                    <span className="bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">
+                    <span className={cn(
+                        "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm",
+                        isClay
+                            ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-[inset_1px_1px_2px_rgba(255,255,255,0.4)]"
+                            : "bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900"
+                    )}>
                         {acc.name}
                     </span>
                 </div>
@@ -1092,7 +1360,10 @@ function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete 
             <div className="absolute top-3 right-3">
                 <button
                     onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-                    className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition-colors"
+                    className={cn(
+                        "p-1.5 rounded-full transition-colors text-slate-400",
+                        isClay ? "hover:bg-slate-100/50 dark:hover:bg-slate-800/50" : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                    )}
                     aria-label="Open expense actions"
                 >
                     <MoreVertical size={16} />
@@ -1112,17 +1383,30 @@ function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete 
                                 initial={{ opacity: 0, scale: 0.95, y: -10 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                                className="absolute right-0 top-10 z-20 w-32 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+                                className={cn(
+                                    "absolute right-0 top-10 z-20 w-32 border overflow-hidden",
+                                    isClay
+                                        ? "bg-white/95 dark:bg-slate-900/95 border-0 shadow-clay-card rounded-2xl backdrop-blur-md"
+                                        : "bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl"
+                                )}
                             >
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onEdit(); setShowMenu(false); }}
-                                    className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors border-b border-slate-50 dark:border-white/5"
+                                    className={cn(
+                                        "w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-blue-600 transition-colors border-b",
+                                        isClay
+                                            ? "hover:bg-blue-50/50 dark:hover:bg-blue-500/10 border-slate-100 dark:border-slate-800"
+                                            : "hover:bg-blue-50 dark:hover:bg-blue-500/10 border-slate-50 dark:border-white/5"
+                                    )}
                                 >
                                     <Edit2 size={12} /> Edit
                                 </button>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onDelete(); setShowMenu(false); }}
-                                    className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                                    className={cn(
+                                        "w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-rose-600 transition-colors",
+                                        isClay ? "hover:bg-rose-50/50 dark:hover:bg-rose-500/10" : "hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                                    )}
                                 >
                                     <Trash2 size={12} /> Delete
                                 </button>
@@ -1136,14 +1420,17 @@ function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete 
                 <div className="flex items-center gap-4 min-w-0 flex-1">
                     <div className={cn(
                         "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-black uppercase transition-all duration-300 shadow-sm",
-                        isSelected ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "bg-slate-100 dark:bg-slate-800 text-slate-500 group-hover:scale-110"
+                        iconClass
                     )}>
                         {expense.category[0]}
                     </div>
                     <div className="min-w-0 flex flex-col gap-0.5 flex-1">
                         <div className="font-bold text-[16px] text-slate-900 dark:text-white tracking-tight group-hover:text-rose-600 transition-colors truncate">{expense.category}</div>
                         <div className="flex items-center gap-2 overflow-hidden">
-                            <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-md shrink-0">{expense.date}</span>
+                            <span className={cn(
+                                "text-[10px] text-slate-400 font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md shrink-0",
+                                isClay ? "bg-slate-100/50 dark:bg-slate-950/50" : "bg-slate-100 dark:bg-slate-800"
+                            )}>{expense.date}</span>
                             {expense.note && (
                                 <span className="text-[11px] text-slate-400 dark:text-slate-500 italic font-medium truncate">
                                     {expense.note}
@@ -1163,13 +1450,45 @@ function ExpenseRow({ expense, accounts, isSelected, onSelect, onEdit, onDelete 
 function IncomeRow({ income, accounts, onEdit, onDelete, onSelect }: any) {
     const acc = accounts.find((a: any) => a.id === income.accountId);
     const [showMenu, setShowMenu] = useState(false);
+    const { theme } = useTheme();
+    const isClay = theme === "claymorphism";
+
+    const sourceLower = (income.source || "").toLowerCase();
+    let badgeColorClass = "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+    let clayBadgeClass = "clay-badge-default";
+
+    if (sourceLower.includes("salary") || sourceLower.includes("job") || sourceLower.includes("wage")) {
+        badgeColorClass = "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+        clayBadgeClass = "clay-badge-salary";
+    } else if (sourceLower.includes("invest") || sourceLower.includes("stock") || sourceLower.includes("dividend") || sourceLower.includes("interest")) {
+        badgeColorClass = "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400";
+        clayBadgeClass = "clay-badge-investments";
+    } else if (sourceLower.includes("free") || sourceLower.includes("gigs") || sourceLower.includes("side") || sourceLower.includes("consult")) {
+        badgeColorClass = "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400";
+        clayBadgeClass = "clay-badge-freelance";
+    }
+
+    let iconClass = isClay ? clayBadgeClass : badgeColorClass;
 
     return (
-        <div onClick={onSelect} className="group relative flex flex-col p-4 sm:p-5 mx-3 my-2 sm:mx-5 sm:my-3 transition-all cursor-pointer rounded-3xl border bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-lg hover:border-slate-200 dark:hover:border-slate-700">
-            {/* Account Tag Inline (Replaces Ribbon) */}
+        <div
+            onClick={onSelect}
+            className={cn(
+                "group relative flex flex-col p-4 sm:p-5 mx-3 my-2 sm:mx-5 sm:my-3 transition-all cursor-pointer rounded-3xl border",
+                isClay
+                    ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card hover:shadow-clay-card-hover"
+                    : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-lg hover:border-slate-200 dark:hover:border-slate-700"
+            )}
+        >
+            {/* Account Tag Inline */}
             {acc && (
                 <div className="absolute top-0 right-6 -translate-y-1/2">
-                    <span className="bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">
+                    <span className={cn(
+                        "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm",
+                        isClay
+                            ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-[inset_1px_1px_2px_rgba(255,255,255,0.4)]"
+                            : "bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900"
+                    )}>
                         {acc.name}
                     </span>
                 </div>
@@ -1179,7 +1498,10 @@ function IncomeRow({ income, accounts, onEdit, onDelete, onSelect }: any) {
             <div className="absolute top-3 right-3">
                 <button
                     onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-                    className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition-colors"
+                    className={cn(
+                        "p-1.5 rounded-full transition-colors text-slate-400",
+                        isClay ? "hover:bg-slate-100/50 dark:hover:bg-slate-800/50" : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                    )}
                     aria-label="Open income actions"
                 >
                     <MoreVertical size={16} />
@@ -1199,17 +1521,30 @@ function IncomeRow({ income, accounts, onEdit, onDelete, onSelect }: any) {
                                 initial={{ opacity: 0, scale: 0.95, y: -10 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                                className="absolute right-0 top-10 z-20 w-32 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+                                className={cn(
+                                    "absolute right-0 top-10 z-20 w-32 border overflow-hidden",
+                                    isClay
+                                        ? "bg-white/95 dark:bg-slate-900/95 border-0 shadow-clay-card rounded-2xl backdrop-blur-md"
+                                        : "bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl"
+                                )}
                             >
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onEdit(); setShowMenu(false); }}
-                                    className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors border-b border-slate-50 dark:border-white/5"
+                                    className={cn(
+                                        "w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-blue-600 transition-colors border-b",
+                                        isClay
+                                            ? "hover:bg-blue-50/50 dark:hover:bg-blue-500/10 border-slate-100 dark:border-slate-800"
+                                            : "hover:bg-blue-50 dark:hover:bg-blue-500/10 border-slate-50 dark:border-white/5"
+                                    )}
                                 >
                                     <Edit2 size={12} /> Edit
                                 </button>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onDelete(); setShowMenu(false); }}
-                                    className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                                    className={cn(
+                                        "w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-rose-600 transition-colors",
+                                        isClay ? "hover:bg-rose-50/50 dark:hover:bg-rose-500/10" : "hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                                    )}
                                 >
                                     <Trash2 size={12} /> Delete
                                 </button>
@@ -1221,13 +1556,19 @@ function IncomeRow({ income, accounts, onEdit, onDelete, onSelect }: any) {
 
             <div className="flex items-center justify-between gap-4 pt-1">
                 <div className="flex items-center gap-4 min-w-0 flex-1">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm font-black uppercase group-hover:scale-110 transition-transform shadow-sm">
+                    <div className={cn(
+                        "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-black uppercase transition-all duration-300 shadow-sm group-hover:scale-110",
+                        iconClass
+                    )}>
                         {income.source[0]}
                     </div>
                     <div className="min-w-0 flex flex-col gap-0.5 flex-1">
                         <div className="font-bold text-[16px] text-slate-900 dark:text-white tracking-tight group-hover:text-emerald-600 transition-colors truncate">{income.source}</div>
                         <div className="flex items-center gap-2 overflow-hidden">
-                            <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-md shrink-0">{income.date}</span>
+                            <span className={cn(
+                                "text-[10px] text-slate-400 font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md shrink-0",
+                                isClay ? "bg-slate-100/50 dark:bg-slate-950/50" : "bg-slate-100 dark:bg-slate-800"
+                            )}>{income.date}</span>
                             {income.note && (
                                 <span className="text-[11px] text-slate-400 dark:text-slate-500 italic font-medium truncate">
                                     {income.note}

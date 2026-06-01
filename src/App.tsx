@@ -172,21 +172,19 @@ export default function App() {
   const toastTheme = darkToastThemes.has(theme) ? "dark" : "light";
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <SettingsProvider>
-          <ModalProvider>
-            <LedgerStateProvider>
-              <CelebrationProvider>
-                <Routes>
-                  <Route path="/payment/:slug" element={<PaymentRequestPage />} />
-                  <Route path="/pay/:slug" element={<PaySlugRedirect />} />
-                  <Route path="*" element={<AppContent />} />
-                </Routes>
-              </CelebrationProvider>
-            </LedgerStateProvider>
-          </ModalProvider>
-        </SettingsProvider>
-      </AuthProvider>
+      <SettingsProvider>
+        <ModalProvider>
+          <LedgerStateProvider>
+            <CelebrationProvider>
+              <Routes>
+                <Route path="/payment/:slug" element={<PaymentRequestPage />} />
+                <Route path="/pay/:slug" element={<PaySlugRedirect />} />
+                <Route path="*" element={<AppContent />} />
+              </Routes>
+            </CelebrationProvider>
+          </LedgerStateProvider>
+        </ModalProvider>
+      </SettingsProvider>
       <ToastContainer position="top-center" theme={toastTheme} autoClose={2000} hideProgressBar newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
     </BrowserRouter>
   );

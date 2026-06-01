@@ -3,6 +3,7 @@ import { type Expense } from "../../types/expense";
 import { Tag, FileText, Calendar, Clock, ArrowRight, ArrowLeft, ArrowUp } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useState } from "react";
+import { useTheme } from "../../hooks/useTheme";
 
 interface AuditCardProps {
   expense: Expense;
@@ -14,6 +15,8 @@ export default function AuditCard({ expense, onSwipe }: AuditCardProps) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const controls = useAnimation();
+  const { theme } = useTheme();
+  const isClay = theme === "claymorphism";
 
   // Rotation and opacity transforms
   const rotate = useTransform(x, [-200, 200], [-25, 25]);
@@ -47,7 +50,12 @@ export default function AuditCard({ expense, onSwipe }: AuditCardProps) {
       onDragEnd={handleDragEnd}
       animate={controls}
       style={{ x, y, rotate, opacity }}
-      className="absolute inset-0 premium-glass rounded-3xl overflow-hidden cursor-grab active:cursor-grabbing flex flex-col"
+      className={cn(
+        "absolute inset-0 overflow-hidden cursor-grab active:cursor-grabbing flex flex-col",
+        isClay
+          ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-[2.5rem]"
+          : "premium-glass border border-white/20 rounded-3xl shadow-sm"
+      )}
     >
       {/* Visual Feedback Badges */}
       <motion.div 
@@ -70,7 +78,12 @@ export default function AuditCard({ expense, onSwipe }: AuditCardProps) {
       </motion.div>
 
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 text-white flex flex-col items-center justify-center gap-2">
+      <div className={cn(
+        "p-8 text-white flex flex-col items-center justify-center gap-2",
+        isClay
+          ? "bg-gradient-to-br from-violet-600 to-indigo-600 shadow-[inset_1px_1.5px_3px_rgba(255,255,255,0.4)] rounded-t-[2.5rem]"
+          : "bg-gradient-to-br from-blue-600 to-indigo-700"
+      )}>
         <div className="text-sm font-bold opacity-80 uppercase tracking-widest">Amount</div>
         <div className="text-5xl font-black">₹{expense.amount.toLocaleString()}</div>
       </div>
@@ -84,8 +97,12 @@ export default function AuditCard({ expense, onSwipe }: AuditCardProps) {
           <div className={cn(
             "text-xl font-bold p-3 rounded-2xl border transition-colors",
             (!expense.category || expense.category === "Other") 
-              ? "bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20 text-rose-600 dark:text-rose-400"
-              : "bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-900 dark:text-white"
+              ? isClay
+                ? "bg-rose-500/10 border-0 shadow-[inset_1px_1px_2px_rgba(244,63,94,0.2)] text-rose-500"
+                : "bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20 text-rose-600 dark:text-rose-400"
+              : isClay
+                ? "bg-slate-100/80 dark:bg-slate-950/80 border-0 shadow-[inset_1px_1.5px_3px_rgba(0,0,0,0.08)] text-slate-900 dark:text-white"
+                : "bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-900 dark:text-white"
           )}>
             {expense.category || "Uncategorized"}
           </div>
@@ -98,8 +115,12 @@ export default function AuditCard({ expense, onSwipe }: AuditCardProps) {
           <div className={cn(
             "text-base font-medium p-4 rounded-2xl border min-h-[100px] transition-colors",
             (!expense.note || expense.note.toLowerCase().includes("no note"))
-              ? "bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20 text-amber-600 dark:text-amber-400 italic"
-              : "bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+              ? isClay
+                ? "bg-amber-500/10 border-0 shadow-[inset_1px_1px_2px_rgba(245,158,11,0.2)] text-amber-500 italic"
+                : "bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20 text-amber-600 dark:text-amber-400 italic"
+              : isClay
+                ? "bg-slate-100/80 dark:bg-slate-950/80 border-0 shadow-[inset_1px_1.5px_3px_rgba(0,0,0,0.08)] text-slate-700 dark:text-slate-300"
+                : "bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-700 dark:text-slate-300"
           )}>
             {expense.note || "No note provided"}
           </div>
@@ -122,7 +143,12 @@ export default function AuditCard({ expense, onSwipe }: AuditCardProps) {
       </div>
 
       {/* Swipe Hints */}
-      <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/50">
+      <div className={cn(
+        "p-4 border-t flex justify-between items-center",
+        isClay
+          ? "border-slate-100 dark:border-slate-800 bg-slate-50/20 dark:bg-slate-950/20"
+          : "border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50"
+      )}>
         <div className="flex items-center gap-1 text-[10px] font-black text-amber-500 uppercase">
           <ArrowLeft size={12} /> Edit
         </div>

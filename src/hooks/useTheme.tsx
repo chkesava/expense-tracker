@@ -1,4 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useAuth } from "./useAuth";
+import { db } from "../firebase";
+import { doc, onSnapshot, setDoc } from "firebase/firestore";
 
 type Theme = 
   | "light" 
@@ -23,11 +26,29 @@ const STORAGE_KEY = "expense-tracker-theme";
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
+  const { realUser } = useAuth();
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window === "undefined") return "light";
     const stored = window.localStorage.getItem(STORAGE_KEY);
     return (stored as Theme) || "light";
   });
+
+  // Listen to Firestore settings changes to sync theme
+  useEffect(() => {
+    if (!realUser) return;
+
+    const ref = doc(db, "users", realUser.uid);
+    const unsub = onSnapshot(ref, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.theme) {
+          setThemeState(data.theme as Theme);
+        }
+      }
+    });
+
+    return () => unsub();
+  }, [realUser]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -54,10 +75,23 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     window.localStorage.setItem(STORAGE_KEY, theme);
   }, [theme]);
 
+  const setTheme = async (nextTheme: Theme) => {
+    setThemeState(nextTheme);
+    window.localStorage.setItem(STORAGE_KEY, nextTheme);
+    if (realUser) {
+      try {
+        const ref = doc(db, "users", realUser.uid);
+        await setDoc(ref, { theme: nextTheme }, { merge: true });
+      } catch (err) {
+        console.error("Failed to sync theme to Firestore", err);
+      }
+    }
+  };
+
   const value = useMemo(() => ({
     theme,
-    setTheme: (nextTheme: Theme) => setThemeState(nextTheme),
-  }), [theme]);
+    setTheme,
+  }), [theme, realUser]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
