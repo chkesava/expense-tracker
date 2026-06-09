@@ -7,14 +7,14 @@ import PageShell from "../components/layout/PageShell";
 
 type LedgerTab = "expenses" | "splits" | "subscriptions" | "travel" | "cards" | "accounts" | "investments" | "collect";
 
-const ExpenseListPage = lazy(() => import("./ExpenseListPage"));
-const SplitPage = lazy(() => import("./SplitPage"));
-const SubscriptionsPage = lazy(() => import("./SubscriptionsPage"));
-const TripsPage = lazy(() => import("./TripsPage"));
-const CardsPage = lazy(() => import("./CardsPage"));
-const AccountsPage = lazy(() => import("./AccountsPage"));
-const InvestmentsPage = lazy(() => import("./InvestmentsPage"));
-const PaymentRequestsPage = lazy(() => import("./PaymentRequestsPage"));
+import ExpenseListPage from "./ExpenseListPage";
+import SplitPage from "./SplitPage";
+import SubscriptionsPage from "./SubscriptionsPage";
+import TripsPage from "./TripsPage";
+import CardsPage from "./CardsPage";
+import AccountsPage from "./AccountsPage";
+import InvestmentsPage from "./InvestmentsPage";
+import PaymentRequestsPage from "./PaymentRequestsPage";
 
 function TabFallback() {
   return (
@@ -67,7 +67,7 @@ export default function LedgerHub() {
           tabLayoutId="ledger-tab-pill"
         />
 
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           <motion.div
             key={activeTab}
             id={`panel-${activeTab}`}

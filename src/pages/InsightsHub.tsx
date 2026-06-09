@@ -7,9 +7,9 @@ import PageShell from "../components/layout/PageShell";
 
 type InsightsTab = "analytics" | "yearly" | "search";
 
-const AnalyticsPage = lazy(() => import("./AnalyticsPage"));
-const AnalysisLab = lazy(() => import("./AnalysisLab"));
-const YearlyAnalytics = lazy(() => import("./YearlyAnalytics"));
+import AnalyticsPage from "./AnalyticsPage";
+import AnalysisLab from "./AnalysisLab";
+import YearlyAnalytics from "./YearlyAnalytics";
 
 function TabFallback() {
   return (
@@ -57,7 +57,7 @@ export default function InsightsHub() {
           tabLayoutId="insights-tab-pill"
         />
 
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           <motion.div
             key={activeTab}
             id={`panel-${activeTab}`}

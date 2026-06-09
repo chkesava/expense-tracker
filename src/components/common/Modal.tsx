@@ -63,7 +63,7 @@ export default function Modal({ isOpen, onClose, title, children, className }: M
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+            className="absolute inset-0 bg-slate-950/70"
           />
 
           {/* Modal Content */}
@@ -71,12 +71,12 @@ export default function Modal({ isOpen, onClose, title, children, className }: M
             initial={{ opacity: 0, y: "100%" }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            transition={{ type: "spring", damping: 32, stiffness: 400 }}
             ref={panelRef}
             className={cn(
               // Mobile: full-width sheet from bottom with rounded top corners
               // Desktop: centered card with full rounded corners
-              "relative w-full sm:max-w-lg premium-glass shadow-2xl overflow-hidden flex flex-col border border-white/20",
+              "relative w-full sm:max-w-lg premium-glass shadow-2xl overflow-hidden flex flex-col border border-white/20 will-change-transform",
               isClay 
                 ? "rounded-t-[2.5rem] sm:rounded-[2.5rem]" 
                 : "rounded-t-[2rem] sm:rounded-[2rem]",

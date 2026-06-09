@@ -35,23 +35,17 @@ export function useTrips() {
       orderBy("createdAt", "desc")
     );
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const tripsData: Trip[] = [];
-      for (const d of snapshot.docs) {
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const tripsData: Trip[] = snapshot.docs.map(d => {
         const data = d.data();
-        // Fetch category budgets subcollection
-        const catBudgetsQ = query(collection(db, `trips/${d.id}/categoryBudgets`));
-        const catBudgetsSnap = await getDocs(catBudgetsQ);
-        const categoryBudgets = catBudgetsSnap.docs.map(cbDoc => cbDoc.data() as TripCategoryBudget);
-        
-        tripsData.push({ 
-          id: d.id, 
-          ...data, 
-          categoryBudgets,
+        return {
+          id: d.id,
+          ...data,
+          categoryBudgets: [] as TripCategoryBudget[],
           startDate: data.startDate?.toDate?.()?.toISOString() || data.startDate,
           endDate: data.endDate?.toDate?.()?.toISOString() || data.endDate,
-        } as Trip);
-      }
+        } as unknown as Trip;
+      });
       setTrips(tripsData);
       setLoading(false);
     }, (error) => {

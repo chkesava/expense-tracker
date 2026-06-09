@@ -25,18 +25,19 @@ import AuthPage from "./pages/AuthPage";
 import AuraBackground from "./components/layout/AuraBackground";
 import { LedgerStateProvider } from "./hooks/useLedgerState";
 
+import Dashboard from "./pages/Dashboard";
+import LedgerHub from "./pages/LedgerHub";
+import InsightsHub from "./pages/InsightsHub";
+import SettingsPage from "./pages/Settings";
+
 const AddExpense = lazy(() => import("./pages/AddExpense"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
 const SeedDataPage = lazy(() => import("./pages/SeedData"));
-const SettingsPage = lazy(() => import("./pages/Settings"));
 const SplitDetailPage = lazy(() => import("./pages/SplitDetailPage"));
 const CreateTripWizard = lazy(() => import("./pages/CreateTripWizard"));
 const TripDetailPage = lazy(() => import("./pages/TripDetailPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const LedgerHub = lazy(() => import("./pages/LedgerHub"));
 const AccountDetailPage = lazy(() => import("./pages/AccountDetailPage"));
 const InvestmentDetailPage = lazy(() => import("./pages/InvestmentDetailPage"));
-const InsightsHub = lazy(() => import("./pages/InsightsHub"));
 const VaultsPage = lazy(() => import("./pages/VaultsPage"));
 const VaultDetailPage = lazy(() => import("./pages/VaultDetailPage"));
 const PaymentRequestPage = lazy(() => import("./pages/PaymentRequestPage"));
@@ -103,13 +104,15 @@ function AppRoutes() {
   return (
     <>
       <AuraBackground />
-      <Modal
-        isOpen={isAddExpenseOpen}
-        onClose={() => setIsAddExpenseOpen(false)}
-        title="Add Transaction"
-      >
-        <ExpenseForm onSuccess={() => setIsAddExpenseOpen(false)} />
-      </Modal>
+      {isAddExpenseOpen && (
+        <Modal
+          isOpen={isAddExpenseOpen}
+          onClose={() => setIsAddExpenseOpen(false)}
+          title="Add Transaction"
+        >
+          <ExpenseForm onSuccess={() => setIsAddExpenseOpen(false)} />
+        </Modal>
+      )}
 
       <MonthDrawer />
       <CelebrationOverlay />
@@ -127,7 +130,7 @@ function AppRoutes() {
         <Header />
 
         <div id="main-content" className="flex-1 w-full pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             <Suspense fallback={<RouteFallback />}>
               <Routes location={location} key={location.pathname}>
                 <Route path="/" element={<Navigate to={`/${settings.defaultView || 'dashboard'}`} replace />} />
