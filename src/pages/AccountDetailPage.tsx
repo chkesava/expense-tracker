@@ -10,8 +10,8 @@ import { useAccountPayments } from "../hooks/useAccountPayments";
 import { useAccountEntries } from "../hooks/useAccountEntries";
 import Amount from "../components/common/Amount";
 import PayCreditBillModal from "../components/PayCreditBillModal";
-import AddAccountEntryModal from "../components/AddAccountEntryModal";
 import { cn } from "../lib/utils";
+import { useModals } from "../hooks/useModals";
 import { getAccountKind } from "../utils/accountKind";
 import {
   buildAccountActivities,
@@ -31,7 +31,7 @@ export default function AccountDetailPage() {
   const { payments } = useAccountPayments();
   const { entries } = useAccountEntries();
   const [showPayBill, setShowPayBill] = useState(false);
-  const [showManualEntry, setShowManualEntry] = useState(false);
+  const { setAccountEntryAccount } = useModals();
 
   const account = useMemo(
     () => accounts.find((a) => a.id === accountId),
@@ -147,7 +147,7 @@ export default function AccountDetailPage() {
             {account.balanceInitialized && (
               <button
                 type="button"
-                onClick={() => setShowManualEntry(true)}
+                onClick={() => setAccountEntryAccount(account)}
                 className="mt-4 w-full rounded-xl border border-border bg-muted/50 py-2.5 text-xs font-black uppercase tracking-wider text-foreground"
               >
                 Add funds or debit
@@ -320,13 +320,6 @@ export default function AccountDetailPage() {
         />
       )}
 
-      {kind !== "credit" && (
-        <AddAccountEntryModal
-          isOpen={showManualEntry}
-          onClose={() => setShowManualEntry(false)}
-          account={account}
-        />
-      )}
     </motion.main>
   );
 }

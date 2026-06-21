@@ -20,13 +20,13 @@ import { useUserRole } from "../hooks/useUserRole";
 import { useModals } from "../hooks/useModals";
 import { useVaults } from "../hooks/useVaults";
 import Avatar from "./Avatar";
-import { useExpenses } from "../hooks/useExpenses";
 import { useStoryGenerator } from "../hooks/useStoryGenerator";
 import useSettings from "../hooks/useSettings";
 import StoryViewer from "./story/StoryViewer";
 import { cn } from "../lib/utils";
 import { currentMonthKey } from "../utils/dates";
 import { ADMIN_NAV_ITEM, CORE_NAV_ITEMS, isNavItemActive } from "../config/navigation";
+import { useExpenses } from "../hooks/useExpenses";
 
 function formatMonthLabel(month: string, short = false) {
   if (!month) return "This Month";
@@ -45,7 +45,6 @@ export default function Header() {
   const { stats } = useGamification();
   const { isAdmin } = useUserRole();
   const { setIsMonthDrawerOpen, setIsAddExpenseOpen, globalMonth } = useModals();
-  const { expenses } = useExpenses();
   const { settings, setGhostMode } = useSettings();
 
   const desktopLinks = [
@@ -61,22 +60,19 @@ export default function Header() {
     settings: Settings,
   } as const;
 
-  const months = useMemo(
-    () => Array.from(new Set(expenses.map((expense) => expense.month))).sort().reverse(),
-    [expenses]
-  );
-  const selectedMonth = globalMonth ?? months[0] ?? currentMonthKey(settings.timezone);
-  const filteredExpenses = useMemo(
-    () => expenses.filter((expense) => expense.month === selectedMonth),
-    [expenses, selectedMonth]
-  );
-  const storySlides = useStoryGenerator(filteredExpenses, selectedMonth, expenses);
+  const selectedMonth = globalMonth ?? currentMonthKey(settings.timezone);
 
   const [showStory, setShowStory] = useState(false);
 
   return (
     <>
-      <StoryViewer isOpen={showStory} onClose={() => setShowStory(false)} slides={storySlides} />
+      {showStory && (
+        <MonthlyStoryViewer
+          isOpen={showStory}
+          onClose={() => setShowStory(false)}
+          selectedMonth={selectedMonth}
+        />
+      )}
 
       <motion.header
         initial={{ y: -100, opacity: 0 }}
@@ -219,9 +215,7 @@ export default function Header() {
               <span
                 className={cn(
                   "relative grid place-items-center rounded-full p-[2px]",
-                  storySlides.length > 0
-                    ? "bg-gradient-to-tr from-fuchsia-500 via-rose-500 to-amber-400"
-                    : "bg-border opacity-70"
+                  "bg-gradient-to-tr from-fuchsia-500 via-rose-500 to-amber-400"
                 )}
               >
                 <span className="rounded-full bg-card p-[2px]">
@@ -235,6 +229,26 @@ export default function Header() {
     </>
   );
 }
+
+function MonthlyStoryViewer({
+  isOpen,
+  onClose,
+  selectedMonth,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  selectedMonth: string;
+}) {
+  const { expenses } = useExpenses();
+  const filteredExpenses = useMemo(
+    () => expenses.filter((expense) => expense.month === selectedMonth),
+    [expenses, selectedMonth]
+  );
+  const storySlides = useStoryGenerator(filteredExpenses, selectedMonth, expenses);
+
+  return <StoryViewer isOpen={isOpen} onClose={onClose} slides={storySlides} />;
+}
+
 function VaultMemberIndicator() {
   const location = useLocation();
   const { vaults } = useVaults();

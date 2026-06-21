@@ -19,17 +19,17 @@ import Modal from "./components/common/Modal";
 import ExpenseForm from "./components/ExpenseForm";
 import MonthDrawer from "./components/MonthDrawer";
 import CelebrationOverlay from "./components/CelebrationOverlay";
+import AddAccountEntryModal from "./components/AddAccountEntryModal";
 
 import AdminRouteGuard from "./guards/AdminRouteGuard";
 import AuthPage from "./pages/AuthPage";
 import AuraBackground from "./components/layout/AuraBackground";
 import { LedgerStateProvider } from "./hooks/useLedgerState";
 
-import Dashboard from "./pages/Dashboard";
-import LedgerHub from "./pages/LedgerHub";
-import InsightsHub from "./pages/InsightsHub";
-import SettingsPage from "./pages/Settings";
-
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const LedgerHub = lazy(() => import("./pages/LedgerHub"));
+const InsightsHub = lazy(() => import("./pages/InsightsHub"));
+const SettingsPage = lazy(() => import("./pages/Settings"));
 const AddExpense = lazy(() => import("./pages/AddExpense"));
 const SeedDataPage = lazy(() => import("./pages/SeedData"));
 const SplitDetailPage = lazy(() => import("./pages/SplitDetailPage"));
@@ -99,7 +99,20 @@ function AppContent() {
 function AppRoutes() {
   const location = useLocation();
   const { settings } = useSettings();
-  const { isAddExpenseOpen, setIsAddExpenseOpen } = useModals();
+  const {
+    isAddExpenseOpen,
+    setIsAddExpenseOpen,
+    editingExpense,
+    setEditingExpense,
+    editingIncome,
+    setEditingIncome,
+    accountEntryAccount,
+    setAccountEntryAccount,
+  } = useModals();
+  const closeTransactionEditor = () => {
+    setEditingExpense(null);
+    setEditingIncome(null);
+  };
 
   return (
     <>
@@ -112,6 +125,24 @@ function AppRoutes() {
         >
           <ExpenseForm onSuccess={() => setIsAddExpenseOpen(false)} />
         </Modal>
+      )}
+      <Modal
+        isOpen={!!editingExpense || !!editingIncome}
+        onClose={closeTransactionEditor}
+        title="Edit Transaction"
+      >
+        <ExpenseForm
+          editingExpense={editingExpense}
+          editingIncome={editingIncome}
+          onSuccess={closeTransactionEditor}
+        />
+      </Modal>
+      {accountEntryAccount && (
+        <AddAccountEntryModal
+          isOpen={!!accountEntryAccount}
+          onClose={() => setAccountEntryAccount(null)}
+          account={accountEntryAccount}
+        />
       )}
 
       <MonthDrawer />

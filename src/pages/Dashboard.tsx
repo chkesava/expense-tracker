@@ -57,6 +57,7 @@ export default function Dashboard() {
   const { incomes, loading: incomesLoading } = useIncomes();
   const loading = expensesLoading || incomesLoading;
   const { accounts } = useAccounts();
+  const accountById = useMemo(() => new Map(accounts.map((account) => [account.id, account])), [accounts]);
   const { investments } = useInvestments();
   const { subscriptions } = useSubscriptions();
   const { budgets } = useCategoryBudgets();
@@ -520,9 +521,9 @@ export default function Dashboard() {
                 </div>
                 <div className="text-right">
                   <div className="font-black text-sm text-slate-900 dark:text-white"><Amount value={expense.amount} prefix="-₹" /></div>
-                  {accounts.find(a => a.id === expense.accountId) && (
+                  {accountById.get(expense.accountId ?? "") && (
                     <Badge variant="ghost" className="mt-1 px-1.5 py-0 text-[8px] bg-slate-50 dark:bg-white/5 text-slate-400 border-0">
-                      {accounts.find(a => a.id === expense.accountId)?.name}
+                      {accountById.get(expense.accountId ?? "")?.name}
                     </Badge>
                   )}
                 </div>
@@ -552,7 +553,7 @@ export default function Dashboard() {
     ];
 
     return sortedKnown;
-  }, [settings.dashboardOrder, isReordering]);
+  }, [settings.dashboardOrder]);
 
   return (
     <>
@@ -579,8 +580,7 @@ export default function Dashboard() {
         </div>
 
         <div className="min-h-[600px]">
-
-
+          {isReordering ? (
             <Reorder.Group
               axis="y"
               values={currentOrder}
@@ -625,6 +625,26 @@ export default function Dashboard() {
                 })}
               </AnimatePresence>
             </Reorder.Group>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
+              {currentOrder.map((id) => {
+                const component = widgetMap[id];
+                if (!component) return null;
+
+                return (
+                  <div
+                    key={id}
+                    className={cn(
+                      "relative h-full",
+                      (id === "overview" || id === "recentActivity" || id === "magicChat") && "md:col-span-2"
+                    )}
+                  >
+                    {component}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </motion.div>
     </>

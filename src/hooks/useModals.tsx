@@ -1,9 +1,16 @@
 import React, { createContext, useContext, useState } from "react";
+import type { Account, Expense, Income } from "../types/expense";
 import { currentMonthKey } from "../utils/dates";
 
 interface ModalContextType {
   isAddExpenseOpen: boolean;
   setIsAddExpenseOpen: (open: boolean) => void;
+  editingExpense: Expense | null;
+  setEditingExpense: (expense: Expense | null) => void;
+  editingIncome: Income | null;
+  setEditingIncome: (income: Income | null) => void;
+  accountEntryAccount: Account | null;
+  setAccountEntryAccount: (account: Account | null) => void;
   isMonthDrawerOpen: boolean;
   setIsMonthDrawerOpen: (open: boolean) => void;
   globalMonth: string | null;
@@ -14,6 +21,9 @@ const ModalContext = createContext<ModalContextType | undefined>(undefined);
 
 export function ModalProvider({ children }: { children: React.ReactNode }) {
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [editingIncome, setEditingIncome] = useState<Income | null>(null);
+  const [accountEntryAccount, setAccountEntryAccount] = useState<Account | null>(null);
   const [isMonthDrawerOpen, setIsMonthDrawerOpen] = useState(false);
   const [globalMonth, setGlobalMonth] = useState<string | null>(currentMonthKey());
 
@@ -22,6 +32,12 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
       value={{ 
         isAddExpenseOpen, 
         setIsAddExpenseOpen, 
+        editingExpense,
+        setEditingExpense,
+        editingIncome,
+        setEditingIncome,
+        accountEntryAccount,
+        setAccountEntryAccount,
         isMonthDrawerOpen, 
         setIsMonthDrawerOpen,
         globalMonth,

@@ -32,20 +32,20 @@ export default function PageHeader({
   tabLayoutId = "active-tab-pill",
 }: PageHeaderProps) {
   return (
-    <div className="mb-6 space-y-4">
-      <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
+    <div className="mb-5 space-y-3 md:mb-6 md:space-y-4">
+      <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3 md:gap-4">
           {icon && (
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-card text-foreground shadow-lg">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-foreground shadow-sm md:h-14 md:w-14 md:rounded-2xl">
               {icon}
             </div>
           )}
-          <div>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-black tracking-normal text-slate-900 dark:text-white md:text-3xl">
               {title}
             </h1>
             {subtitle && (
-              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1">
+              <p className="mt-1 line-clamp-2 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400 md:tracking-[0.16em]">
                 {subtitle}
               </p>
             )}
@@ -62,7 +62,7 @@ export default function PageHeader({
         <div
           role="tablist"
           aria-label={tabAriaLabel}
-          className="flex gap-1 overflow-x-auto rounded-xl border border-border bg-muted/50 p-1 backdrop-blur-xl scrollbar-hide no-scrollbar"
+          className="flex gap-1 overflow-x-auto rounded-xl border border-border bg-muted/50 p-1 scrollbar-hide no-scrollbar"
         >
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -77,7 +77,7 @@ export default function PageHeader({
                 aria-selected={isActive}
                 aria-controls={`panel-${tab.id}`}
                 className={cn(
-                  "relative flex items-center gap-2 whitespace-nowrap rounded-lg px-6 py-2.5 text-xs font-black uppercase tracking-widest transition-all",
+                  "relative flex min-h-10 items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] transition-all sm:px-4 md:px-6 md:py-2.5 md:text-xs md:tracking-widest",
                   isActive
                     ? "text-foreground"
                     : "text-muted-foreground hover:text-foreground"

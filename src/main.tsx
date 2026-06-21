@@ -7,12 +7,15 @@ import "./styles/auth.css";
 import "./styles/form.css"; // your existing form css
 import { ThemeProvider } from './hooks/useTheme';
 import { AuthProvider } from './hooks/useAuth';
+import { FinanceDataProvider } from './hooks/useFinanceData';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
       <ThemeProvider>
-        <App />
+        <FinanceDataProvider>
+          <App />
+        </FinanceDataProvider>
       </ThemeProvider>
     </AuthProvider>
   </StrictMode>,

@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Landmark, CreditCard, Wallet, ChevronRight } from "lucide-react";
 import { useAccounts } from "../hooks/useAccounts";
 import { useAccountTypes } from "../hooks/useAccountTypes";
@@ -8,11 +7,13 @@ import { useExpenses } from "../hooks/useExpenses";
 import { useIncomes } from "../hooks/useIncomes";
 import { useAccountPayments } from "../hooks/useAccountPayments";
 import { useAccountEntries } from "../hooks/useAccountEntries";
+import { useInvestments } from "../hooks/useInvestments";
 import Amount from "../components/common/Amount";
 import EmptyState from "../components/common/EmptyState";
 import { Skeleton } from "../components/common/Skeleton";
 import { getAccountKind } from "../utils/accountKind";
 import { computeBankBalance, computeCreditUsage } from "../utils/accountBalance";
+import NetWorthCard from "../components/NetWorthCard";
 
 export default function AccountsPage({ hideHeader }: { hideHeader?: boolean }) {
   const navigate = useNavigate();
@@ -22,22 +23,27 @@ export default function AccountsPage({ hideHeader }: { hideHeader?: boolean }) {
   const { incomes } = useIncomes();
   const { payments } = useAccountPayments();
   const { entries } = useAccountEntries();
+  const { investments, loading: investmentsLoading } = useInvestments();
+  const accountTypeNameById = useMemo(
+    () => new Map(accountTypes.map((type) => [type.id, type.name])),
+    [accountTypes]
+  );
 
   const grouped = useMemo(() => {
     const cashLike: typeof accounts = [];
     const credit: typeof accounts = [];
 
     for (const acc of accounts) {
-      const typeName = accountTypes.find((t) => t.id === acc.typeId)?.name || "";
+      const typeName = accountTypeNameById.get(acc.typeId) || "";
       const kind = getAccountKind(typeName);
       if (kind !== "credit") cashLike.push(acc);
       else credit.push(acc);
     }
     return { cashLike, credit };
-  }, [accounts, accountTypes]);
+  }, [accounts, accountTypeNameById]);
 
   const renderAccountCard = (acc: (typeof accounts)[0]) => {
-    const typeName = accountTypes.find((t) => t.id === acc.typeId)?.name || "Unknown";
+    const typeName = accountTypeNameById.get(acc.typeId) || "Unknown";
     const kind = getAccountKind(typeName);
 
     let primaryLabel = "";
@@ -59,13 +65,11 @@ export default function AccountsPage({ hideHeader }: { hideHeader?: boolean }) {
     }
 
     return (
-      <motion.button
+      <button
         key={acc.id}
         type="button"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
         onClick={() => navigate(`/accounts/${acc.id}`)}
-        className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-card/80 p-4 text-left backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:shadow-lg"
+        className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/30 hover:bg-muted/30"
       >
         <div className="min-w-0">
           <div className="truncate text-sm font-black text-foreground">{acc.name}</div>
@@ -85,11 +89,11 @@ export default function AccountsPage({ hideHeader }: { hideHeader?: boolean }) {
           )}
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </div>
-      </motion.button>
+      </button>
     );
   };
 
-  if (loading) {
+  if (loading || investmentsLoading) {
     return (
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
@@ -117,6 +121,16 @@ export default function AccountsPage({ hideHeader }: { hideHeader?: boolean }) {
           <p className="text-sm text-muted-foreground">Balances, credit usage, and transaction history.</p>
         </div>
       )}
+
+      <NetWorthCard
+        accounts={accounts}
+        accountTypes={accountTypes}
+        expenses={expenses}
+        incomes={incomes}
+        payments={payments}
+        entries={entries}
+        investments={investments}
+      />
 
       {grouped.cashLike.length > 0 && (
         <section>

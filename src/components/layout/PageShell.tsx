@@ -29,8 +29,8 @@ export default function PageShell({
   }
 
   return (
-    <main className={cn("mx-auto w-full px-4 pb-32 pt-24 md:px-6", widthClassByTier[width], className)}>
-      <div className={cn("space-y-6", contentClassName)}>{children}</div>
+    <main className={cn("mx-auto w-full px-3 pb-28 pt-24 sm:px-4 md:px-6 md:pb-12 md:pt-28", widthClassByTier[width], className)}>
+      <div className={cn("space-y-5 md:space-y-6", contentClassName)}>{children}</div>
     </main>
   );
 }

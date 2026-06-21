@@ -59,7 +59,7 @@
     --input: 220 13% 91%;
     --ring: 245 100% 60%;
     
-    --radius: 1.5rem; /* Smoother, larger radius for Bento aesthetic */
+    --radius: 1rem;
     
     /* Design System Elevations */
     --glass-bg: rgba(255, 255, 255, 0.85);
@@ -332,15 +332,15 @@
     -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
     font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1, "cv11" 1;
-    letter-spacing: -0.015em;
-    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    letter-spacing: 0;
+    transition: background-color 0.2s ease;
   }
 
   /* Premium Typography Hierarchy */
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-sans);
     font-weight: 900;
-    letter-spacing: -0.05em;
+    letter-spacing: 0;
     line-height: 1.1;
   }
 }
@@ -774,17 +774,21 @@
   }
 
   .premium-card {
-    @apply rounded-[2rem] border border-border bg-card/90 backdrop-blur-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)];
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    @apply rounded-2xl border border-border bg-card shadow-sm;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
   }
 
   .premium-card:hover {
-    @apply shadow-[0_20px_40px_rgb(0,0,0,0.08)] -translate-y-1;
+    @apply shadow-md;
   }
 
   .bento-card {
-    @apply rounded-[2rem] border border-border bg-card/80 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 relative;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    @apply relative rounded-2xl border border-border bg-card shadow-sm;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+  }
+
+  .bento-card:hover {
+    @apply shadow-md;
   }
 
   .theme-glass-3d .bento-card {

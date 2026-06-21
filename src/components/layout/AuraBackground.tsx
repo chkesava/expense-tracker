@@ -18,10 +18,10 @@ export default function AuraBackground() {
       <div
         className={
           isGlass
-            ? "absolute inset-0 opacity-50 mix-blend-screen"
+            ? "absolute inset-0 hidden opacity-40 mix-blend-screen sm:block"
             : isClay
-            ? "absolute inset-0 opacity-65 mix-blend-multiply"
-            : "absolute inset-0 opacity-40 dark:opacity-30 mix-blend-multiply dark:mix-blend-screen"
+            ? "absolute inset-0 hidden opacity-45 mix-blend-multiply sm:block"
+            : "absolute inset-0 hidden opacity-25 mix-blend-multiply dark:opacity-20 dark:mix-blend-screen sm:block"
         }
       >
         {/* Blob 1 — use CSS animations instead of framer-motion for background blobs.
@@ -29,30 +29,30 @@ export default function AuraBackground() {
         <div
           className={
             isGlass
-              ? "absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] rounded-full bg-fuchsia-700 blur-[80px] sm:blur-[120px] opacity-70 will-change-transform animate-aura-blob-1"
+              ? "absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] rounded-full bg-fuchsia-700 blur-[80px] sm:blur-[120px] opacity-60 will-change-transform animate-aura-blob-1"
               : isClay
-              ? "absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] rounded-full bg-pink-400 blur-[80px] sm:blur-[120px] opacity-70 will-change-transform animate-aura-blob-1"
-              : "absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] rounded-full bg-blue-400 dark:bg-indigo-600 blur-[70px] sm:blur-[100px] opacity-60 will-change-transform animate-aura-blob-1"
+              ? "absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] rounded-full bg-pink-400 blur-[80px] sm:blur-[120px] opacity-55 will-change-transform animate-aura-blob-1"
+              : "absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] rounded-full bg-blue-400 dark:bg-indigo-600 blur-[70px] sm:blur-[100px] opacity-45 will-change-transform animate-aura-blob-1"
           }
         />
         {/* Blob 2 */}
         <div
           className={
             isGlass
-              ? "absolute top-[10%] -right-[20%] w-[60vw] h-[60vw] rounded-full bg-rose-900 blur-[90px] sm:blur-[140px] opacity-60 will-change-transform animate-aura-blob-2"
+              ? "absolute top-[10%] -right-[20%] w-[60vw] h-[60vw] rounded-full bg-rose-900 blur-[90px] sm:blur-[140px] opacity-50 will-change-transform animate-aura-blob-2"
               : isClay
-              ? "absolute top-[10%] -right-[20%] w-[60vw] h-[60vw] rounded-full bg-sky-400 blur-[85px] sm:blur-[130px] opacity-60 will-change-transform animate-aura-blob-2"
-              : "absolute top-[10%] -right-[20%] w-[60vw] h-[60vw] rounded-full bg-purple-400 dark:bg-fuchsia-700 blur-[80px] sm:blur-[120px] opacity-50 will-change-transform animate-aura-blob-2"
+              ? "absolute top-[10%] -right-[20%] w-[60vw] h-[60vw] rounded-full bg-sky-400 blur-[85px] sm:blur-[130px] opacity-45 will-change-transform animate-aura-blob-2"
+              : "absolute top-[10%] -right-[20%] w-[60vw] h-[60vw] rounded-full bg-purple-400 dark:bg-fuchsia-700 blur-[80px] sm:blur-[120px] opacity-35 will-change-transform animate-aura-blob-2"
           }
         />
         {/* Blob 3 */}
         <div
           className={
             isGlass
-              ? "absolute -bottom-[20%] left-[10%] w-[80vw] h-[50vw] rounded-full bg-indigo-900 blur-[100px] sm:blur-[150px] opacity-55 will-change-transform animate-aura-blob-3"
+              ? "absolute -bottom-[20%] left-[10%] w-[80vw] h-[50vw] rounded-full bg-indigo-900 blur-[100px] sm:blur-[150px] opacity-45 will-change-transform animate-aura-blob-3"
               : isClay
-              ? "absolute -bottom-[20%] left-[10%] w-[80vw] h-[50vw] rounded-full bg-amber-300 blur-[90px] sm:blur-[140px] opacity-55 will-change-transform animate-aura-blob-3"
-              : "absolute -bottom-[20%] left-[10%] w-[80vw] h-[50vw] rounded-full bg-cyan-300 dark:bg-blue-800 blur-[85px] sm:blur-[130px] opacity-50 will-change-transform animate-aura-blob-3"
+              ? "absolute -bottom-[20%] left-[10%] w-[80vw] h-[50vw] rounded-full bg-amber-300 blur-[90px] sm:blur-[140px] opacity-40 will-change-transform animate-aura-blob-3"
+              : "absolute -bottom-[20%] left-[10%] w-[80vw] h-[50vw] rounded-full bg-cyan-300 dark:bg-blue-800 blur-[85px] sm:blur-[130px] opacity-35 will-change-transform animate-aura-blob-3"
           }
         />
       </div>

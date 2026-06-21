@@ -47,7 +47,6 @@ import PageHeader from "../components/layout/PageHeader";
 import BulkActionBar from "../components/BulkActionBar";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import Modal from "../components/common/Modal";
-import ExpenseForm from "../components/ExpenseForm";
 import { Skeleton } from "../components/common/Skeleton";
 import Amount from "../components/common/Amount";
 import { Badge } from "../components/common/Badge";
@@ -65,6 +64,8 @@ import { INCOME_SOURCES } from "../types/expense";
 import AuditCard from "../components/audit/AuditCard";
 import AuditControls from "../components/audit/AuditControls";
 
+const INITIAL_TRANSACTION_RENDER_COUNT = 80;
+const TRANSACTION_RENDER_INCREMENT = 80;
 
 
 function splitCsvLine(line: string): string[] {
@@ -110,10 +111,11 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
     const { accountTypes } = useAccountTypes();
     const { rules } = useCategorizationRules();
     const { syncTripSpentAmount } = useTrips();
-    const { globalMonth } = useModals();
+    const { globalMonth, setEditingExpense, setEditingIncome } = useModals();
     const { user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const accountById = useMemo(() => new Map(accounts.map((account) => [account.id, account])), [accounts]);
 
     const {
         expensesTab: activeTab,
@@ -165,8 +167,6 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
 
     // --- COMMON UI STATE ---
     const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: "expense" | "income", tripId?: string | null } | null>(null);
-    const [editingExpense, setEditingExpense] = useState<any | null>(null);
-    const [editingIncome, setEditingIncome] = useState<any | null>(null);
     const [viewingTransaction, setViewingTransaction] = useState<{ data: any, type: "expense" | "income" } | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -180,7 +180,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
             if (selectedCategory && e.category !== selectedCategory) return false;
             if (selectedAccountId && e.accountId !== selectedAccountId) return false;
             if (selectedAccountTypeId) {
-                const acc = accounts.find(a => a.id === e.accountId);
+                const acc = accountById.get(e.accountId ?? "");
                 if (!acc || acc.typeId !== selectedAccountTypeId) return false;
             }
             if (query) {
@@ -202,10 +202,19 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
         });
 
         return results;
-    }, [filteredByMonth, query, selectedCategory, selectedAccountId, selectedAccountTypeId, accounts, sortField, sortOrder]);
+    }, [filteredByMonth, query, selectedCategory, selectedAccountId, selectedAccountTypeId, accountById, sortField, sortOrder]);
 
     const historySummary = useMemo(() => getMonthlySummary(searchedExpenses), [searchedExpenses]);
-    const { today, yesterday, earlier } = useMemo(() => groupExpensesByDay(searchedExpenses, settings.timezone), [searchedExpenses, settings.timezone]);
+    const [visibleExpenseCount, setVisibleExpenseCount] = useState(INITIAL_TRANSACTION_RENDER_COUNT);
+    useEffect(() => {
+        setVisibleExpenseCount(INITIAL_TRANSACTION_RENDER_COUNT);
+    }, [selectedMonth, query, selectedCategory, selectedAccountId, selectedAccountTypeId, sortField, sortOrder, activeTab]);
+    const visibleExpenses = useMemo(
+        () => searchedExpenses.slice(0, visibleExpenseCount),
+        [searchedExpenses, visibleExpenseCount]
+    );
+    const hasMoreExpenses = visibleExpenseCount < searchedExpenses.length;
+    const { today, yesterday, earlier } = useMemo(() => groupExpensesByDay(visibleExpenses, settings.timezone), [visibleExpenses, settings.timezone]);
 
     // --- LOGIC: INCOME ---
     const [incomeQuery, setIncomeQuery] = useState("");
@@ -226,7 +235,16 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
     }, [filteredIncomes, incomeQuery, selectedSource]);
 
     const incomeSummary = useMemo(() => getIncomeSummary(searchedIncomes), [searchedIncomes]);
-    const { today: iToday, yesterday: iYesterday, earlier: iEarlier } = useMemo(() => groupIncomesByDay(searchedIncomes, settings.timezone), [searchedIncomes, settings.timezone]);
+    const [visibleIncomeCount, setVisibleIncomeCount] = useState(INITIAL_TRANSACTION_RENDER_COUNT);
+    useEffect(() => {
+        setVisibleIncomeCount(INITIAL_TRANSACTION_RENDER_COUNT);
+    }, [selectedMonth, incomeQuery, selectedSource, activeTab]);
+    const visibleIncomes = useMemo(
+        () => searchedIncomes.slice(0, visibleIncomeCount),
+        [searchedIncomes, visibleIncomeCount]
+    );
+    const hasMoreIncomes = visibleIncomeCount < searchedIncomes.length;
+    const { today: iToday, yesterday: iYesterday, earlier: iEarlier } = useMemo(() => groupIncomesByDay(visibleIncomes, settings.timezone), [visibleIncomes, settings.timezone]);
 
     // --- LOGIC: AUDIT ---
     const auditableExpenses = useMemo(() => {
@@ -707,7 +725,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                 <ExpenseRow
                                                                     key={e.id}
                                                                     expense={e}
-                                                                    accounts={accounts}
+                                                                    accountById={accountById}
                                                                     isSelected={selectedIds.has(e.id!)}
                                                                     onSelect={handleSelectExpense}
                                                                     onEdit={setEditingExpense}
@@ -728,7 +746,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                 <ExpenseRow
                                                                     key={e.id}
                                                                     expense={e}
-                                                                    accounts={accounts}
+                                                                    accountById={accountById}
                                                                     isSelected={selectedIds.has(e.id!)}
                                                                     onSelect={handleSelectExpense}
                                                                     onEdit={setEditingExpense}
@@ -749,13 +767,24 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                 <ExpenseRow
                                                                     key={e.id}
                                                                     expense={e}
-                                                                    accounts={accounts}
+                                                                    accountById={accountById}
                                                                     isSelected={selectedIds.has(e.id!)}
                                                                     onSelect={handleSelectExpense}
                                                                     onEdit={setEditingExpense}
                                                                     onDelete={handleDeleteExpense}
                                                                 />
                                                             ))}
+                                                        </div>
+                                                    )}
+                                                    {hasMoreExpenses && (
+                                                        <div className="px-4 pb-4 pt-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setVisibleExpenseCount((count) => count + TRANSACTION_RENDER_INCREMENT)}
+                                                                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:text-foreground"
+                                                            >
+                                                                Show more transactions
+                                                            </button>
                                                         </div>
                                                     )}
                                                 </div>
@@ -860,7 +889,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                     <IncomeRow
                                                                         key={i.id}
                                                                         income={i}
-                                                                        accounts={accounts}
+                                                                        accountById={accountById}
                                                                         isSelected={selectedIds.has(i.id!)}
                                                                         onSelect={handleSelectIncome}
                                                                         onEdit={setEditingIncome}
@@ -881,7 +910,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                     <IncomeRow
                                                                         key={i.id}
                                                                         income={i}
-                                                                        accounts={accounts}
+                                                                        accountById={accountById}
                                                                         isSelected={selectedIds.has(i.id!)}
                                                                         onSelect={handleSelectIncome}
                                                                         onEdit={setEditingIncome}
@@ -902,13 +931,24 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                                     <IncomeRow
                                                                         key={i.id}
                                                                         income={i}
-                                                                        accounts={accounts}
+                                                                        accountById={accountById}
                                                                         isSelected={selectedIds.has(i.id!)}
                                                                         onSelect={handleSelectIncome}
                                                                         onEdit={setEditingIncome}
                                                                         onDelete={handleDeleteIncome}
                                                                     />
                                                                 ))}
+                                                            </div>
+                                                        )}
+                                                        {hasMoreIncomes && (
+                                                            <div className="px-4 pb-4 pt-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setVisibleIncomeCount((count) => count + TRANSACTION_RENDER_INCREMENT)}
+                                                                    className="w-full rounded-xl border border-border bg-card px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:text-foreground"
+                                                                >
+                                                                    Show more income
+                                                                </button>
                                                             </div>
                                                         )}
                                                     </div>
@@ -1218,14 +1258,6 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                     await handleBulkDelete();
                 }}
             />
-            <Modal isOpen={!!editingExpense || !!editingIncome} onClose={() => { setEditingExpense(null); setEditingIncome(null); }} title="Edit Transaction">
-                <ExpenseForm
-                    editingExpense={editingExpense}
-                    editingIncome={editingIncome}
-                    onSuccess={() => { setEditingExpense(null); setEditingIncome(null); }}
-                />
-            </Modal>
-
             {/* TRANSACTION DETAILS MODAL */}
             <Modal isOpen={!!viewingTransaction} onClose={() => setViewingTransaction(null)} title="Transaction Details">
                 {viewingTransaction && (
@@ -1258,7 +1290,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                             )}
                             <div className="flex justify-between items-center">
                                 <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Account</span>
-                                <span className="text-sm font-bold">{accounts.find(a => a.id === viewingTransaction.data.accountId)?.name || "Unknown"}</span>
+                                <span className="text-sm font-bold">{accountById.get(viewingTransaction.data.accountId)?.name || "Unknown"}</span>
                             </div>
                         </div>
 
@@ -1319,8 +1351,8 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
     );
 }
 
-const ExpenseRow = memo(({ expense, accounts, isSelected, onSelect, onEdit, onDelete }: any) => {
-    const acc = accounts.find((a: any) => a.id === expense.accountId);
+const ExpenseRow = memo(({ expense, accountById, isSelected, onSelect, onEdit, onDelete }: any) => {
+    const acc = accountById.get(expense.accountId);
     const [showMenu, setShowMenu] = useState(false);
     const { theme } = useTheme();
     const isClay = theme === "claymorphism";
@@ -1483,12 +1515,12 @@ const ExpenseRow = memo(({ expense, accounts, isSelected, onSelect, onEdit, onDe
         prevProps.expense.tripId === nextProps.expense.tripId &&
         prevProps.expense.isAudited === nextProps.expense.isAudited &&
         prevProps.isSelected === nextProps.isSelected &&
-        prevProps.accounts === nextProps.accounts
+        prevProps.accountById === nextProps.accountById
     );
 });
 
-const IncomeRow = memo(({ income, accounts, isSelected, onEdit, onDelete, onSelect }: any) => {
-    const acc = accounts.find((a: any) => a.id === income.accountId);
+const IncomeRow = memo(({ income, accountById, isSelected, onEdit, onDelete, onSelect }: any) => {
+    const acc = accountById.get(income.accountId);
     const [showMenu, setShowMenu] = useState(false);
     const { theme } = useTheme();
     const isClay = theme === "claymorphism";
@@ -1643,6 +1675,6 @@ const IncomeRow = memo(({ income, accounts, isSelected, onEdit, onDelete, onSele
         prevProps.income.date === nextProps.income.date &&
         prevProps.income.accountId === nextProps.income.accountId &&
         prevProps.isSelected === nextProps.isSelected &&
-        prevProps.accounts === nextProps.accounts
+        prevProps.accountById === nextProps.accountById
     );
 });
