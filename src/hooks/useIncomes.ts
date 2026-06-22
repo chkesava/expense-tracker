@@ -1,6 +1,6 @@
-import { useFinanceData } from "./useFinanceData";
+import { useIncomesContext } from "./useFinanceData";
 
 export const useIncomes = () => {
-  const { incomes, incomesLoading } = useFinanceData();
+  const { incomes, incomesLoading } = useIncomesContext();
   return { incomes, loading: incomesLoading };
 };

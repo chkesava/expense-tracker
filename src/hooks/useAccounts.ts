@@ -1,8 +1,8 @@
 import type { Account } from "../types/expense";
-import { useFinanceData } from "./useFinanceData";
+import { useAccountsContext } from "./useFinanceData";
 
 export const useAccounts = () => {
-  const { accounts, accountsLoading, addAccount, updateAccount, deleteAccount } = useFinanceData();
+  const { accounts, accountsLoading, addAccount, updateAccount, deleteAccount } = useAccountsContext();
   return {
     accounts,
     loading: accountsLoading,

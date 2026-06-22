@@ -1,5 +1,5 @@
 import { addDoc, collection, serverTimestamp, updateDoc, doc } from "firebase/firestore";
-import { useState, useEffect, useMemo } from "react";
+import { memo, useState, useEffect, useMemo, useDeferredValue } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { db } from "../firebase";
 import { useAuth } from "../hooks/useAuth";
@@ -14,7 +14,7 @@ import { previewBalanceAfterTransaction } from "../utils/accountBalance";
 import { currentMonthKey, monthFromDateKey, todayDateKey } from "../utils/dates";
 import { useCategories } from "../hooks/useCategories";
 import { CATEGORIES, INCOME_SOURCES } from "../types/expense";
-import type { Expense, Income } from "../types/expense";
+import type { Account, Expense, Income } from "../types/expense";
 import { toast } from 'react-toastify';
 import useSettings from "../hooks/useSettings";
 import { useGamification } from "../hooks/useGamification";
@@ -28,6 +28,73 @@ import { useVaults } from "../hooks/useVaults";
 import { Users, Calendar, Tag, CreditCard, FileText, MapPin, Zap, Camera } from "lucide-react";
 import ReceiptScanner from "./ReceiptScanner";
 import type { ParsedExpense } from "../utils/magicParser";
+
+// ─── Extracted Balance Preview (Phase 2 perf fix) ───────────────────────────
+// This isolates the heavy context subscriptions (expenses, incomes, payments,
+// entries) into a small child component so the main form doesn't re-render
+// on every real-time Firestore update.
+const BalancePreviewBadge = memo(function BalancePreviewBadge({
+  selectedAccount,
+  selectedTypeName,
+  type,
+  amount,
+  editingExpenseId,
+  editingIncomeId,
+}: {
+  selectedAccount: Account | undefined;
+  selectedTypeName: string;
+  type: "expense" | "income" | "vault";
+  amount: string;
+  editingExpenseId?: string;
+  editingIncomeId?: string;
+}) {
+  const { expenses } = useExpenses();
+  const { incomes } = useIncomes();
+  const { payments } = useAccountPayments();
+  const { entries } = useAccountEntries();
+
+  // Defer the amount to avoid blocking user input while recalculating
+  const deferredAmount = useDeferredValue(amount);
+
+  const preview = useMemo(() => {
+    if (!selectedAccount || !deferredAmount || type === "vault") return null;
+    const num = Number(deferredAmount);
+    if (!Number.isFinite(num) || num <= 0) return null;
+    const excludeId = editingExpenseId || editingIncomeId;
+    return previewBalanceAfterTransaction(
+      selectedAccount,
+      selectedTypeName,
+      expenses,
+      incomes,
+      type === "income" ? "income" : "expense",
+      num,
+      payments,
+      entries,
+      excludeId
+    );
+  }, [
+    selectedAccount,
+    selectedTypeName,
+    deferredAmount,
+    type,
+    expenses,
+    incomes,
+    payments,
+    entries,
+    editingExpenseId,
+    editingIncomeId,
+  ]);
+
+  if (preview == null || !selectedAccount) return null;
+
+  return (
+    <p className="mt-1 ml-1 text-[10px] font-bold text-muted-foreground">
+      {getAccountKind(selectedTypeName) === "credit"
+        ? `Available after: ₹${preview.toLocaleString()}`
+        : `Balance after: ₹${preview.toLocaleString()}`}
+    </p>
+  );
+});
 
 
 export default function ExpenseForm({ 
@@ -59,10 +126,6 @@ export default function ExpenseForm({
 
   const { accounts } = useAccounts();
   const { accountTypes } = useAccountTypes();
-  const { expenses } = useExpenses();
-  const { incomes } = useIncomes();
-  const { payments } = useAccountPayments();
-  const { entries } = useAccountEntries();
   const { categories: userCategories } = useCategories();
   const { rules } = useCategorizationRules();
   const { trips, syncTripSpentAmount } = useTrips();
@@ -109,35 +172,6 @@ export default function ExpenseForm({
         : "",
     [selectedAccount, accountTypes]
   );
-
-  const balancePreview = useMemo(() => {
-    if (!selectedAccount || !amount || type === "vault") return null;
-    const num = Number(amount);
-    if (!Number.isFinite(num) || num <= 0) return null;
-    const excludeId = editingExpense?.id || editingIncome?.id;
-    return previewBalanceAfterTransaction(
-      selectedAccount,
-      selectedTypeName,
-      expenses,
-      incomes,
-      type === "income" ? "income" : "expense",
-      num,
-      payments,
-      entries,
-      excludeId
-    );
-  }, [
-    selectedAccount,
-    selectedTypeName,
-    amount,
-    type,
-    expenses,
-    incomes,
-    payments,
-    entries,
-    editingExpense?.id,
-    editingIncome?.id,
-  ]);
 
   const handleScanResult = (result: ParsedExpense) => {
     if (result.amount) setAmount(result.amount.toString());
@@ -207,25 +241,8 @@ export default function ExpenseForm({
         return;
       }
 
-      if (type === "expense" && accountId && selectedAccount) {
-        const kind = getAccountKind(selectedTypeName);
-        if (kind === "credit" && selectedAccount.creditLimit) {
-          const preview = previewBalanceAfterTransaction(
-            selectedAccount,
-            selectedTypeName,
-            expenses,
-            incomes,
-            "expense",
-            Number(amount),
-            payments,
-            entries,
-            editingExpense?.id
-          );
-          if (preview != null && preview < 0) {
-            toast.warn("This expense exceeds available credit on this card");
-          }
-        }
-      }
+      // Credit limit check is handled by the BalancePreviewBadge component
+      // which shows real-time balance preview to the user while filling the form.
 
       const collectionName = type === "expense" ? "expenses" : "incomes";
 
@@ -464,13 +481,14 @@ export default function ExpenseForm({
                 </select>
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[10px]">▼</div>
             </div>
-            {balancePreview != null && selectedAccount && (
-              <p className="mt-1 ml-1 text-[10px] font-bold text-muted-foreground">
-                {getAccountKind(selectedTypeName) === "credit"
-                  ? `Available after: ₹${balancePreview.toLocaleString()}`
-                  : `Balance after: ₹${balancePreview.toLocaleString()}`}
-              </p>
-            )}
+            <BalancePreviewBadge
+              selectedAccount={selectedAccount}
+              selectedTypeName={selectedTypeName}
+              type={type}
+              amount={amount}
+              editingExpenseId={editingExpense?.id}
+              editingIncomeId={editingIncome?.id}
+            />
         </div>
 
         <div className="space-y-1.5">

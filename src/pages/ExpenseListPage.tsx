@@ -1391,7 +1391,7 @@ const ExpenseRow = memo(({ expense, accountById, isSelected, onSelect, onEdit, o
         <div
             onClick={() => onSelect(expense)}
             className={cn(
-                "group relative flex flex-col p-4 sm:p-5 mx-3 my-2 sm:mx-5 sm:my-3 transition-all cursor-pointer rounded-3xl border",
+                "group relative flex flex-col p-4 sm:p-5 mx-3 my-2 sm:mx-5 sm:my-3 transition-[box-shadow,border-color,background-color] cursor-pointer rounded-3xl border",
                 isSelected
                     ? isClay
                         ? "bg-blue-500/10 dark:bg-blue-500/20 ring-2 ring-inset ring-blue-500 border-transparent shadow-[0_8px_16px_rgba(59,130,246,0.15)]"
@@ -1478,7 +1478,7 @@ const ExpenseRow = memo(({ expense, accountById, isSelected, onSelect, onEdit, o
             <div className="flex items-center justify-between gap-4 pt-1">
                 <div className="flex items-center gap-4 min-w-0 flex-1">
                     <div className={cn(
-                        "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-black uppercase transition-all duration-300 shadow-sm",
+                        "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-black uppercase transition-[background-color,color,transform] duration-300 shadow-sm",
                         iconClass
                     )}>
                         {expense.category[0]}
@@ -1553,7 +1553,7 @@ const IncomeRow = memo(({ income, accountById, isSelected, onEdit, onDelete, onS
         <div
             onClick={() => onSelect(income)}
             className={cn(
-                "group relative flex flex-col p-4 sm:p-5 mx-3 my-2 sm:mx-5 sm:my-3 transition-all cursor-pointer rounded-3xl border",
+                "group relative flex flex-col p-4 sm:p-5 mx-3 my-2 sm:mx-5 sm:my-3 transition-[box-shadow,border-color,background-color] cursor-pointer rounded-3xl border",
                 isSelected
                     ? isClay
                         ? "bg-blue-500/10 dark:bg-blue-500/20 ring-2 ring-inset ring-blue-500 border-transparent shadow-[0_8px_16px_rgba(59,130,246,0.15)]"
@@ -1640,7 +1640,7 @@ const IncomeRow = memo(({ income, accountById, isSelected, onEdit, onDelete, onS
             <div className="flex items-center justify-between gap-4 pt-1">
                 <div className="flex items-center gap-4 min-w-0 flex-1">
                     <div className={cn(
-                        "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-black uppercase transition-all duration-300 shadow-sm group-hover:scale-110",
+                        "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-black uppercase transition-[background-color,color,transform] duration-300 shadow-sm group-hover:scale-110",
                         iconClass
                     )}>
                         {income.source[0]}

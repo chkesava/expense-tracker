@@ -1,7 +1,7 @@
-import { useFinanceData } from "./useFinanceData";
+import { useAccountsContext } from "./useFinanceData";
 
 export function useAccountPayments() {
-  const { payments, paymentsLoading, addPayment, addExternalPayment, deletePayment } = useFinanceData();
+  const { payments, paymentsLoading, addPayment, addExternalPayment, deletePayment } = useAccountsContext();
   return {
     payments,
     loading: paymentsLoading,
