@@ -1,4 +1,5 @@
-import { lazy, Suspense, useEffect } from "react";
+import { Suspense, useEffect } from "react";
+import { lazyWithRetry } from "./utils/lazyWithRetry";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
@@ -26,24 +27,24 @@ import AuthPage from "./pages/AuthPage";
 import AuraBackground from "./components/layout/AuraBackground";
 import { LedgerStateProvider } from "./hooks/useLedgerState";
 
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const LedgerHub = lazy(() => import("./pages/LedgerHub"));
-const InsightsHub = lazy(() => import("./pages/InsightsHub"));
-const SettingsPage = lazy(() => import("./pages/Settings"));
-const AddExpense = lazy(() => import("./pages/AddExpense"));
-const SeedDataPage = lazy(() => import("./pages/SeedData"));
-const SplitDetailPage = lazy(() => import("./pages/SplitDetailPage"));
-const CreateTripWizard = lazy(() => import("./pages/CreateTripWizard"));
-const TripDetailPage = lazy(() => import("./pages/TripDetailPage"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const AccountDetailPage = lazy(() => import("./pages/AccountDetailPage"));
-const InvestmentDetailPage = lazy(() => import("./pages/InvestmentDetailPage"));
-const VaultsPage = lazy(() => import("./pages/VaultsPage"));
-const VaultDetailPage = lazy(() => import("./pages/VaultDetailPage"));
-const PaymentRequestPage = lazy(() => import("./pages/PaymentRequestPage"));
-const AdminDashboard = lazy(() => import("./admin/pages/AdminDashboard"));
-const AdminUsers = lazy(() => import("./admin/pages/AdminUsers"));
-const AdminUserDetail = lazy(() => import("./admin/pages/AdminUserDetail"));
+const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
+const LedgerHub = lazyWithRetry(() => import("./pages/LedgerHub"));
+const InsightsHub = lazyWithRetry(() => import("./pages/InsightsHub"));
+const SettingsPage = lazyWithRetry(() => import("./pages/Settings"));
+const AddExpense = lazyWithRetry(() => import("./pages/AddExpense"));
+const SeedDataPage = lazyWithRetry(() => import("./pages/SeedData"));
+const SplitDetailPage = lazyWithRetry(() => import("./pages/SplitDetailPage"));
+const CreateTripWizard = lazyWithRetry(() => import("./pages/CreateTripWizard"));
+const TripDetailPage = lazyWithRetry(() => import("./pages/TripDetailPage"));
+const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
+const AccountDetailPage = lazyWithRetry(() => import("./pages/AccountDetailPage"));
+const InvestmentDetailPage = lazyWithRetry(() => import("./pages/InvestmentDetailPage"));
+const VaultsPage = lazyWithRetry(() => import("./pages/VaultsPage"));
+const VaultDetailPage = lazyWithRetry(() => import("./pages/VaultDetailPage"));
+const PaymentRequestPage = lazyWithRetry(() => import("./pages/PaymentRequestPage"));
+const AdminDashboard = lazyWithRetry(() => import("./admin/pages/AdminDashboard"));
+const AdminUsers = lazyWithRetry(() => import("./admin/pages/AdminUsers"));
+const AdminUserDetail = lazyWithRetry(() => import("./admin/pages/AdminUserDetail"));
 
 function RouteFallback() {
   return (
@@ -65,6 +66,10 @@ function AppContent() {
   useEffect(() => {
     if (user) processSubscriptions();
   }, [processSubscriptions, user]);
+
+  useEffect(() => {
+    sessionStorage.removeItem("chunk-reload-attempted");
+  }, []);
 
   return (
     <AnimatePresence mode="wait">

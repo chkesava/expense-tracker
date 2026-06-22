@@ -298,7 +298,14 @@ export default function AnalysisLab({ hideHeader }: { hideHeader?: boolean }) {
                   <div className="space-y-2">
                     <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-950">
                         <option value="">All Categories</option>
-                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        <optgroup label="Default">
+                          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        </optgroup>
+                        {userCategories.length > 0 && (
+                          <optgroup label="Custom">
+                            {userCategories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                          </optgroup>
+                        )}
                     </select>
                     <select value={selectedAccountId} onChange={e => setSelectedAccountId(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-950">
                         <option value="">All Accounts</option>

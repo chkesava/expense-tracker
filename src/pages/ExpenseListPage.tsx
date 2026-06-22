@@ -516,30 +516,32 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Tabs Navigation */}
-                <div className={cn(
-                    "flex p-1.5 mb-10 w-fit mx-auto sm:mx-0",
-                    isClay
-                        ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-[2rem]"
-                        : "bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl rounded-[2rem] border border-white/20 dark:border-white/5"
-                )}>
-                    {(["history", "income", "audit", "data"] as const).map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={cn(
-                                "px-6 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all duration-300",
-                                activeTab === tab
-                                    ? isClay
-                                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-clay-card shadow-[inset_1px_1px_2px_rgba(255,255,255,0.4)] scale-105"
-                                        : "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl scale-105"
-                                    : isClay
-                                        ? "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100/30 dark:hover:bg-slate-800/30"
-                                        : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                            )}
-                        >
-                            {{ history: "Expenses", income: "Income", audit: "Review", data: "Import & export" }[tab]}
-                        </button>
-                    ))}
+                <div className="w-full overflow-x-auto scrollbar-hide no-scrollbar mb-10 -mx-4 px-4 sm:mx-0 sm:px-0">
+                    <div className={cn(
+                        "flex p-1.5 w-max sm:w-fit min-w-full sm:min-w-0 justify-between sm:justify-start",
+                        isClay
+                            ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-[2rem]"
+                            : "bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl rounded-[2rem] border border-white/20 dark:border-white/5"
+                    )}>
+                        {(["history", "income", "audit", "data"] as const).map((tab) => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={cn(
+                                    "px-4 py-2.5 sm:px-6 sm:py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all duration-300 shrink-0 whitespace-nowrap",
+                                    activeTab === tab
+                                        ? isClay
+                                            ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-clay-card shadow-[inset_1px_1px_2px_rgba(255,255,255,0.4)] scale-105"
+                                            : "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl scale-105"
+                                        : isClay
+                                            ? "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100/30 dark:hover:bg-slate-800/30"
+                                            : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                )}
+                            >
+                                {{ history: "Expenses", income: "Income", audit: "Review", data: "Import & export" }[tab]}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 <AnimatePresence mode="wait">

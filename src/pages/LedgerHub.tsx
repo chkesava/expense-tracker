@@ -1,20 +1,21 @@
-import { lazy, Suspense, useCallback, useMemo } from "react";
+import { Suspense, useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Wallet, Users, RefreshCw, Plane, CreditCard, Landmark, QrCode, TrendingUp } from "lucide-react";
 import PageHeader from "../components/layout/PageHeader";
 import PageShell from "../components/layout/PageShell";
+import { lazyWithRetry } from "../utils/lazyWithRetry";
 
 type LedgerTab = "expenses" | "splits" | "subscriptions" | "travel" | "cards" | "accounts" | "investments" | "collect";
 
-const ExpenseListPage = lazy(() => import("./ExpenseListPage"));
-const SplitPage = lazy(() => import("./SplitPage"));
-const SubscriptionsPage = lazy(() => import("./SubscriptionsPage"));
-const TripsPage = lazy(() => import("./TripsPage"));
-const CardsPage = lazy(() => import("./CardsPage"));
-const AccountsPage = lazy(() => import("./AccountsPage"));
-const InvestmentsPage = lazy(() => import("./InvestmentsPage"));
-const PaymentRequestsPage = lazy(() => import("./PaymentRequestsPage"));
+const ExpenseListPage = lazyWithRetry(() => import("./ExpenseListPage"));
+const SplitPage = lazyWithRetry(() => import("./SplitPage"));
+const SubscriptionsPage = lazyWithRetry(() => import("./SubscriptionsPage"));
+const TripsPage = lazyWithRetry(() => import("./TripsPage"));
+const CardsPage = lazyWithRetry(() => import("./CardsPage"));
+const AccountsPage = lazyWithRetry(() => import("./AccountsPage"));
+const InvestmentsPage = lazyWithRetry(() => import("./InvestmentsPage"));
+const PaymentRequestsPage = lazyWithRetry(() => import("./PaymentRequestsPage"));
 
 function TabFallback() {
   return (
