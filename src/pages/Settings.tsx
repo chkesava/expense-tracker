@@ -126,7 +126,7 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { isSupported, isRegistered, register, unregister } = useBiometrics();
 
-  const { categories, addCategory, deleteCategory } = useCategories();
+  const { categories, addCategory, updateCategory, archiveCategory, deleteCategory } = useCategories();
   const { accountTypes, addAccountType, deleteAccountType } = useAccountTypes();
   const { accounts, addAccount, deleteAccount, updateAccount } = useAccounts();
   const { budgets, addBudget, deleteBudget } = useCategoryBudgets();
@@ -499,9 +499,9 @@ export default function SettingsPage() {
               <SettingsCard title="General" subtitle="Defaults and protection." icon={SlidersHorizontal}>
                 <SettingsRow title="Default category" description="Used for quick add defaults.">
                   <select value={settings.defaultCategory} onChange={(e) => setDefaultCategory(e.target.value)} className={cn(fieldClass, "cursor-pointer appearance-none")}>
-                    {CATEGORIES.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
+                    {categories.filter(c => !c.isArchived).map((c) => (
+                      <option key={c.id} value={c.name}>
+                        {c.name}
                       </option>
                     ))}
                   </select>
@@ -1006,11 +1006,11 @@ export default function SettingsPage() {
 
                 <details className="rounded-2xl border border-slate-100/80 bg-white/60 p-4 dark:border-slate-800 dark:bg-slate-950/30">
                   <summary className="cursor-pointer list-none">
-                    <div className="text-sm font-black text-slate-900 dark:text-slate-100">Custom categories ({categories.length})</div>
-                    <div className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">Add categories beyond defaults.</div>
+                    <div className="text-sm font-black text-slate-900 dark:text-slate-100">Custom Categories ({categories.length})</div>
+                    <div className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">Add, rename, or archive transaction categories.</div>
                   </summary>
                   <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                    <input value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder="New category" className={fieldClass} />
+                    <input value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder="New category name" className={fieldClass} />
                     <button
                       onClick={() => {
                         addCategory(newCategory);
@@ -1022,13 +1022,41 @@ export default function SettingsPage() {
                     </button>
                   </div>
                   <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {categories.length === 0 && <div className="py-3 text-center text-xs italic text-slate-400 sm:col-span-2">No custom categories yet.</div>}
+                    {categories.length === 0 && <div className="py-3 text-center text-xs italic text-slate-400 sm:col-span-2">No categories yet.</div>}
                     {categories.map((c) => (
-                      <div key={c.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/60">
-                        <div className="truncate text-sm font-black text-slate-900 dark:text-slate-100">{c.name}</div>
-                        <button onClick={() => deleteCategory(c.id)} className="rounded-xl border border-slate-200 bg-white p-2 text-slate-400 hover:text-red-500 dark:border-slate-700 dark:bg-slate-900">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                      <div key={c.id} className={cn(
+                        "flex items-center justify-between gap-3 rounded-2xl border p-3.5 transition-all",
+                        c.isArchived 
+                          ? "border-slate-100 bg-slate-100/30 dark:border-slate-850 dark:bg-slate-950/10 opacity-60" 
+                          : "border-slate-100 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-950/60"
+                      )}>
+                        <input
+                          type="text"
+                          defaultValue={c.name}
+                          onBlur={(e) => {
+                            const val = e.target.value.trim();
+                            if (val && val !== c.name) {
+                              updateCategory(c.id, val);
+                            }
+                          }}
+                          className="bg-transparent border-none outline-none font-bold text-sm text-slate-950 dark:text-slate-50 focus:ring-0 p-0 flex-1"
+                        />
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            onClick={() => archiveCategory(c.id, !c.isArchived)}
+                            className={cn(
+                              "px-2 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg border transition-all",
+                              c.isArchived
+                                ? "bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20"
+                                : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
+                            )}
+                          >
+                            {c.isArchived ? "Restore" : "Archive"}
+                          </button>
+                          <button onClick={() => deleteCategory(c.id)} className="rounded-xl border border-slate-200 bg-white p-2 text-slate-400 hover:text-red-500 dark:border-slate-700 dark:bg-slate-900">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>

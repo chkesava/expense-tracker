@@ -11,7 +11,8 @@ import {
   Shield,
   Wallet,
   Users,
-  EyeOff
+  EyeOff,
+  RefreshCw
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import useOnline from "../hooks/useOnline";
@@ -46,6 +47,7 @@ export default function Header() {
   const { isAdmin } = useUserRole();
   const { setIsMonthDrawerOpen, setIsAddExpenseOpen, globalMonth } = useModals();
   const { settings, setGhostMode } = useSettings();
+  const { pendingSyncCount } = useExpenses();
 
   const desktopLinks = [
     ...CORE_NAV_ITEMS.filter((item) => item.id !== "settings"),
@@ -130,6 +132,16 @@ export default function Header() {
             )}
              <span className="hidden sm:inline">{settings.ghostMode ? "Ghost" : isOnline ? "Online" : "Offline"}</span>
           </button>
+
+          {pendingSyncCount > 0 && (
+            <div
+              className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 text-blue-600 ring-1 ring-blue-500/20 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] shadow-sm"
+              title={`${pendingSyncCount} changes syncing to cloud...`}
+            >
+              <RefreshCw size={10} className="animate-spin" />
+              <span>{pendingSyncCount} syncing</span>
+            </div>
+          )}
         </div>
 
         <nav className="hidden lg:flex items-center gap-1 bg-slate-100/50 dark:bg-slate-800/50 backdrop-blur-md p-1.5 rounded-[1.5rem] border border-white/50 dark:border-white/5">

@@ -149,8 +149,8 @@ function VaultCard({ vault }: { vault: SharedVault }) {
     const navigate = useNavigate();
     const { expenses } = useVaultExpenses(vault.id);
     
-    const totalSpent = expenses.reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
-    const progress = Math.min(100, vault.budget > 0 ? (totalSpent / vault.budget) * 100 : 0);
+    const totalSaved = expenses.reduce((sum, expense) => expense.type === "deposit" ? sum + (Number(expense.amount) || 0) : sum - (Number(expense.amount) || 0), 0);
+    const progress = Math.min(100, vault.budget > 0 ? (totalSaved / vault.budget) * 100 : 0);
 
     return (
         <motion.div 
@@ -166,18 +166,18 @@ function VaultCard({ vault }: { vault: SharedVault }) {
                             <Wallet size={24} />
                         </div>
                         <div>
-                            <h3 className="font-black text-lg">{vault.name}</h3>
-                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                <Users size={10} />
-                                <span>{vault.memberIds.length} Members</span>
-                            </div>
+                          <h3 className="font-black text-lg">{vault.name}</h3>
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            <Users size={10} />
+                            <span>{vault.memberIds.length} Members</span>
+                          </div>
                         </div>
                     </div>
                 </div>
 
                 <div className="space-y-2">
                     <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-widest text-slate-400">
-                        <span>Budget Progress</span>
+                        <span>Saved Progress</span>
                         <div className="flex items-center gap-1">
                             <Target size={10} />
                             <Amount value={vault.budget} />

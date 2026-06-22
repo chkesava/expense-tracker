@@ -9,7 +9,9 @@ import {
     sendPasswordResetEmail,
     updateProfile
 } from "firebase/auth";
-import { auth } from "../firebase";
+import { auth, db } from "../firebase";
+import { collection, getDocs, writeBatch, doc, serverTimestamp } from "firebase/firestore";
+import { CATEGORIES } from "../types/expense";
 
 interface AuthContextType {
     user: User | null;
@@ -36,7 +38,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+        const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
+            if (currentUser) {
+                try {
+                    // Seed categories collection if empty
+                    const categoriesRef = collection(db, "users", currentUser.uid, "categories");
+                    const snap = await getDocs(categoriesRef);
+                    if (snap.empty) {
+                        const batch = writeBatch(db);
+                        CATEGORIES.forEach((cat) => {
+                            const newDocRef = doc(collection(db, "users", currentUser.uid, "categories"));
+                            batch.set(newDocRef, {
+                                name: cat,
+                                isArchived: false,
+                                createdAt: serverTimestamp(),
+                            });
+                        });
+                        await batch.commit();
+                        console.log("Seeded default categories for user:", currentUser.uid);
+                    }
+                } catch (error) {
+                    console.error("Error seeding categories on login:", error);
+                }
+            }
             setUser(currentUser);
             setLoading(false);
         });

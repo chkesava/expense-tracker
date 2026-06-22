@@ -29,6 +29,7 @@ export const INCOME_SOURCES = [
 export interface Category {
   id: string;
   name: string;
+  isArchived?: boolean;
   createdAt?: unknown;
 }
 

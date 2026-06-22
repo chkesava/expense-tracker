@@ -11,6 +11,7 @@ import MobileActionDock from "./components/MobileActionDock";
 import BottomNav from "./components/BottomNav";
 import PrivacyLock from "./components/PrivacyLock";
 import useSettings, { SettingsProvider } from "./hooks/useSettings";
+import FloatingAdvisor from "./components/FloatingAdvisor";
 
 import { useSubscriptions } from "./hooks/useSubscriptions";
 import { useTheme } from "./hooks/useTheme";
@@ -164,6 +165,7 @@ function AppRoutes() {
           Skip to main content
         </a>
         <Header />
+        <FloatingAdvisor />
 
         <div id="main-content" className="flex-1 w-full pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
           <AnimatePresence>
@@ -184,6 +186,8 @@ function AppRoutes() {
                 <Route path="/subscriptions" element={<Navigate to="/ledger?tab=subscriptions" replace />} />
                 <Route path="/analytics" element={<Navigate to="/insights?tab=analytics" replace />} />
                 <Route path="/analysis" element={<Navigate to="/insights?tab=search" replace />} />
+                <Route path="/advisor" element={<Navigate to="/insights?tab=advisor" replace />} />
+                <Route path="/ask" element={<Navigate to="/insights?tab=advisor" replace />} />
 
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/settings" element={<SettingsPage />} />

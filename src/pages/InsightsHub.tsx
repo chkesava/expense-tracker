@@ -1,11 +1,12 @@
 import { lazy, Suspense, useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { BarChart3, Search, CalendarDays } from "lucide-react";
+import { BarChart3, Search, CalendarDays, Sparkles } from "lucide-react";
 import PageHeader from "../components/layout/PageHeader";
 import PageShell from "../components/layout/PageShell";
+import MagicChatEntry from "../components/MagicChatEntry";
 
-type InsightsTab = "analytics" | "yearly" | "search";
+type InsightsTab = "analytics" | "yearly" | "search" | "advisor";
 
 import AnalyticsPage from "./AnalyticsPage";
 import AnalysisLab from "./AnalysisLab";
@@ -25,7 +26,7 @@ export default function InsightsHub() {
 
   const searchParams = new URLSearchParams(location.search);
   const tabFromUrl = searchParams.get("tab");
-  const activeTab = (tabFromUrl && ["analytics", "yearly", "search"].includes(tabFromUrl))
+  const activeTab = (tabFromUrl && ["analytics", "yearly", "search", "advisor"].includes(tabFromUrl))
     ? (tabFromUrl as InsightsTab)
     : "analytics";
 
@@ -41,6 +42,7 @@ export default function InsightsHub() {
     { id: "analytics", label: "Performance", icon: <BarChart3 size={16} /> },
     { id: "yearly",    label: "Yearly",      icon: <CalendarDays size={16} /> },
     { id: "search",    label: "Discovery",   icon: <Search size={16} /> },
+    { id: "advisor",   label: "AI Advisor",  icon: <Sparkles size={16} /> },
   ], []);
 
   return (
@@ -72,6 +74,11 @@ export default function InsightsHub() {
               {activeTab === "analytics" && <AnalyticsPage hideHeader />}
               {activeTab === "yearly" && <YearlyAnalytics />}
               {activeTab === "search" && <AnalysisLab hideHeader />}
+              {activeTab === "advisor" && (
+                <div className="mt-4">
+                  <MagicChatEntry defaultMode="advisor" />
+                </div>
+              )}
             </Suspense>
           </motion.div>
         </AnimatePresence>

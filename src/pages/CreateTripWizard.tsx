@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTrips } from "../hooks/useTrips";
-import { CATEGORIES } from "../types/expense";
+import { useCategories } from "../hooks/useCategories";
 import type { TripCategoryBudget } from "../types/trip";
 import { cn } from "../lib/utils";
 import { 
@@ -27,6 +27,7 @@ const steps = [
 export default function CreateTripWizard() {
   const navigate = useNavigate();
   const { addTrip } = useTrips();
+  const { categories } = useCategories();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -207,11 +208,12 @@ export default function CreateTripWizard() {
             {currentStep === 4 && (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
-                  {CATEGORIES.map((cat) => {
+                  {categories.filter(c => !c.isArchived).map((c) => {
+                    const cat = c.name;
                     const cb = categoryBudgets.find(b => b.category === cat);
                     return (
                       <div 
-                        key={cat}
+                        key={c.id}
                         className={cn(
                           "p-4 rounded-3xl border transition-all cursor-pointer flex flex-col gap-2",
                           cb ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800" : "bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 hover:border-slate-200"

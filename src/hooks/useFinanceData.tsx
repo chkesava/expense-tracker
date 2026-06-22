@@ -23,6 +23,7 @@ import { useAuth } from "./useAuth";
 type ExpensesContextType = {
   expenses: Expense[];
   expensesLoading: boolean;
+  pendingSyncCount: number;
 };
 
 type IncomesContextType = {
@@ -111,6 +112,26 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
   const [entries, setEntries] = useState<AccountEntry[]>([]);
   const [entriesLoading, setEntriesLoading] = useState(true);
 
+  // Track pending writes per collection
+  const pendingExpensesCountRef = useRef(0);
+  const pendingIncomesCountRef = useRef(0);
+  const pendingAccountsCountRef = useRef(0);
+  const pendingAccountTypesCountRef = useRef(0);
+  const pendingPaymentsCountRef = useRef(0);
+  const pendingEntriesCountRef = useRef(0);
+  const [pendingSyncCount, setPendingSyncCount] = useState(0);
+
+  const updatePendingSyncCount = useCallback(() => {
+    const total =
+      pendingExpensesCountRef.current +
+      pendingIncomesCountRef.current +
+      pendingAccountsCountRef.current +
+      pendingAccountTypesCountRef.current +
+      pendingPaymentsCountRef.current +
+      pendingEntriesCountRef.current;
+    setPendingSyncCount(total);
+  }, []);
+
   // ─── Firestore Listeners (unchanged) ──────────────────────────────────────
 
   useEffect(() => {
@@ -127,6 +148,14 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
       setAccountTypesLoading(false);
       setPaymentsLoading(false);
       setEntriesLoading(false);
+      
+      pendingExpensesCountRef.current = 0;
+      pendingIncomesCountRef.current = 0;
+      pendingAccountsCountRef.current = 0;
+      pendingAccountTypesCountRef.current = 0;
+      pendingPaymentsCountRef.current = 0;
+      pendingEntriesCountRef.current = 0;
+      setPendingSyncCount(0);
       return;
     }
 
@@ -143,6 +172,8 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
         query(collection(db, ...base, "expenses"), orderBy("createdAt", "desc")),
         (snap) => {
           setExpenses(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Expense)));
+          pendingExpensesCountRef.current = snap.docs.filter((d) => d.metadata.hasPendingWrites).length;
+          updatePendingSyncCount();
           setExpensesLoading(false);
         },
         (error) => {
@@ -154,6 +185,8 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
         query(collection(db, ...base, "incomes"), orderBy("createdAt", "desc")),
         (snap) => {
           setIncomes(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Income)));
+          pendingIncomesCountRef.current = snap.docs.filter((d) => d.metadata.hasPendingWrites).length;
+          updatePendingSyncCount();
           setIncomesLoading(false);
         },
         (error) => {
@@ -165,6 +198,8 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
         query(collection(db, ...base, "accounts")),
         (snap) => {
           setAccounts(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Account)));
+          pendingAccountsCountRef.current = snap.docs.filter((d) => d.metadata.hasPendingWrites).length;
+          updatePendingSyncCount();
           setAccountsLoading(false);
         },
         (error) => {
@@ -176,6 +211,8 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
         query(collection(db, ...base, "accountTypes")),
         (snap) => {
           setAccountTypes(snap.docs.map((d) => ({ id: d.id, ...d.data() } as AccountType)));
+          pendingAccountTypesCountRef.current = snap.docs.filter((d) => d.metadata.hasPendingWrites).length;
+          updatePendingSyncCount();
           setAccountTypesLoading(false);
         },
         (error) => {
@@ -187,6 +224,8 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
         query(collection(db, ...base, "accountPayments")),
         (snap) => {
           setPayments(sortByDateDesc(snap.docs.map((d) => ({ id: d.id, ...d.data() } as AccountPayment))));
+          pendingPaymentsCountRef.current = snap.docs.filter((d) => d.metadata.hasPendingWrites).length;
+          updatePendingSyncCount();
           setPaymentsLoading(false);
         },
         (error) => {
@@ -198,6 +237,8 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
         query(collection(db, ...base, "accountEntries")),
         (snap) => {
           setEntries(sortByDateDesc(snap.docs.map((d) => ({ id: d.id, ...d.data() } as AccountEntry))));
+          pendingEntriesCountRef.current = snap.docs.filter((d) => d.metadata.hasPendingWrites).length;
+          updatePendingSyncCount();
           setEntriesLoading(false);
         },
         (error) => {
@@ -210,7 +251,7 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
     return () => {
       unsubscribers.forEach((unsubscribe) => unsubscribe());
     };
-  }, [user]);
+  }, [user, updatePendingSyncCount]);
 
   // ─── Stable Action Functions (Phase 4: useCallback + useRef) ──────────────
 
@@ -455,7 +496,8 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
   const expensesValue = useMemo<ExpensesContextType>(() => ({
     expenses,
     expensesLoading,
-  }), [expenses, expensesLoading]);
+    pendingSyncCount,
+  }), [expenses, expensesLoading, pendingSyncCount]);
 
   const incomesValue = useMemo<IncomesContextType>(() => ({
     incomes,

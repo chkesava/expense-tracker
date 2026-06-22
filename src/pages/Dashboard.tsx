@@ -24,7 +24,8 @@ import { groupByCategory, groupByMonth } from "../utils/analytics";
 import { getUsageColor, getSmartInsight } from "../utils/insights";
 import { CATEGORIES } from "../types/expense";
 import { cn } from "../lib/utils";
-import { monthFromDateKey, todayDateKey } from "../utils/dates";
+import { monthFromDateKey, todayDateKey, currentMonthKey } from "../utils/dates";
+import { getBudgetForecasts } from "../utils/rangeAnalytics";
 import MagicChatEntry from "../components/MagicChatEntry";
 import NumberTicker from "../components/common/NumberTicker";
 import Amount from "../components/common/Amount";
@@ -75,6 +76,7 @@ export default function Dashboard() {
   const [visibleCount, setVisibleCount] = useState(7);
   const [isAdding, setIsAdding] = useState(false);
   const [showFocusConfig, setShowFocusConfig] = useState(false);
+  const [focusDefaultCategory, setFocusDefaultCategory] = useState<string | undefined>(undefined);
   const [isReordering, setIsReordering] = useState(false);
 
   const widgets = settings.dashboardWidgets;
@@ -158,6 +160,17 @@ export default function Dashboard() {
       .sort((a, b) => b.percent - a.percent)
       .slice(0, 3);
   }, [budgets, filteredExpenses, selectedMonth]);
+
+  const isCurrentMonthSelected = useMemo(() => {
+    return selectedMonth === currentMonthKey(settings.timezone);
+  }, [selectedMonth, settings.timezone]);
+
+  const predictiveAlerts = useMemo(() => {
+    if (!isCurrentMonthSelected) return [];
+    const todayStr = todayDateKey(settings.timezone);
+    const activeBudgets = budgets.filter((b) => b.month === selectedMonth);
+    return getBudgetForecasts(filteredExpenses, activeBudgets, todayStr);
+  }, [filteredExpenses, budgets, isCurrentMonthSelected, selectedMonth, settings.timezone]);
 
   const goalProgress = useMemo(() => {
     return goals.map((goal) => ({
@@ -557,7 +570,14 @@ export default function Dashboard() {
 
   return (
     <>
-      <FocusConfigModal isOpen={showFocusConfig} onClose={() => setShowFocusConfig(false)} />
+      <FocusConfigModal
+        isOpen={showFocusConfig}
+        onClose={() => {
+          setShowFocusConfig(false);
+          setFocusDefaultCategory(undefined);
+        }}
+        defaultCategory={focusDefaultCategory}
+      />
 
       <motion.div variants={containerVariants} initial="hidden" animate="visible" className="min-h-[100dvh] max-w-2xl mx-auto px-4 md:px-6 pt-20 md:pt-24 pb-32">
         <div className="flex items-center justify-between mb-8 px-1">
@@ -578,6 +598,51 @@ export default function Dashboard() {
             {isReordering ? <Check size={18} /> : <LayoutGrid size={18} />}
           </button>
         </div>
+
+        {/* Predictive Budget Alerts Widget */}
+        <AnimatePresence>
+          {isCurrentMonthSelected && predictiveAlerts.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, y: -20 }}
+              animate={{ opacity: 1, height: "auto", y: 0 }}
+              exit={{ opacity: 0, height: 0, y: -20 }}
+              className="mb-6 overflow-hidden"
+            >
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 dark:border-amber-500/30 p-5 shadow-sm">
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                  <Zap className="h-24 w-24 text-amber-500" />
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 shadow-inner">
+                    <Zap className="h-5 w-5 animate-pulse" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                      Predictive Budget Alert
+                    </h4>
+                    <div className="space-y-2">
+                      {predictiveAlerts.map((alert) => (
+                        <p key={alert.category} className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                          At your current rate, you will exceed your <strong className="text-slate-900 dark:text-white font-extrabold">{alert.category}</strong> budget by <span className="text-orange-600 dark:text-orange-400 font-extrabold">{alert.overshootPercent}%</span> on <strong className="text-slate-900 dark:text-white font-extrabold">Day {alert.exceedDay}</strong>.{" "}
+                          <button
+                            onClick={() => {
+                              setFocusDefaultCategory(alert.category);
+                              setShowFocusConfig(true);
+                            }}
+                            className="text-amber-600 dark:text-amber-400 font-bold hover:underline underline-offset-2 transition-all cursor-pointer inline-flex items-center gap-1 bg-transparent border-0 p-0"
+                          >
+                            Consider activating a Focus Goal
+                            <ArrowRight size={12} className="inline ml-0.5" />
+                          </button>
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="min-h-[600px]">
           {isReordering ? (

@@ -446,16 +446,9 @@ export default function ExpenseForm({
               }}
             >
               {type !== "income" ? (
-                <>
-                  <optgroup label="Default">
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </optgroup>
-                  {userCategories.length > 0 && (
-                    <optgroup label="Custom">
-                      {userCategories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                    </optgroup>
-                  )}
-                </>
+                userCategories.filter(c => !c.isArchived).map(c => (
+                  <option key={c.id} value={c.name}>{c.name}</option>
+                ))
               ) : (
                 INCOME_SOURCES.map(s => <option key={s} value={s}>{s}</option>)
               )}

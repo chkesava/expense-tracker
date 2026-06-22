@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { CATEGORIES } from '../../types/expense';
@@ -8,13 +8,20 @@ import { useFocusMode } from '../../hooks/useFocusMode';
 interface FocusConfigModalProps {
     isOpen: boolean;
     onClose: () => void;
+    defaultCategory?: string;
 }
 
-export default function FocusConfigModal({ isOpen, onClose }: FocusConfigModalProps) {
+export default function FocusConfigModal({ isOpen, onClose, defaultCategory }: FocusConfigModalProps) {
     const { startFocus } = useFocusMode();
     const [category, setCategory] = useState(CATEGORIES[0]);
     const [duration, setDuration] = useState(7);
     const [limit, setLimit] = useState('');
+
+    useEffect(() => {
+        if (isOpen && defaultCategory && CATEGORIES.includes(defaultCategory as any)) {
+            setCategory(defaultCategory as any);
+        }
+    }, [isOpen, defaultCategory]);
 
     const handleSubmit = () => {
         if (!limit) return;

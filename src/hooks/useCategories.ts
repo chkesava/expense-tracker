@@ -1,4 +1,4 @@
-import { collection, onSnapshot, orderBy, query, addDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc, serverTimestamp, query } from "firebase/firestore";
 import { db } from "../firebase";
 import { useEffect, useState } from "react";
 import type { Category } from "../types/expense";
@@ -37,12 +37,39 @@ export const useCategories = () => {
     try {
       await addDoc(collection(db, "users", user.uid, "categories"), {
         name: name.trim(),
+        isArchived: false,
         createdAt: serverTimestamp(),
       });
       toast.success("Category added");
     } catch (err) {
       console.error(err);
       toast.error("Failed to add category");
+    }
+  };
+
+  const updateCategory = async (id: string, newName: string) => {
+    if (!user || !newName.trim()) return;
+    try {
+      await updateDoc(doc(db, "users", user.uid, "categories", id), {
+        name: newName.trim(),
+      });
+      toast.success("Category updated");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update category");
+    }
+  };
+
+  const archiveCategory = async (id: string, isArchived = true) => {
+    if (!user) return;
+    try {
+      await updateDoc(doc(db, "users", user.uid, "categories", id), {
+        isArchived,
+      });
+      toast.success(isArchived ? "Category archived" : "Category restored");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update category status");
     }
   };
 
@@ -57,5 +84,5 @@ export const useCategories = () => {
     }
   };
 
-  return { categories, loading, addCategory, deleteCategory };
+  return { categories, loading, addCategory, updateCategory, archiveCategory, deleteCategory };
 };

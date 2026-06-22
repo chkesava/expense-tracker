@@ -1,5 +1,5 @@
-import type { Expense } from "../types/expense";
-import { parseLocalDate, toLocalDateKey } from "./dates";
+import type { Expense, CategoryBudget } from "../types/expense";
+import { parseLocalDate, toLocalDateKey, daysInMonth } from "./dates";
 
 export interface TimeSeriesPoint {
   date: string;
@@ -117,5 +117,75 @@ export const getCumulativeSpendingSeries = (expenses: Expense[], start: string, 
       cumulative
     };
   });
+};
+
+export interface BudgetForecast {
+  category: string;
+  budgetAmount: number;
+  currentSpend: number;
+  projectedSpend: number;
+  overshootPercent: number;
+  exceedDay: number;
+}
+
+/**
+ * Predicts whether the user will overshoot their category budgets this month
+ */
+export const getBudgetForecasts = (
+  currentMonthExpenses: Expense[],
+  currentMonthBudgets: CategoryBudget[],
+  todayStr: string
+): BudgetForecast[] => {
+  const [yearStr, monthStr, dayStr] = todayStr.split("-");
+  const year = Number(yearStr);
+  const monthIndex = Number(monthStr) - 1;
+  const currentDay = Number(dayStr);
+  const totalDays = daysInMonth(year, monthIndex);
+  
+  const currentMonth = todayStr.slice(0, 7);
+
+  // Group current month's expenses by category
+  const spentByCategory: Record<string, number> = {};
+  currentMonthExpenses.forEach(e => {
+    spentByCategory[e.category] = (spentByCategory[e.category] || 0) + e.amount;
+  });
+
+  const forecasts: BudgetForecast[] = [];
+
+  currentMonthBudgets.forEach(budget => {
+    const currentSpend = spentByCategory[budget.category] || 0;
+    const budgetAmount = budget.amount;
+
+    if (budgetAmount <= 0) return;
+
+    // Only forecast if they haven't already exceeded the budget
+    if (currentSpend >= budgetAmount) return;
+
+    const daysElapsed = Math.max(1, currentDay);
+    const velocity = currentSpend / daysElapsed;
+
+    if (velocity <= 0) return;
+
+    const projectedSpend = velocity * totalDays;
+
+    if (projectedSpend > budgetAmount) {
+      const overshootPercent = Math.round(((projectedSpend - budgetAmount) / budgetAmount) * 100);
+      const exceedDay = Math.ceil(budgetAmount / velocity);
+
+      // Only show if they exceed it within this month
+      if (exceedDay <= totalDays) {
+        forecasts.push({
+          category: budget.category,
+          budgetAmount,
+          currentSpend,
+          projectedSpend,
+          overshootPercent,
+          exceedDay
+        });
+      }
+    }
+  });
+
+  return forecasts;
 };
 
