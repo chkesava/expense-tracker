@@ -12,6 +12,9 @@ import BottomNav from "./components/BottomNav";
 import PrivacyLock from "./components/PrivacyLock";
 import useSettings, { SettingsProvider } from "./hooks/useSettings";
 import FloatingAdvisor from "./components/FloatingAdvisor";
+import MaintenanceScreen from "./components/MaintenanceScreen";
+import { useSystemSettings } from "./hooks/useSystemSettings";
+import { useUserRole } from "./hooks/useUserRole";
 
 import { useSubscriptions } from "./hooks/useSubscriptions";
 import { useTheme } from "./hooks/useTheme";
@@ -46,6 +49,8 @@ const PaymentRequestPage = lazyWithRetry(() => import("./pages/PaymentRequestPag
 const AdminDashboard = lazyWithRetry(() => import("./admin/pages/AdminDashboard"));
 const AdminUsers = lazyWithRetry(() => import("./admin/pages/AdminUsers"));
 const AdminUserDetail = lazyWithRetry(() => import("./admin/pages/AdminUserDetail"));
+const AdminLayout = lazyWithRetry(() => import("./admin/components/AdminLayout"));
+const AdminSettings = lazyWithRetry(() => import("./admin/pages/AdminSettings"));
 
 function RouteFallback() {
   return (
@@ -63,6 +68,8 @@ function PaySlugRedirect() {
 function AppContent() {
   const { user } = useAuth();
   const { processSubscriptions } = useSubscriptions();
+  const { settings, loading: settingsLoading } = useSystemSettings();
+  const { isAdmin, loading: roleLoading } = useUserRole();
 
   useEffect(() => {
     if (user) processSubscriptions();
@@ -71,6 +78,14 @@ function AppContent() {
   useEffect(() => {
     sessionStorage.removeItem("chunk-reload-attempted");
   }, []);
+
+  if (settingsLoading || (user && roleLoading)) {
+    return <RouteFallback />;
+  }
+
+  if (settings.maintenanceMode && !isAdmin) {
+    return <MaintenanceScreen />;
+  }
 
   return (
     <AnimatePresence mode="wait">
@@ -165,7 +180,7 @@ function AppRoutes() {
           Skip to main content
         </a>
         <Header />
-        <FloatingAdvisor />
+        {!location.pathname.startsWith('/admin') && <FloatingAdvisor />}
 
         <div id="main-content" className="flex-1 w-full pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
           <AnimatePresence>
@@ -198,16 +213,21 @@ function AppRoutes() {
                 {import.meta.env.DEV && (
                   <Route path="/seed" element={<SeedDataPage />} />
                 )}
-                <Route path="/admin" element={<AdminRouteGuard><AdminDashboard /></AdminRouteGuard>} />
-                <Route path="/admin/users" element={<AdminRouteGuard><AdminUsers /></AdminRouteGuard>} />
-                <Route path="/admin/user/:userId" element={<AdminRouteGuard><AdminUserDetail /></AdminRouteGuard>} />
+                <Route path="/admin" element={<AdminRouteGuard><AdminLayout /></AdminRouteGuard>}>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="users" element={<AdminUsers />} />
+                  <Route path="user/:userId" element={<AdminUserDetail />} />
+                  <Route path="settings" element={<AdminSettings />} />
+                </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
           </AnimatePresence>
         </div>
 
-        {settings.navigationStyle === 'bottom' ? <BottomNav /> : <MobileActionDock />}
+        {!location.pathname.startsWith('/admin') && (
+          settings.navigationStyle === 'bottom' ? <BottomNav /> : <MobileActionDock />
+        )}
       </div>
     </>
   );

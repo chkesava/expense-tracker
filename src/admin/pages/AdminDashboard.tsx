@@ -8,7 +8,7 @@ export default function AdminDashboard() {
     const { stats, users, loading } = useAdminData();
 
     return (
-        <main className="min-h-screen bg-background px-4 pb-24 pt-24 text-foreground md:px-8">
+        <>
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -30,6 +30,6 @@ export default function AdminDashboard() {
                     </div>
                 </div>
             </motion.div>
-        </main>
+        </>
     );
 }

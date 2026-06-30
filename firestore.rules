@@ -174,7 +174,11 @@ service cloud.firestore {
 
   match /users/{userId} {
     allow read: if request.auth != null;
-    allow write: if canAccessUser(userId);
+    allow create: if isOwner(userId) && (!('role' in request.resource.data) || request.resource.data.role == "USER");
+    allow update: if canAccessUser(userId) && (
+      isSuperAdmin() || (!('role' in request.resource.data) || request.resource.data.role == resource.data.role)
+    );
+    allow delete: if canAccessUser(userId);
 
     match /expenses/{expenseId} {
       allow read, delete: if canAccessUser(userId);
@@ -265,6 +269,16 @@ service cloud.firestore {
     match /categoryBudgets/{budgetId} {
       allow read, write: if request.auth != null && (get(/databases/$(database)/documents/trips/$(tripId)).data.userId == request.auth.uid || isSuperAdmin());
     }
+  }
+
+  match /system_settings/{document=**} {
+    allow read: if true;
+    allow write: if isSuperAdmin();
+  }
+
+  match /broadcasts/{document=**} {
+    allow read: if request.auth != null;
+    allow write: if isSuperAdmin();
   }
   }
 }

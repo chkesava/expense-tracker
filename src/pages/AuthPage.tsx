@@ -2,12 +2,14 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Activity } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
+import { useSystemSettings } from "../hooks/useSystemSettings";
 import { toast } from "react-toastify";
 
 type AuthMode = "login" | "signup" | "forgot";
 
 export default function AuthPage() {
     const { login, loginWithEmail, signUpWithEmail, resetPassword } = useAuth();
+    const { settings: systemSettings } = useSystemSettings();
     const [mode, setMode] = useState<AuthMode>("login");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -22,6 +24,9 @@ export default function AuthPage() {
                 await loginWithEmail(email, password);
                 toast.success("Welcome back!");
             } else if (mode === "signup") {
+                if (systemSettings?.disableSignups) {
+                    throw new Error("New registrations are temporarily disabled by the administrator.");
+                }
                 if (!displayName) throw new Error("Please enter your name");
                 await signUpWithEmail(email, password, displayName);
                 toast.success("Account created successfully!");
@@ -32,6 +37,22 @@ export default function AuthPage() {
             }
         } catch (error: any) {
             toast.error(error.message || "Authentication failed");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGoogleLogin = async () => {
+        setLoading(true);
+        try {
+            await login();
+            toast.success("Welcome back!");
+        } catch (error: any) {
+            if (error.message) {
+                toast.error(error.message);
+            } else {
+                toast.error("Google sign-in failed");
+            }
         } finally {
             setLoading(false);
         }
@@ -153,13 +174,13 @@ export default function AuthPage() {
                         <motion.button
                             whileHover={{ scale: 1.01 }}
                             whileTap={{ scale: 0.99 }}
-                            disabled={loading}
-                            className="w-full py-4 bg-gradient-to-r from-primary to-indigo-600 text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-xl shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all flex justify-center items-center gap-3 mt-6"
+                            disabled={loading || (mode === "signup" && systemSettings?.disableSignups)}
+                            className="w-full py-4 bg-gradient-to-r from-primary to-indigo-600 text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-xl shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all flex justify-center items-center gap-3 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading && (
                                 <div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
                             )}
-                            {mode === "login" ? "Execute Login" : mode === "signup" ? "Create Account" : "Reset Access"}
+                            {mode === "login" ? "Execute Login" : mode === "signup" ? (systemSettings?.disableSignups ? "Signups Disabled" : "Create Account") : "Reset Access"}
                         </motion.button>
                     </form>
 
@@ -172,8 +193,9 @@ export default function AuthPage() {
                     <motion.button
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.99 }}
-                        onClick={login}
-                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-200 font-bold py-3.5 rounded-xl flex items-center justify-center gap-3 shadow-sm hover:shadow-md transition-all text-sm"
+                        onClick={handleGoogleLogin}
+                        disabled={loading}
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-200 font-bold py-3.5 rounded-xl flex items-center justify-center gap-3 shadow-sm hover:shadow-md transition-all text-sm disabled:opacity-50"
                     >
                         <img className="w-4 h-4" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
                         <span>Google Identification</span>
@@ -183,12 +205,18 @@ export default function AuthPage() {
                         {mode === "login" ? (
                             <p className="text-[11px] font-medium text-slate-500">
                                 New to the system?{" "}
-                                <button
-                                    onClick={() => setMode("signup")}
-                                    className="text-slate-900 dark:text-white font-black uppercase tracking-widest ml-1 hover:underline"
-                                >
-                                    Join Network
-                                </button>
+                                {!systemSettings?.disableSignups ? (
+                                    <button
+                                        onClick={() => setMode("signup")}
+                                        className="text-slate-900 dark:text-white font-black uppercase tracking-widest ml-1 hover:underline"
+                                    >
+                                        Join Network
+                                    </button>
+                                ) : (
+                                    <span className="text-slate-400 dark:text-slate-600 font-bold ml-1 uppercase tracking-widest text-[10px]">
+                                        (Signups Disabled)
+                                    </span>
+                                )}
                             </p>
                         ) : (
                             <p className="text-[11px] font-medium text-slate-500">

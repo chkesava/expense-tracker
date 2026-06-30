@@ -28,6 +28,7 @@ import { cn } from "../lib/utils";
 import { currentMonthKey } from "../utils/dates";
 import { ADMIN_NAV_ITEM, CORE_NAV_ITEMS, isNavItemActive } from "../config/navigation";
 import { useExpenses } from "../hooks/useExpenses";
+import AnnouncementBanner from "./AnnouncementBanner";
 
 function formatMonthLabel(month: string, short = false) {
   if (!month) return "This Month";
@@ -66,6 +67,18 @@ export default function Header() {
 
   const [showStory, setShowStory] = useState(false);
 
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
+  if (isAdminRoute) {
+    return (
+      <div className="fixed top-0 left-0 w-full z-50 flex flex-col pointer-events-none">
+        <div className="w-full pointer-events-auto">
+          <AnnouncementBanner />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       {showStory && (
@@ -76,15 +89,20 @@ export default function Header() {
         />
       )}
 
-      <motion.header
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className={cn(
-          "fixed top-2 left-2 right-2 sm:top-5 sm:left-5 sm:right-5 max-w-7xl mx-auto z-50 px-2.5 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4",
-          "bento-card transition-all duration-500"
-        )}
-      >
+      <div className="fixed top-0 left-0 w-full z-50 flex flex-col pointer-events-none">
+        <div className="w-full pointer-events-auto">
+          <AnnouncementBanner />
+        </div>
+        <div className="w-full px-2 pt-2 sm:px-5 sm:pt-5 pointer-events-none">
+          <motion.header
+            initial={{ y: -100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className={cn(
+              "max-w-7xl mx-auto w-full pointer-events-auto px-2.5 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4",
+              "bento-card transition-all duration-500"
+            )}
+          >
         <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -207,6 +225,19 @@ export default function Header() {
             </div>
           )}
 
+          {isAdmin && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate("/admin")}
+              className="lg:hidden flex items-center justify-center rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 px-3 py-2 text-blue-600 dark:text-blue-400 shadow-sm hover:shadow-md transition-all gap-1.5"
+              aria-label="Open Admin Panel"
+            >
+              <Shield size={14} />
+              <span className="text-[11px] font-black tracking-wider uppercase">Admin</span>
+            </motion.button>
+          )}
+
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -237,7 +268,9 @@ export default function Header() {
             </button>
           </div>
         </div>
-      </motion.header>
+          </motion.header>
+        </div>
+      </div>
     </>
   );
 }

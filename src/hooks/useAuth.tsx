@@ -7,10 +7,11 @@ import {
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword, 
     sendPasswordResetEmail,
-    updateProfile
+    updateProfile,
+    getAdditionalUserInfo
 } from "firebase/auth";
 import { auth, db } from "../firebase";
-import { collection, getDocs, writeBatch, doc, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, writeBatch, doc, serverTimestamp, getDoc } from "firebase/firestore";
 import { CATEGORIES } from "../types/expense";
 
 interface AuthContextType {
@@ -70,7 +71,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const login = async () => {
         const provider = new GoogleAuthProvider();
         try {
-            await signInWithPopup(auth, provider);
+            const result = await signInWithPopup(auth, provider);
+            const additionalInfo = getAdditionalUserInfo(result);
+            
+            if (additionalInfo?.isNewUser) {
+                // Check if signups are disabled
+                const settingsRef = doc(db, "system_settings", "global");
+                const settingsSnap = await getDoc(settingsRef);
+                if (settingsSnap.exists() && settingsSnap.data().disableSignups) {
+                    // Delete the user we just created to keep auth clean
+                    await result.user.delete();
+                    throw new Error("New registrations are temporarily disabled by the administrator.");
+                }
+            }
         } catch (error) {
             console.error("Login failed", error);
             throw error;

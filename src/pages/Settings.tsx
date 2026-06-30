@@ -24,6 +24,7 @@ import { db } from "../firebase";
 import Avatar from "../components/Avatar";
 import Amount from "../components/common/Amount";
 import { useBiometrics } from "../hooks/useBiometrics";
+import { useSystemSettings } from "../hooks/useSystemSettings";
 
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import { cn } from "../lib/utils";
@@ -132,6 +133,7 @@ export default function SettingsPage() {
   const { budgets, addBudget, deleteBudget } = useCategoryBudgets();
   const { goals, addGoal, updateGoalProgress, deleteGoal } = useFinancialGoals();
   const { rules, addRule, deleteRule } = useCategorizationRules();
+  const { settings: systemSettings } = useSystemSettings();
 
   const [active, setActive] = useState<SectionId>("general");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -1283,7 +1285,9 @@ export default function SettingsPage() {
                     </select>
                     <button
                       onClick={handleExportYear}
-                      className="min-h-11 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 text-sm font-black text-white shadow-lg shadow-blue-500/20 active:scale-[0.98]"
+                      disabled={!systemSettings.allowDataExport}
+                      title={!systemSettings.allowDataExport ? "Data export has been disabled by administrator" : ""}
+                      className="min-h-11 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 text-sm font-black text-white shadow-lg shadow-blue-500/20 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
                     >
                       Export CSV
                     </button>

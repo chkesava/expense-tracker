@@ -3,9 +3,19 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, X } from "lucide-react";
 import MagicChatEntry from "./MagicChatEntry";
 import { cn } from "../lib/utils";
+import { useSystemSettings } from "../hooks/useSystemSettings";
+import { useModals } from "../hooks/useModals";
 
 export default function FloatingAdvisor() {
   const [isOpen, setIsOpen] = useState(false);
+  const { settings } = useSystemSettings();
+  const { isAddExpenseOpen, editingExpense, editingIncome } = useModals();
+
+  // Respect the global AI Features toggle set by Super Admin
+  if (!settings.enableAIFeatures) return null;
+
+  // Hide the AI advisor when the transaction entry modal/popup is open
+  if (isAddExpenseOpen || editingExpense || editingIncome) return null;
 
   return (
     <>

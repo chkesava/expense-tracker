@@ -1,7 +1,12 @@
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import type { UserProfile } from "../../types/user";
 import type { Expense } from "../../types/expense";
+
+export const updateUserRole = async (userId: string, role: "USER" | "SUPER_ADMIN"): Promise<void> => {
+    const userRef = doc(db, "users", userId);
+    await updateDoc(userRef, { role });
+};
 
 // Helper to fetch all users
 export const moveAllUsers = async (): Promise<UserProfile[]> => {

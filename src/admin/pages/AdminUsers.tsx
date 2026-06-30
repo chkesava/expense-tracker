@@ -1,15 +1,19 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Search, ChevronLeft, ChevronRight, ArrowUpDown, MoreHorizontal } from "lucide-react";
 import { useAdminData } from "../hooks/useAdminData";
 
 export default function AdminUsers() {
     const { users, loading } = useAdminData();
     const [search, setSearch] = useState("");
+    
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const usersPerPage = 10;
 
-    const filteredUsers = users.filter((user) =>
-        (user.displayName || user.username || user.email || "").toLowerCase().includes(search.toLowerCase())
-    );
+    // Sorting state
+    const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
     const formatCurrency = (amount: number) =>
         new Intl.NumberFormat("en-IN", {
@@ -18,58 +22,109 @@ export default function AdminUsers() {
             maximumFractionDigits: 0,
         }).format(amount);
 
+    const handleSort = (key: string) => {
+        let direction: 'asc' | 'desc' = 'asc';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const processedUsers = useMemo(() => {
+        // Filter
+        let result = users.filter((user) =>
+            (user.displayName || user.username || user.email || "").toLowerCase().includes(search.toLowerCase())
+        );
+
+        // Sort
+        if (sortConfig !== null) {
+            result.sort((a: any, b: any) => {
+                if (a[sortConfig.key] < b[sortConfig.key]) {
+                    return sortConfig.direction === 'asc' ? -1 : 1;
+                }
+                if (a[sortConfig.key] > b[sortConfig.key]) {
+                    return sortConfig.direction === 'asc' ? 1 : -1;
+                }
+                return 0;
+            });
+        }
+
+        return result;
+    }, [users, search, sortConfig]);
+
+    // Pagination calculations
+    const indexOfLastUser = currentPage * usersPerPage;
+    const indexOfFirstUser = indexOfLastUser - usersPerPage;
+    const currentUsers = processedUsers.slice(indexOfFirstUser, indexOfLastUser);
+    const totalPages = Math.ceil(processedUsers.length / usersPerPage);
+
     return (
-        <main className="min-h-screen bg-background px-4 pb-24 pt-24 text-foreground md:px-8">
+        <>
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="max-w-7xl mx-auto"
+                className="w-full"
             >
-                <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                     <div>
-                        <h1 className="text-3xl font-bold">Users</h1>
-                        <p className="text-muted-foreground">Manage and view all registered users</p>
+                        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Users</h1>
+                        <p className="text-slate-500 mt-1">Manage and view all registered users</p>
                     </div>
-                    <div className="relative">
+                    <div className="relative w-full sm:w-72">
                         <input
                             type="text"
                             placeholder="Search users..."
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="pl-10 pr-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-64"
+                            onChange={(e) => {
+                                setSearch(e.target.value);
+                                setCurrentPage(1); // Reset to first page on search
+                            }}
+                            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
                         />
-                        <span className="absolute left-3 top-2.5 text-slate-400">🔍</span>
+                        <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
                     </div>
-                </header>
+                </div>
 
                 {loading ? (
-                    <div className="text-center py-12">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                        <p className="text-slate-500">Loading users...</p>
+                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                        <div className="animate-spin rounded-full h-10 w-10 border-4 border-slate-100 border-t-blue-600 mb-4"></div>
+                        <p className="text-slate-500 font-medium">Loading users...</p>
                     </div>
                 ) : (
-                    <div className="bg-white/80 backdrop-blur-xl border border-white/60 rounded-3xl shadow-sm overflow-hidden">
+                    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
+                            <table className="w-full text-left border-collapse whitespace-nowrap">
                                 <thead>
-                                    <tr className="border-b border-slate-100 bg-slate-50/50 text-slate-500 text-xs uppercase tracking-wider">
-                                        <th className="p-4 font-semibold">User</th>
-                                        <th className="p-4 font-semibold">Role</th>
-                                        <th className="p-4 font-semibold text-right">Expenses</th>
-                                        <th className="p-4 font-semibold text-right">Total Spend</th>
-                                        <th className="p-4 font-semibold text-right">Action</th>
+                                    <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 text-xs font-semibold uppercase tracking-wider">
+                                        <th className="p-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('displayName')}>
+                                            <div className="flex items-center gap-2">
+                                                User <ArrowUpDown className="h-3.5 w-3.5 text-slate-400" />
+                                            </div>
+                                        </th>
+                                        <th className="p-4">Role</th>
+                                        <th className="p-4 text-right cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('expenseCount')}>
+                                            <div className="flex items-center justify-end gap-2">
+                                                Expenses <ArrowUpDown className="h-3.5 w-3.5 text-slate-400" />
+                                            </div>
+                                        </th>
+                                        <th className="p-4 text-right cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('totalSpend')}>
+                                            <div className="flex items-center justify-end gap-2">
+                                                Total Spend <ArrowUpDown className="h-3.5 w-3.5 text-slate-400" />
+                                            </div>
+                                        </th>
+                                        <th className="p-4 text-right">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {filteredUsers.map((user) => (
-                                        <tr key={user.uid} className="hover:bg-slate-50 transition-colors group">
+                                <tbody className="divide-y divide-slate-100 text-sm">
+                                    {currentUsers.map((user) => (
+                                        <tr key={user.uid} className="hover:bg-slate-50/80 transition-colors group">
                                             <td className="p-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden">
+                                                    <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center overflow-hidden flex-shrink-0 border border-blue-200">
                                                         {user.photoURL ? (
                                                             <img src={user.photoURL} alt={user.displayName || "User"} className="w-full h-full object-cover" />
                                                         ) : (
-                                                            <span className="text-slate-500 font-bold">
+                                                            <span className="font-semibold text-sm">
                                                                 {(user.username || user.displayName || user.email || "U")[0].toUpperCase()}
                                                             </span>
                                                         )}
@@ -84,39 +139,73 @@ export default function AdminUsers() {
                                             </td>
                                             <td className="p-4">
                                                 <span
-                                                    className={`px-2 py-1 rounded-full text-xs font-bold ${user.role === "SUPER_ADMIN"
-                                                        ? "bg-purple-100 text-purple-700"
-                                                        : "bg-slate-100 text-slate-600"
+                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.role === "SUPER_ADMIN"
+                                                        ? "bg-purple-100 text-purple-700 border border-purple-200"
+                                                        : "bg-slate-100 text-slate-700 border border-slate-200"
                                                         }`}
                                                 >
                                                     {user.role}
                                                 </span>
                                             </td>
                                             <td className="p-4 text-right font-medium text-slate-700">{user.expenseCount}</td>
-                                            <td className="p-4 text-right font-bold text-slate-900">{formatCurrency(user.totalSpend)}</td>
+                                            <td className="p-4 text-right font-medium text-slate-900">{formatCurrency(user.totalSpend)}</td>
                                             <td className="p-4 text-right">
                                                 <Link
                                                     to={`/admin/user/${user.uid}`}
-                                                    className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+                                                    className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                                                 >
-                                                    View Details
+                                                    <MoreHorizontal className="h-5 w-5" />
                                                 </Link>
                                             </td>
                                         </tr>
                                     ))}
-                                    {filteredUsers.length === 0 && (
+                                    {currentUsers.length === 0 && (
                                         <tr>
-                                            <td colSpan={5} className="p-8 text-center text-slate-500">
-                                                No users found matching "{search}"
+                                            <td colSpan={5} className="p-8 text-center">
+                                                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 mb-4">
+                                                    <Search className="h-6 w-6 text-slate-400" />
+                                                </div>
+                                                <h3 className="text-sm font-medium text-slate-900 mb-1">No users found</h3>
+                                                <p className="text-sm text-slate-500">
+                                                    No users match your search criteria "{search}"
+                                                </p>
                                             </td>
                                         </tr>
                                     )}
                                 </tbody>
                             </table>
                         </div>
+
+                        {/* Pagination Footer */}
+                        {processedUsers.length > 0 && (
+                            <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 bg-slate-50/50">
+                                <div className="text-sm text-slate-500">
+                                    Showing <span className="font-medium text-slate-900">{indexOfFirstUser + 1}</span> to <span className="font-medium text-slate-900">{Math.min(indexOfLastUser, processedUsers.length)}</span> of <span className="font-medium text-slate-900">{processedUsers.length}</span> results
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                        disabled={currentPage === 1}
+                                        className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <ChevronLeft className="h-5 w-5" />
+                                    </button>
+                                    <div className="text-sm font-medium text-slate-700 px-2">
+                                        Page {currentPage} of {totalPages}
+                                    </div>
+                                    <button
+                                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                        disabled={currentPage === totalPages}
+                                        className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <ChevronRight className="h-5 w-5" />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </motion.div>
-        </main>
+        </>
     );
 }

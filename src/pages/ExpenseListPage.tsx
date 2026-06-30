@@ -59,6 +59,7 @@ import { exportExpensesToCSV } from "../utils/exportCsv";
 import { getIncomeSummary, groupIncomesByDay } from "../utils/incomeSummary";
 import { currentMonthKey, todayDateKey } from "../utils/dates";
 import { INCOME_SOURCES } from "../types/expense";
+import { useSystemSettings } from "../hooks/useSystemSettings";
 
 // Audit Components
 import AuditCard from "../components/audit/AuditCard";
@@ -101,6 +102,7 @@ function normalizeHeader(header: string): string {
 
 export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }) {
     const { settings } = useSettings();
+    const { settings: systemSettings } = useSystemSettings();
     const { theme } = useTheme();
     const isClay = theme === "claymorphism";
     const { expenses, loading: expensesLoading } = useExpenses();
@@ -1156,9 +1158,12 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                             </div>
 
                                             <button
-                                                onClick={() => exportExpensesToCSV(expenses, `Vault_Backup_${todayDateKey(settings.timezone)}.csv`)}
+                                                onClick={() => systemSettings.allowDataExport && exportExpensesToCSV(expenses, `Vault_Backup_${todayDateKey(settings.timezone)}.csv`)}
+                                                disabled={!systemSettings.allowDataExport}
+                                                title={!systemSettings.allowDataExport ? "Data export has been disabled by administrator" : ""}
                                                 className={cn(
                                                     "flex w-full items-center justify-between p-6 rounded-[2.5rem] transition-all group",
+                                                    !systemSettings.allowDataExport && "opacity-40 cursor-not-allowed",
                                                     isClay
                                                         ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card hover:translate-y-[-2px]"
                                                         : "bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700"
@@ -1167,7 +1172,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                 <div className="text-left">
                                                     <h4 className={cn("font-black text-[10px] uppercase tracking-[0.2em]", isClay ? "text-blue-500" : "text-slate-400 group-hover:text-slate-600 transition-colors")}>Data Management</h4>
                                                     <h3 className="font-black text-sm uppercase tracking-widest mt-1">Full System Backup</h3>
-                                                    <p className="text-[10px] text-slate-400 mt-1">Export all {expenses.length} records</p>
+                                                    <p className="text-[10px] text-slate-400 mt-1">{systemSettings.allowDataExport ? `Export all ${expenses.length} records` : "Export disabled by administrator"}</p>
                                                 </div>
                                                 <div className={cn(
                                                     "h-12 w-12 rounded-2xl flex items-center justify-center transition-all",
