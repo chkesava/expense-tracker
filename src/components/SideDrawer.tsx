@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Home, Wallet, Users, BarChart3, Settings, Shield, LogOut, Activity } from "lucide-react";
+import { X, Home, Wallet, Users, BarChart3, Settings, Shield, LogOut, Activity, ArrowLeftRight } from "lucide-react";
 import { useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useFocusTrap } from "../hooks/useFocusTrap";
@@ -118,7 +118,16 @@ export default function SideDrawer({ isOpen, onClose }: SideDrawerProps) {
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('selectedApp');
+                    window.location.reload();
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-4 rounded-[2rem] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold text-sm hover:bg-emerald-100 transition-colors"
+                >
+                  <ArrowLeftRight size={18} /> Switch App
+                </button>
                 <button
                   onClick={async () => {
                     await logout();

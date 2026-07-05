@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, writeBatch } from "firebase/firestore";
-import { Brush, Database, Folder, LayoutGrid, LogOut, SlidersHorizontal, Trash2, User, WalletCards, FileText, Loader2, Share2, Shield, Fingerprint, QrCode } from "lucide-react";
+import { Brush, Database, Folder, LayoutGrid, LogOut, SlidersHorizontal, Trash2, User, WalletCards, FileText, Loader2, Share2, Shield, Fingerprint, QrCode, ArrowLeftRight } from "lucide-react";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -484,15 +484,30 @@ export default function SettingsPage() {
 
                 <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
                   <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500 ml-1 mb-3">Account Security</div>
-                  <button
-                    onClick={() => setShowLogoutConfirm(true)}
-                    className="flex w-full items-center justify-between rounded-2xl border border-red-100 bg-red-50/50 px-4 py-3 text-sm font-black text-red-700 hover:bg-red-100/50 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300"
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      <LogOut className="h-4 w-4" /> Sign Out
-                    </span>
-                    <span className="text-[10px] uppercase tracking-[0.24em]">Logout</span>
-                  </button>
+                  
+                  <div className="flex flex-col gap-3">
+                    <button
+                      onClick={() => {
+                        localStorage.removeItem('selectedApp');
+                        window.location.reload();
+                      }}
+                      className="flex w-full items-center justify-between rounded-2xl border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-sm font-black text-emerald-700 hover:bg-emerald-100/50 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300"
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <ArrowLeftRight className="h-4 w-4" /> Switch App
+                      </span>
+                      <span className="text-[10px] uppercase tracking-[0.24em]">Navigate</span>
+                    </button>
+                    <button
+                      onClick={() => setShowLogoutConfirm(true)}
+                      className="flex w-full items-center justify-between rounded-2xl border border-red-100 bg-red-50/50 px-4 py-3 text-sm font-black text-red-700 hover:bg-red-100/50 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300"
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <LogOut className="h-4 w-4" /> Sign Out
+                      </span>
+                      <span className="text-[10px] uppercase tracking-[0.24em]">Logout</span>
+                    </button>
+                  </div>
                 </div>
               </SettingsCard>
             )}
