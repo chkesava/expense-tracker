@@ -219,3 +219,52 @@ DIRECTIONS & RULES:
   }
 }
 
+/**
+ * Parses natural language food entry into structured nutritional data using Gemini AI.
+ * Follows the user's preference for a cost-effective model (using gemini-1.5-flash).
+ */
+export async function analyzeNutrition(text: string) {
+  if (!GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY is missing. Cannot analyze nutrition.");
+  }
+
+  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }, { apiVersion: "v1" });
+
+  const prompt = `
+    Analyze the following food description and estimate the nutritional breakdown.
+    Return ONLY a valid JSON object with the following structure:
+    {
+      "foods": [
+        {
+          "name": "string (name of the food item)",
+          "quantity": "string (e.g. 1 slice, 200g)",
+          "nutrients": {
+            "calories": number (estimated total calories),
+            "protein": number (estimated protein in grams),
+            "carbs": number (estimated carbs in grams),
+            "fat": number (estimated fat in grams),
+            "fiber": number (estimated fiber in grams, default to 0 if unknown)
+          }
+        }
+      ]
+    }
+
+    User Input: "${text}"
+
+    Rules:
+    1. Break down the input into individual distinct food items if there are multiple.
+    2. Estimate the nutritional values as accurately as possible based on standard portion sizes if not specified.
+    3. Return ONLY the JSON object, absolutely no markdown formatting, no backticks, no explanations.
+  `;
+
+  try {
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const jsonStr = response.text().replace(/```json|```/g, "").trim();
+    return JSON.parse(jsonStr);
+  } catch (error) {
+    console.error("AI Nutrition Parsing Error:", error);
+    throw new Error("Failed to parse nutrition data from text.");
+  }
+}

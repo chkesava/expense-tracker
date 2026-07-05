@@ -210,6 +210,18 @@ service cloud.firestore {
       allow create, update: if canAccessUser(userId) && isValidInvestmentData();
     }
 
+    match /daily_logs/{date} {
+      allow read, write: if canAccessUser(userId);
+      
+      match /meals/{mealId} {
+        allow read, write: if canAccessUser(userId);
+      }
+      
+      match /workouts/{workoutId} {
+        allow read, write: if canAccessUser(userId);
+      }
+    }
+
     match /{collection}/{docId} {
       allow read, write: if canAccessUser(userId)
         && !(collection in ['expenses', 'incomes', 'accounts', 'accountEntries', 'accountPayments', 'investments']);

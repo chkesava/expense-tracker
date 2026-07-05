@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { lazyWithRetry } from "./utils/lazyWithRetry";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
@@ -51,7 +51,8 @@ const AdminUsers = lazyWithRetry(() => import("./admin/pages/AdminUsers"));
 const AdminUserDetail = lazyWithRetry(() => import("./admin/pages/AdminUserDetail"));
 const AdminLayout = lazyWithRetry(() => import("./admin/components/AdminLayout"));
 const AdminSettings = lazyWithRetry(() => import("./admin/pages/AdminSettings"));
-
+import AppSelector from "./pages/AppSelector";
+const NutritionApp = lazyWithRetry(() => import("./pages/nutrition/NutritionApp"));
 function RouteFallback() {
   return (
     <div className="flex min-h-[50dvh] items-center justify-center px-6">
@@ -70,6 +71,15 @@ function AppContent() {
   const { processSubscriptions } = useSubscriptions();
   const { settings, loading: settingsLoading } = useSystemSettings();
   const { isAdmin, loading: roleLoading } = useUserRole();
+
+  const [selectedApp, setSelectedApp] = useState<'expense' | 'nutrition' | null>(() => {
+    return (localStorage.getItem('selectedApp') as 'expense' | 'nutrition') || null;
+  });
+
+  const handleAppSelect = (app: 'expense' | 'nutrition') => {
+    localStorage.setItem('selectedApp', app);
+    setSelectedApp(app);
+  };
 
   useEffect(() => {
     if (user) processSubscriptions();
@@ -109,7 +119,13 @@ function AppContent() {
           className="w-full min-h-[100dvh]"
         >
           <PrivacyLock>
-            <AppRoutes />
+            {selectedApp === null ? (
+              <AppSelector onSelect={handleAppSelect} />
+            ) : selectedApp === 'nutrition' ? (
+              <NutritionApp />
+            ) : (
+              <AppRoutes />
+            )}
           </PrivacyLock>
         </motion.div>
       )}
