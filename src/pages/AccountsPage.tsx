@@ -7,7 +7,9 @@ import { useExpenses } from "../hooks/useExpenses";
 import { useIncomes } from "../hooks/useIncomes";
 import { useAccountPayments } from "../hooks/useAccountPayments";
 import { useAccountEntries } from "../hooks/useAccountEntries";
+import { useAccountTransfers } from "../hooks/useAccountTransfers";
 import { useInvestments } from "../hooks/useInvestments";
+import { usePortfolioNetWorth } from "../features/portfolio/hooks/usePortfolioNetWorth";
 import Amount from "../components/common/Amount";
 import EmptyState from "../components/common/EmptyState";
 import { Skeleton } from "../components/common/Skeleton";
@@ -23,7 +25,9 @@ export default function AccountsPage({ hideHeader }: { hideHeader?: boolean }) {
   const { incomes } = useIncomes();
   const { payments } = useAccountPayments();
   const { entries } = useAccountEntries();
+  const { transfers } = useAccountTransfers();
   const { investments, loading: investmentsLoading } = useInvestments();
+  const { portfolioValue, loading: portfolioLoading } = usePortfolioNetWorth();
   const accountTypeNameById = useMemo(
     () => new Map(accountTypes.map((type) => [type.id, type.name])),
     [accountTypes]
@@ -53,7 +57,7 @@ export default function AccountsPage({ hideHeader }: { hideHeader?: boolean }) {
     if (kind !== "credit") {
       primaryLabel = acc.balanceInitialized ? "Balance" : "Balance not set";
       primaryValue = acc.balanceInitialized
-        ? computeBankBalance(acc, expenses, incomes, payments, entries)
+        ? computeBankBalance(acc, expenses, incomes, payments, entries, transfers)
         : null;
     } else if (kind === "credit" && acc.billGenerationDay) {
       const usage = computeCreditUsage(acc, expenses, payments);
@@ -93,7 +97,7 @@ export default function AccountsPage({ hideHeader }: { hideHeader?: boolean }) {
     );
   };
 
-  if (loading || investmentsLoading) {
+  if (loading || investmentsLoading || portfolioLoading) {
     return (
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
@@ -129,7 +133,9 @@ export default function AccountsPage({ hideHeader }: { hideHeader?: boolean }) {
         incomes={incomes}
         payments={payments}
         entries={entries}
+        transfers={transfers}
         investments={investments}
+        portfolioValue={portfolioValue}
       />
 
       {grouped.cashLike.length > 0 && (

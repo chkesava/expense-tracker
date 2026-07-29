@@ -137,7 +137,7 @@ export default function InvestmentsPage({ hideHeader }: { hideHeader?: boolean }
     <div className="space-y-8">
       {!hideHeader && (
         <div>
-          <h2 className="text-2xl font-black text-foreground">Investments</h2>
+          <h2 className="text-2xl font-black text-foreground">Fixed & Mutual Funds</h2>
           <p className="text-sm text-muted-foreground">
             Fixed deposits, interest savings, and mutual funds.
           </p>
@@ -156,7 +156,7 @@ export default function InvestmentsPage({ hideHeader }: { hideHeader?: boolean }
       {active.length === 0 ? (
         <EmptyState
           icon={<TrendingUp className="h-7 w-7" />}
-          title="No investments yet"
+          title="No fixed investments yet"
           description="Track FDs with simple monthly interest, daily-compound savings, or mutual funds with manual NAV updates."
           actionLabel="Add investment"
           onAction={() => setShowCreate(true)}

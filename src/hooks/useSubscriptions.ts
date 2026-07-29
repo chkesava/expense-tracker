@@ -53,6 +53,10 @@ export function useSubscriptions() {
     // Transactional Add: Checks logic BEFORE saving to ensure atomic-like behavior
     const addSubscription = async (sub: Omit<Subscription, "id" | "lastProcessed" | "createdAt">) => {
         if (!user) return;
+        if (sub.type === "transfer" && (!sub.accountId || !sub.toAccountId || sub.accountId === sub.toAccountId)) {
+            toast.error("Choose two different accounts for the recurring transfer");
+            return;
+        }
 
         const currentMonth = getLocalMonth();
         const currentYear = new Date().getFullYear();
@@ -84,6 +88,37 @@ export function useSubscriptions() {
 
             const dueNow = sub.isActive && !isCompleted && currentDay >= sub.dayOfMonth;
             if (dueNow) {
+                if (sub.type === "transfer") {
+                    if (!sub.accountId || !sub.toAccountId || sub.accountId === sub.toAccountId) {
+                        throw new Error("A recurring transfer needs two different accounts");
+                    }
+                    const existingTransferQ = query(
+                        collection(db, "users", user.uid, "accountTransfers"),
+                        where("month", "==", currentMonth),
+                        where("subscriptionId", "==", subRef.id)
+                    );
+                    const existingTransferSnap = await getDocs(existingTransferQ);
+                    if (existingTransferSnap.empty) {
+                        await addDoc(collection(db, "users", user.uid, "accountTransfers"), {
+                            fromAccountId: sub.accountId,
+                            toAccountId: sub.toAccountId,
+                            amount: sub.amount,
+                            date: todayDateKey(),
+                            month: currentMonth,
+                            note: `${sub.name} (Recurring transfer)`,
+                            subscriptionId: subRef.id,
+                            recurringTransfer: true,
+                            createdAt: serverTimestamp(),
+                        });
+                        toast.success("Recurring transfer added & transfer recorded!");
+                    } else {
+                        toast.success("Recurring transfer added (transfer already exists for this month)");
+                    }
+                    await updateDoc(doc(db, "users", user.uid, "subscriptions", subRef.id), {
+                        lastProcessed: currentMonth,
+                    });
+                    return;
+                }
                 const existingByIdQ = query(
                     collection(db, "users", user.uid, "expenses"),
                     where("month", "==", currentMonth),
@@ -155,7 +190,15 @@ export function useSubscriptions() {
                 where("subscriptionId", "==", id)
             );
             const linkedExpensesSnap = await getDocs(linkedExpensesQ);
-            await Promise.all(linkedExpensesSnap.docs.map((d) => deleteDoc(d.ref)));
+            const linkedTransfersQ = query(
+                collection(db, "users", user.uid, "accountTransfers"),
+                where("subscriptionId", "==", id)
+            );
+            const linkedTransfersSnap = await getDocs(linkedTransfersQ);
+            await Promise.all([
+                ...linkedExpensesSnap.docs.map((d) => deleteDoc(d.ref)),
+                ...linkedTransfersSnap.docs.map((d) => deleteDoc(d.ref)),
+            ]);
             await deleteDoc(doc(db, "users", user.uid, "subscriptions", id));
             toast.success("Subscription removed");
         } catch (error) {
@@ -199,6 +242,37 @@ export function useSubscriptions() {
             // 2. Check due date
             if (currentDay >= sub.dayOfMonth) {
                 try {
+                    if (sub.type === "transfer") {
+                        if (!sub.accountId || !sub.toAccountId || sub.accountId === sub.toAccountId) {
+                            console.error(`Recurring transfer ${sub.name} has invalid accounts.`);
+                            continue;
+                        }
+                        const transfersRef = collection(db, "users", user.uid, "accountTransfers");
+                        const existingTransferQ = query(
+                            transfersRef,
+                            where("month", "==", currentMonth),
+                            where("subscriptionId", "==", sub.id)
+                        );
+                        const existingTransferSnap = await getDocs(existingTransferQ);
+                        if (existingTransferSnap.empty) {
+                            await addDoc(transfersRef, {
+                                fromAccountId: sub.accountId,
+                                toAccountId: sub.toAccountId,
+                                amount: sub.amount,
+                                date: todayDateKey(),
+                                month: currentMonth,
+                                note: `${sub.name} (Recurring transfer)`,
+                                subscriptionId: sub.id,
+                                recurringTransfer: true,
+                                createdAt: serverTimestamp(),
+                            });
+                            processedCount++;
+                        }
+                        await updateDoc(doc(db, "users", user.uid, "subscriptions", sub.id!), {
+                            lastProcessed: currentMonth,
+                        });
+                        continue;
+                    }
                     // Double-Check Idempotency (in case of race conditions during app load)
                     // We use a specific query to see if an expense exists for this month.
                     const expensesRef = collection(db, "users", user.uid, "expenses");
@@ -260,7 +334,7 @@ export function useSubscriptions() {
         }
 
         if (processedCount > 0) {
-            toast.info(`Processed ${processedCount} subscription renewal${processedCount > 1 ? 's' : ''}`);
+            toast.info(`Processed ${processedCount} recurring item${processedCount > 1 ? 's' : ''}`);
         }
     }, [user, subscriptions, loading]);
 

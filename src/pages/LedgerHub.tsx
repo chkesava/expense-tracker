@@ -1,10 +1,11 @@
 import { Suspense, useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wallet, Users, RefreshCw, Plane, CreditCard, Landmark, QrCode, TrendingUp } from "lucide-react";
+import { Wallet, Users, RefreshCw, Plane, CreditCard, Landmark, QrCode, PiggyBank } from "lucide-react";
 import PageHeader from "../components/layout/PageHeader";
 import PageShell from "../components/layout/PageShell";
 import { lazyWithRetry } from "../utils/lazyWithRetry";
+import useSettings from "../hooks/useSettings";
 
 type LedgerTab = "expenses" | "splits" | "subscriptions" | "travel" | "cards" | "accounts" | "investments" | "collect";
 
@@ -28,10 +29,14 @@ function TabFallback() {
 export default function LedgerHub() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { settings } = useSettings();
   
   const searchParams = new URLSearchParams(location.search);
   const tabFromUrl = searchParams.get("tab");
-  const activeTab = (tabFromUrl && ["expenses", "splits", "subscriptions", "travel", "cards", "accounts", "investments", "collect"].includes(tabFromUrl))
+  const allowedTabs = settings.enableInvestments
+    ? ["expenses", "splits", "subscriptions", "travel", "cards", "accounts", "investments", "collect"]
+    : ["expenses", "splits", "subscriptions", "travel", "cards", "accounts", "collect"];
+  const activeTab = (tabFromUrl && allowedTabs.includes(tabFromUrl))
     ? (tabFromUrl as LedgerTab)
     : "expenses";
 
@@ -50,9 +55,9 @@ export default function LedgerHub() {
     { id: "travel", label: "Travel", icon: <Plane size={16} /> },
     { id: "cards", label: "Cards", icon: <CreditCard size={16} /> },
     { id: "accounts", label: "Accounts", icon: <Landmark size={16} /> },
-    { id: "investments", label: "Investments", icon: <TrendingUp size={16} /> },
+    ...(settings.enableInvestments ? [{ id: "investments", label: "Fixed & MF", icon: <PiggyBank size={16} /> }] : []),
     { id: "collect", label: "Collect", icon: <QrCode size={16} /> },
-  ], []);
+  ], [settings.enableInvestments]);
 
   return (
     <PageShell width="standard">
@@ -86,7 +91,7 @@ export default function LedgerHub() {
               {activeTab === "travel" && <TripsPage hideHeader />}
               {activeTab === "cards" && <CardsPage hideHeader />}
               {activeTab === "accounts" && <AccountsPage hideHeader />}
-              {activeTab === "investments" && <InvestmentsPage hideHeader />}
+              {settings.enableInvestments && activeTab === "investments" && <InvestmentsPage hideHeader />}
               {activeTab === "collect" && <PaymentRequestsPage hideHeader />}
             </Suspense>
           </motion.div>

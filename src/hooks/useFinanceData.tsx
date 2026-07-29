@@ -14,7 +14,7 @@ import {
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "react-toastify";
 import { db } from "../firebase";
-import type { Account, AccountEntry, AccountPayment, AccountType, Expense, Income } from "../types/expense";
+import type { Account, AccountEntry, AccountPayment, AccountTransfer, AccountType, Expense, Income } from "../types/expense";
 import { isValidDateKey } from "../utils/dates";
 import { useAuth } from "./useAuth";
 
@@ -40,6 +40,8 @@ type AccountsContextType = {
   paymentsLoading: boolean;
   entries: AccountEntry[];
   entriesLoading: boolean;
+  transfers: AccountTransfer[];
+  transfersLoading: boolean;
   addAccount: (
     name: string,
     typeId: string,
@@ -73,6 +75,14 @@ type AccountsContextType = {
     note?: string
   ) => Promise<boolean>;
   deleteEntry: (id: string) => Promise<void>;
+  addTransfer: (
+    fromAccountId: string,
+    toAccountId: string,
+    amount: number,
+    date: string,
+    note?: string
+  ) => Promise<boolean>;
+  deleteTransfer: (id: string) => Promise<void>;
 };
 
 // Legacy combined type — kept for backward compatibility with useFinanceData()
@@ -111,6 +121,8 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
   const [paymentsLoading, setPaymentsLoading] = useState(true);
   const [entries, setEntries] = useState<AccountEntry[]>([]);
   const [entriesLoading, setEntriesLoading] = useState(true);
+  const [transfers, setTransfers] = useState<AccountTransfer[]>([]);
+  const [transfersLoading, setTransfersLoading] = useState(true);
 
   // Track pending writes per collection
   const pendingExpensesCountRef = useRef(0);
@@ -119,6 +131,7 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
   const pendingAccountTypesCountRef = useRef(0);
   const pendingPaymentsCountRef = useRef(0);
   const pendingEntriesCountRef = useRef(0);
+  const pendingTransfersCountRef = useRef(0);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
 
   const updatePendingSyncCount = useCallback(() => {
@@ -128,7 +141,8 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
       pendingAccountsCountRef.current +
       pendingAccountTypesCountRef.current +
       pendingPaymentsCountRef.current +
-      pendingEntriesCountRef.current;
+      pendingEntriesCountRef.current +
+      pendingTransfersCountRef.current;
     setPendingSyncCount(total);
   }, []);
 
@@ -142,12 +156,14 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
       setAccountTypes([]);
       setPayments([]);
       setEntries([]);
+      setTransfers([]);
       setExpensesLoading(false);
       setIncomesLoading(false);
       setAccountsLoading(false);
       setAccountTypesLoading(false);
       setPaymentsLoading(false);
       setEntriesLoading(false);
+      setTransfersLoading(false);
       
       pendingExpensesCountRef.current = 0;
       pendingIncomesCountRef.current = 0;
@@ -155,6 +171,7 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
       pendingAccountTypesCountRef.current = 0;
       pendingPaymentsCountRef.current = 0;
       pendingEntriesCountRef.current = 0;
+      pendingTransfersCountRef.current = 0;
       setPendingSyncCount(0);
       return;
     }
@@ -165,6 +182,7 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
     setAccountTypesLoading(true);
     setPaymentsLoading(true);
     setEntriesLoading(true);
+    setTransfersLoading(true);
 
     const base = ["users", user.uid] as const;
     const unsubscribers = [
@@ -246,6 +264,19 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
           setEntriesLoading(false);
         }
       ),
+      onSnapshot(
+        query(collection(db, ...base, "accountTransfers")),
+        (snap) => {
+          setTransfers(sortByDateDesc(snap.docs.map((d) => ({ id: d.id, ...d.data() } as AccountTransfer))));
+          pendingTransfersCountRef.current = snap.docs.filter((d) => d.metadata.hasPendingWrites).length;
+          updatePendingSyncCount();
+          setTransfersLoading(false);
+        },
+        (error) => {
+          console.error("useAccountTransfers snapshot error:", error);
+          setTransfersLoading(false);
+        }
+      ),
     ];
 
     return () => {
@@ -305,12 +336,16 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
         linkedEntriesSnap,
         linkedPaymentsFromSnap,
         linkedPaymentsToSnap,
+        linkedTransfersFromSnap,
+        linkedTransfersToSnap,
       ] = await Promise.all([
         getDocs(query(collection(db, ...base, "expenses"), where("accountId", "==", id))),
         getDocs(query(collection(db, ...base, "incomes"), where("accountId", "==", id))),
         getDocs(query(collection(db, ...base, "accountEntries"), where("accountId", "==", id))),
         getDocs(query(collection(db, ...base, "accountPayments"), where("fromAccountId", "==", id))),
         getDocs(query(collection(db, ...base, "accountPayments"), where("toAccountId", "==", id))),
+        getDocs(query(collection(db, ...base, "accountTransfers"), where("fromAccountId", "==", id))),
+        getDocs(query(collection(db, ...base, "accountTransfers"), where("toAccountId", "==", id))),
       ]);
 
       const linkedCount =
@@ -318,7 +353,9 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
         linkedIncomesSnap.size +
         linkedEntriesSnap.size +
         linkedPaymentsFromSnap.size +
-        linkedPaymentsToSnap.size;
+        linkedPaymentsToSnap.size +
+        linkedTransfersFromSnap.size +
+        linkedTransfersToSnap.size;
 
       if (linkedCount > 0) {
         toast.error(`Cannot delete account. ${linkedCount} linked records exist. Move/unlink transactions first.`);
@@ -491,6 +528,56 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const addTransfer = useCallback(async (
+    fromAccountId: string,
+    toAccountId: string,
+    amount: number,
+    date: string,
+    note?: string
+  ) => {
+    const u = userRef.current;
+    if (!u || !fromAccountId || !toAccountId || amount <= 0) {
+      toast.error("Choose two accounts and enter a valid amount");
+      return false;
+    }
+    if (fromAccountId === toAccountId) {
+      toast.error("Source and destination accounts must differ");
+      return false;
+    }
+    if (!isValidDateKey(date)) {
+      toast.error("Invalid transfer date");
+      return false;
+    }
+    try {
+      await addDoc(collection(db, "users", u.uid, "accountTransfers"), {
+        fromAccountId,
+        toAccountId,
+        amount,
+        date,
+        note: note?.trim() || "",
+        createdAt: serverTimestamp(),
+      });
+      toast.success("Transfer recorded");
+      return true;
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to record transfer");
+      return false;
+    }
+  }, []);
+
+  const deleteTransfer = useCallback(async (id: string) => {
+    const u = userRef.current;
+    if (!u) return;
+    try {
+      await deleteDoc(doc(db, "users", u.uid, "accountTransfers", id));
+      toast.success("Transfer removed");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to remove transfer");
+    }
+  }, []);
+
   // ─── Granular Context Values (each only re-creates when its deps change) ──
 
   const expensesValue = useMemo<ExpensesContextType>(() => ({
@@ -513,6 +600,8 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
     paymentsLoading,
     entries,
     entriesLoading,
+    transfers,
+    transfersLoading,
     addAccount,
     updateAccount,
     deleteAccount,
@@ -523,6 +612,8 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
     deletePayment,
     addEntry,
     deleteEntry,
+    addTransfer,
+    deleteTransfer,
   }), [
     accounts,
     accountsLoading,
@@ -532,6 +623,8 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
     paymentsLoading,
     entries,
     entriesLoading,
+    transfers,
+    transfersLoading,
     addAccount,
     updateAccount,
     deleteAccount,
@@ -542,6 +635,8 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
     deletePayment,
     addEntry,
     deleteEntry,
+    addTransfer,
+    deleteTransfer,
   ]);
 
   // ─── Nested Providers ─────────────────────────────────────────────────────

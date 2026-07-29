@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Account, AccountPayment } from "../types/expense";
+import type { Account, AccountPayment, AccountTransfer } from "../types/expense";
 import { buildAccountActivities, computeBankBalance } from "./accountBalance";
 
 describe("account activity ledger", () => {
@@ -48,5 +48,58 @@ describe("account activity ledger", () => {
       "payment-1",
       "entry-entry-1",
     ]);
+  });
+
+  it("moves money between accounts without treating it as income or an expense", () => {
+    const cash: Account = {
+      id: "cash-1",
+      name: "Hand cash",
+      typeId: "cash-type",
+      openingBalance: 1000,
+      balanceInitialized: true,
+      balanceAsOfDate: "2026-06-01",
+    };
+    const bank: Account = {
+      id: "bank-1",
+      name: "Bank",
+      typeId: "bank-type",
+      openingBalance: 200,
+      balanceInitialized: true,
+      balanceAsOfDate: "2026-06-01",
+    };
+    const transfers: AccountTransfer[] = [{
+      id: "transfer-1",
+      fromAccountId: "cash-1",
+      toAccountId: "bank-1",
+      amount: 300,
+      date: "2026-06-10",
+    }];
+
+    expect(computeBankBalance(cash, [], [], [], [], transfers)).toBe(700);
+    expect(computeBankBalance(bank, [], [], [], [], transfers)).toBe(500);
+
+    const cashActivity = buildAccountActivities(
+      cash,
+      "Cash",
+      [],
+      [],
+      [],
+      [],
+      transfers,
+      { "bank-1": "Bank" }
+    )[0];
+    const bankActivity = buildAccountActivities(
+      bank,
+      "Bank",
+      [],
+      [],
+      [],
+      [],
+      transfers,
+      { "cash-1": "Hand cash" }
+    )[0];
+
+    expect(cashActivity).toMatchObject({ type: "debit", isTransfer: true, counterpartyName: "Bank" });
+    expect(bankActivity).toMatchObject({ type: "credit", isTransfer: true, counterpartyName: "Hand cash" });
   });
 });

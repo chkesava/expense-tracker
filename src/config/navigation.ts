@@ -1,4 +1,4 @@
-export type NavSectionId = "home" | "ledger" | "vaults" | "insights" | "settings" | "admin";
+export type NavSectionId = "home" | "ledger" | "investments" | "vaults" | "insights" | "settings" | "admin";
 
 export type NavigationItem = {
   id: NavSectionId;
@@ -7,6 +7,7 @@ export type NavigationItem = {
   mobileLabel?: string;
   includeInBottomNav?: boolean;
   includeInDrawer?: boolean;
+  requiresInvestmentsFeature?: boolean;
 };
 
 export const CORE_NAV_ITEMS: NavigationItem[] = [
@@ -25,6 +26,15 @@ export const CORE_NAV_ITEMS: NavigationItem[] = [
     mobileLabel: "Ledger",
     includeInBottomNav: true,
     includeInDrawer: true,
+  },
+  {
+    id: "investments",
+    path: "/investments",
+    label: "Investments",
+    mobileLabel: "Invest",
+    includeInBottomNav: true,
+    includeInDrawer: true,
+    requiresInvestmentsFeature: true,
   },
   {
     id: "vaults",
@@ -67,9 +77,9 @@ const LEDGER_PREFIXES = [
   "/travel",
   "/cards",
   "/accounts",
-  "/investments",
   "/collect",
 ];
+const INVESTMENTS_PREFIXES = ["/investments"];
 const INSIGHTS_PREFIXES = ["/insights", "/analytics", "/analysis"];
 const VAULT_PREFIXES = ["/vaults"];
 
@@ -79,5 +89,6 @@ export function isNavItemActive(pathname: string, id: NavSectionId): boolean {
   if (id === "admin") return pathname.startsWith("/admin");
   if (id === "vaults") return VAULT_PREFIXES.some((prefix) => pathname.startsWith(prefix));
   if (id === "insights") return INSIGHTS_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  if (id === "investments") return INVESTMENTS_PREFIXES.some((prefix) => pathname.startsWith(prefix));
   return LEDGER_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }

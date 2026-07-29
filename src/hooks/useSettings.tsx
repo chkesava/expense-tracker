@@ -19,6 +19,7 @@ type Settings = {
     gamification: boolean;
     topCategories: boolean;
   };
+  enableInvestments: boolean;
   dashboardOrder: string[];
   navigationStyle: "bottom" | "dock";
   ghostMode: boolean;
@@ -44,6 +45,7 @@ export const DEFAULTS: Settings = {
     gamification: true,
     topCategories: true,
   },
+  enableInvestments: true,
   dashboardOrder: ["focus", "gamification", "subscriptions", "topCategories", "overview", "investments", "quickAdd", "insight", "budgetAlerts", "financialGoals", "recentActivity"],
   navigationStyle: "bottom",
   ghostMode: false,

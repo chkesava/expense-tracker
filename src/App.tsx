@@ -30,6 +30,7 @@ import AdminRouteGuard from "./guards/AdminRouteGuard";
 import AuthPage from "./pages/AuthPage";
 import AuraBackground from "./components/layout/AuraBackground";
 import { LedgerStateProvider } from "./hooks/useLedgerState";
+import { useAlertChecker } from "./features/portfolio/hooks/useAlertChecker";
 
 const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
 const LedgerHub = lazyWithRetry(() => import("./pages/LedgerHub"));
@@ -43,6 +44,7 @@ const TripDetailPage = lazyWithRetry(() => import("./pages/TripDetailPage"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const AccountDetailPage = lazyWithRetry(() => import("./pages/AccountDetailPage"));
 const InvestmentDetailPage = lazyWithRetry(() => import("./pages/InvestmentDetailPage"));
+const InvestmentsHubPage = lazyWithRetry(() => import("./features/portfolio/pages/InvestmentsHubPage"));
 const VaultsPage = lazyWithRetry(() => import("./pages/VaultsPage"));
 const VaultDetailPage = lazyWithRetry(() => import("./pages/VaultDetailPage"));
 const PaymentRequestPage = lazyWithRetry(() => import("./pages/PaymentRequestPage"));
@@ -134,6 +136,7 @@ function AppContent() {
 }
 
 function AppRoutes() {
+  useAlertChecker();
   const location = useLocation();
   const { settings } = useSettings();
   const {
@@ -205,8 +208,15 @@ function AppRoutes() {
                 <Route path="/" element={<Navigate to={`/${settings.defaultView || 'dashboard'}`} replace />} />
                 <Route path="/add" element={<AddExpense />} />
                 <Route path="/ledger" element={<LedgerHub />} />
+                <Route
+                  path="/investments"
+                  element={settings.enableInvestments ? <InvestmentsHubPage /> : <Navigate to="/dashboard" replace />}
+                />
                 <Route path="/accounts/:accountId" element={<AccountDetailPage />} />
-                <Route path="/investments/:investmentId" element={<InvestmentDetailPage />} />
+                <Route
+                  path="/investments/:investmentId"
+                  element={settings.enableInvestments ? <InvestmentDetailPage /> : <Navigate to="/dashboard" replace />}
+                />
                 <Route path="/insights" element={<InsightsHub />} />
                 <Route path="/vaults" element={<VaultsPage />} />
                 <Route path="/vaults/:vaultId" element={<VaultDetailPage />} />

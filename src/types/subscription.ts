@@ -6,10 +6,12 @@ export interface Subscription {
     dayOfMonth: number; // 1-31
     isActive: boolean;
     lastProcessed: string; // "YYYY-MM"
-    type: "subscription" | "emi";
+    type: "subscription" | "emi" | "transfer";
     endMonth?: number; // 1-12
     endYear?: number;
     isCompleted?: boolean;
     accountId?: string;
+    /** Destination account for a recurring internal transfer. */
+    toAccountId?: string;
     createdAt?: any;
 }

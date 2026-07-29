@@ -6,6 +6,7 @@ import { useExpenses } from "../hooks/useExpenses";
 import { useIncomes } from "../hooks/useIncomes";
 import { useAccountPayments } from "../hooks/useAccountPayments";
 import { useAccountEntries } from "../hooks/useAccountEntries";
+import { useAccountTransfers } from "../hooks/useAccountTransfers";
 import { getAccountKind } from "../utils/accountKind";
 import { computeBankBalance, previewBalanceAfterBillPayment } from "../utils/accountBalance";
 import { todayDateKey } from "../utils/dates";
@@ -44,6 +45,7 @@ export default function PayCreditBillModal({
   const { incomes } = useIncomes();
   const { payments, addPayment, addExternalPayment } = useAccountPayments();
   const { entries } = useAccountEntries();
+  const { transfers } = useAccountTransfers();
 
   const [fromAccountId, setFromAccountId] = useState("");
   const [amount, setAmount] = useState(suggestedAmount?.toString() ?? "");
@@ -84,9 +86,10 @@ export default function PayCreditBillModal({
       incomes,
       payments,
       entries,
+      transfers,
       num
     );
-  }, [alreadyPaid, selectedFrom, amount, expenses, incomes, payments, entries]);
+  }, [alreadyPaid, selectedFrom, amount, expenses, incomes, payments, entries, transfers]);
 
   const handleSubmit = async () => {
     if (!alreadyPaid && !fromAccountId) {
@@ -191,7 +194,7 @@ export default function PayCreditBillModal({
                   <option value="">Select account</option>
                   {sourceAccounts.map((a) => {
                     const typeName = accountTypes.find((t) => t.id === a.typeId)?.name || "";
-                    const bal = computeBankBalance(a, expenses, incomes, payments, entries);
+                    const bal = computeBankBalance(a, expenses, incomes, payments, entries, transfers);
                     return (
                       <option key={a.id} value={a.id}>
                         {a.name} ({typeName}) — ₹{bal.toLocaleString()}

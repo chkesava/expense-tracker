@@ -9,6 +9,7 @@ interface SystemSettings {
     defaultCurrency: string;
     enableAIFeatures: boolean;
     allowDataExport: boolean;
+    enableInvestments: boolean;
 }
 
 const DEFAULT_SETTINGS: SystemSettings = {
@@ -18,6 +19,7 @@ const DEFAULT_SETTINGS: SystemSettings = {
     defaultCurrency: "INR",
     enableAIFeatures: true,
     allowDataExport: true,
+    enableInvestments: true,
 };
 
 export function useSystemSettings() {

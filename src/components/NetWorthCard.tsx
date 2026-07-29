@@ -6,7 +6,7 @@ import { getAccountKind } from "../utils/accountKind";
 import { computeBankBalance, computeCreditUsage } from "../utils/accountBalance";
 import { getInvestmentValuation } from "../utils/investmentInterest";
 import { toLocalDateKey } from "../utils/dates";
-import type { Account, AccountType, Expense, Income, AccountPayment, AccountEntry } from "../types/expense";
+import type { Account, AccountType, Expense, Income, AccountPayment, AccountEntry, AccountTransfer } from "../types/expense";
 import type { Investment } from "../types/investment";
 import { cn } from "../lib/utils";
 
@@ -17,7 +17,9 @@ interface NetWorthCardProps {
   incomes: Income[];
   payments: AccountPayment[];
   entries: AccountEntry[];
+  transfers: AccountTransfer[];
   investments: Investment[];
+  portfolioValue?: number;
 }
 
 function groupByKey<T>(items: T[], getKey: (item: T) => string | null | undefined) {
@@ -39,7 +41,9 @@ export default function NetWorthCard({
   incomes,
   payments,
   entries,
+  transfers,
   investments,
+  portfolioValue = 0,
 }: NetWorthCardProps) {
   // Local state for toggling sensitive metric visibility
   const [isPrivate, setIsPrivate] = useState(() => {
@@ -65,6 +69,8 @@ export default function NetWorthCard({
   const paymentsFromAccount = useMemo(() => groupByKey(payments, (payment) => payment.fromAccountId), [payments]);
   const paymentsToAccount = useMemo(() => groupByKey(payments, (payment) => payment.toAccountId), [payments]);
   const entriesByAccount = useMemo(() => groupByKey(entries, (entry) => entry.accountId), [entries]);
+  const transfersFromAccount = useMemo(() => groupByKey(transfers, (transfer) => transfer.fromAccountId), [transfers]);
+  const transfersToAccount = useMemo(() => groupByKey(transfers, (transfer) => transfer.toAccountId), [transfers]);
 
   // Filter accounts into Cash (non-credit) and Credit
   const cashAccounts = useMemo(() => {
@@ -84,9 +90,9 @@ export default function NetWorthCard({
   // Current calculations
   const totalCashBalance = useMemo(() => {
     return cashAccounts.reduce((sum, acc) => {
-      return sum + computeBankBalance(acc, expenses, incomes, payments, entries);
+      return sum + computeBankBalance(acc, expenses, incomes, payments, entries, transfers);
     }, 0);
-  }, [cashAccounts, expenses, incomes, payments, entries]);
+  }, [cashAccounts, expenses, incomes, payments, entries, transfers]);
 
   const totalInvestmentValuation = useMemo(() => {
     const todayStr = toLocalDateKey(new Date());
@@ -102,7 +108,7 @@ export default function NetWorthCard({
     }, 0);
   }, [creditAccounts, expenses, payments]);
 
-  const totalAssets = totalCashBalance + totalInvestmentValuation;
+  const totalAssets = totalCashBalance + totalInvestmentValuation + portfolioValue;
   const netWorth = totalAssets - totalCreditOutstanding;
 
   // Debt to Asset ratio
@@ -156,6 +162,8 @@ export default function NetWorthCard({
         const accountIncomes = incomesByAccount.get(acc.id) ?? [];
         const outgoingPayments = paymentsFromAccount.get(acc.id) ?? [];
         const accountEntries = entriesByAccount.get(acc.id) ?? [];
+        const outgoingTransfers = transfersFromAccount.get(acc.id) ?? [];
+        const incomingTransfers = transfersToAccount.get(acc.id) ?? [];
 
         const totalExp = accountExpenses
           .filter((e) => e.accountId === acc.id && (!baseline || e.date >= baseline) && e.date <= targetDateKey)
@@ -169,8 +177,14 @@ export default function NetWorthCard({
         const totalAdj = accountEntries
           .filter((entry) => entry.accountId === acc.id && (!baseline || entry.date >= baseline) && entry.date <= targetDateKey)
           .reduce((s, entry) => s + (entry.direction === "credit" ? entry.amount : -entry.amount), 0);
+        const totalTransfersOut = outgoingTransfers
+          .filter((transfer) => (!baseline || transfer.date >= baseline) && transfer.date <= targetDateKey)
+          .reduce((s, transfer) => s + transfer.amount, 0);
+        const totalTransfersIn = incomingTransfers
+          .filter((transfer) => (!baseline || transfer.date >= baseline) && transfer.date <= targetDateKey)
+          .reduce((s, transfer) => s + transfer.amount, 0);
 
-        return sum + (opening + totalInc - totalExp - totalPay + totalAdj);
+        return sum + (opening + totalInc - totalExp - totalPay + totalAdj - totalTransfersOut + totalTransfersIn);
       }, 0);
 
       // Compute Credit Outstanding
@@ -212,7 +226,7 @@ export default function NetWorthCard({
     }
 
     return dataPoints;
-  }, [cashAccounts, creditAccounts, expensesByAccount, incomesByAccount, paymentsFromAccount, paymentsToAccount, entriesByAccount, investments]);
+  }, [cashAccounts, creditAccounts, expensesByAccount, incomesByAccount, paymentsFromAccount, paymentsToAccount, entriesByAccount, transfersFromAccount, transfersToAccount, investments]);
 
   // Format ratio badge colors
   const ratioBadge = useMemo(() => {
@@ -341,9 +355,11 @@ export default function NetWorthCard({
                 isPrivate && "blur-sm select-none pointer-events-none"
               )}
             >
-              <Amount value={totalInvestmentValuation} showBlur={false} />
+              <Amount value={totalInvestmentValuation + portfolioValue} showBlur={false} />
             </div>
-            <span className="text-[9px] text-muted-foreground">Valuation Today</span>
+            <span className="text-[9px] text-muted-foreground">
+              FD, MF, Stocks & ETFs
+            </span>
           </div>
 
           {/* Liabilities */}

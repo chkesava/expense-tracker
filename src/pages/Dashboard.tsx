@@ -15,8 +15,8 @@ import { useCategoryBudgets } from "../hooks/useCategoryBudgets";
 import { useFinancialGoals } from "../hooks/useFinancialGoals";
 import { useAuth } from "../hooks/useAuth";
 import { useAccounts } from "../hooks/useAccounts";
-import { useInvestments } from "../hooks/useInvestments";
-import { totalPortfolioValue } from "../utils/investmentInterest";
+import { usePortfolioMetrics } from "../features/portfolio/hooks/usePortfolioMetrics";
+import PortfolioQuickViewModal from "../features/portfolio/components/PortfolioQuickViewModal";
 import useSettings, { DEFAULTS } from "../hooks/useSettings";
 import { useModals } from "../hooks/useModals";
 import { db } from "../firebase";
@@ -59,7 +59,13 @@ export default function Dashboard() {
   const loading = expensesLoading || incomesLoading;
   const { accounts } = useAccounts();
   const accountById = useMemo(() => new Map(accounts.map((account) => [account.id, account])), [accounts]);
-  const { investments } = useInvestments();
+  const {
+    holdings: stockHoldings,
+    summary: stockSummary,
+    loading: portfolioLoading,
+    isRefreshing: portfolioRefreshing,
+    lastUpdated: portfolioLastUpdated,
+  } = usePortfolioMetrics();
   const { subscriptions } = useSubscriptions();
   const { budgets } = useCategoryBudgets();
   const { goals } = useFinancialGoals();
@@ -78,6 +84,7 @@ export default function Dashboard() {
   const [showFocusConfig, setShowFocusConfig] = useState(false);
   const [focusDefaultCategory, setFocusDefaultCategory] = useState<string | undefined>(undefined);
   const [isReordering, setIsReordering] = useState(false);
+  const [isPortfolioQuickViewOpen, setIsPortfolioQuickViewOpen] = useState(false);
 
   const widgets = settings.dashboardWidgets;
   const showFocus = widgets?.focus !== false;
@@ -186,16 +193,6 @@ export default function Dashboard() {
     neutral: "from-slate-600 to-slate-700 shadow-slate-500/20",
   };
 
-  const portfolioTotal = useMemo(() => {
-    const active = investments.filter((i) => i.status === "active" || i.status === "matured");
-    return totalPortfolioValue(active);
-  }, [investments]);
-
-  const activeInvestmentCount = useMemo(
-    () => investments.filter((i) => i.status === "active" || i.status === "matured").length,
-    [investments]
-  );
-
   const auditableCount = useMemo(() => {
     return expenses.filter(e => {
       const needsCategory = !e.category || e.category === "Other" || e.category === "Uncategorized";
@@ -206,9 +203,11 @@ export default function Dashboard() {
 
   const widgetMap: Record<string, React.ReactNode> = {
     magicChat: <MagicChatEntry />,
-    investments: activeInvestmentCount > 0 && (
-      <Link
-        to="/ledger?tab=investments"
+    ...(settings.enableInvestments ? {
+    investments: (
+      <button
+        type="button"
+        onClick={() => setIsPortfolioQuickViewOpen(true)}
         className={`${surfaceClass} flex h-full flex-col justify-between p-6 transition-all hover:-translate-y-0.5 hover:shadow-lg`}
       >
         <div className="flex items-center gap-2">
@@ -218,13 +217,16 @@ export default function Dashboard() {
           </h3>
         </div>
         <div className="mt-4">
-          <Amount value={portfolioTotal} className="text-2xl font-black text-slate-900 dark:text-white" />
+          <Amount value={stockSummary.portfolioValue} className="text-2xl font-black text-slate-900 dark:text-white" />
           <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
-            {activeInvestmentCount} active holding{activeInvestmentCount === 1 ? "" : "s"}
+            {stockHoldings.length > 0
+              ? `${stockHoldings.length} tracked holding${stockHoldings.length === 1 ? "" : "s"}`
+              : "Tap to start tracking"}
           </p>
         </div>
-      </Link>
+      </button>
     ),
+    } : {}),
     analysisLab: (
       <motion.div 
         whileHover={{ scale: 1.02 }}
@@ -286,9 +288,9 @@ export default function Dashboard() {
                <Repeat size={20} />
             </div>
             <div>
-              <h3 className="font-bold text-slate-800 dark:text-slate-100 text-base">Recurring Bills</h3>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100 text-base">Recurring Items</h3>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">
-                {subscriptions.filter((s) => s.isActive).length} Active Subscriptions
+                {subscriptions.filter((s) => s.isActive).length} Active Items
               </p>
             </div>
           </div>
@@ -557,7 +559,7 @@ export default function Dashboard() {
       ...DEFAULTS.dashboardOrder,
       "magicChat",
       "audit",
-      "investments",
+      ...(settings.enableInvestments ? ["investments"] : []),
     ];
 
     const sortedKnown = [
@@ -577,6 +579,23 @@ export default function Dashboard() {
           setFocusDefaultCategory(undefined);
         }}
         defaultCategory={focusDefaultCategory}
+      />
+      <PortfolioQuickViewModal
+        isOpen={isPortfolioQuickViewOpen}
+        onClose={() => setIsPortfolioQuickViewOpen(false)}
+        onAddHolding={() => {
+          setIsPortfolioQuickViewOpen(false);
+          if (settings.enableInvestments) navigate("/investments?add=true");
+        }}
+        onOpenPortfolio={() => {
+          setIsPortfolioQuickViewOpen(false);
+          if (settings.enableInvestments) navigate("/investments");
+        }}
+        holdings={stockHoldings}
+        summary={stockSummary}
+        loading={portfolioLoading}
+        isRefreshing={portfolioRefreshing}
+        lastUpdated={portfolioLastUpdated}
       />
 
       <motion.div variants={containerVariants} initial="hidden" animate="visible" className="min-h-[100dvh] max-w-2xl mx-auto px-4 md:px-6 pt-20 md:pt-24 pb-32">

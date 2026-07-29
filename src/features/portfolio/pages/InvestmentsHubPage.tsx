@@ -1,0 +1,248 @@
+import { useMemo, useState, useCallback, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Plus, Search } from "lucide-react";
+import PageShell from "../../../components/layout/PageShell";
+import PageHeader from "../../../components/layout/PageHeader";
+import Button from "../../../components/ui/Button";
+import PortfolioErrorBoundary from "../components/PortfolioErrorBoundary";
+import PortfolioSkeleton from "../components/PortfolioSkeleton";
+import OnboardingWizard from "../components/OnboardingWizard";
+import PortfolioDashboard from "../components/PortfolioDashboard";
+import HoldingsTable from "../components/HoldingsTable";
+import AllocationPieChart from "../components/AllocationPieChart";
+import AddHoldingModal from "../components/AddHoldingModal";
+import MockBuyModal from "../components/MockBuyModal";
+import MockSellModal from "../components/MockSellModal";
+import TransactionHistoryModal from "../components/TransactionHistoryModal";
+import WatchlistPanel from "../components/WatchlistPanel";
+import AlertsPanel from "../components/AlertsPanel";
+import PortfolioCharts from "../components/PortfolioCharts";
+import SymbolSearchInput from "../components/SymbolSearchInput";
+import { usePortfolioSettings } from "../hooks/usePortfolioSettings";
+import { usePortfolioMetrics } from "../hooks/usePortfolioMetrics";
+import { useHoldings } from "../hooks/useHoldings";
+import { usePortfolioTransactions } from "../hooks/usePortfolioTransactions";
+import { useWatchlist } from "../hooks/useWatchlist";
+import type { HoldingWithMetrics, InstrumentType, SearchResult } from "../types";
+
+type TabId = "stocks" | "etfs" | "mutual_funds" | "gold" | "crypto" | "watchlist" | "alerts" | "analytics";
+
+const TABS: { id: TabId; label: string; instrument?: InstrumentType }[] = [
+  { id: "stocks", label: "Stocks", instrument: "stock" },
+  { id: "etfs", label: "ETFs", instrument: "etf" },
+  { id: "mutual_funds", label: "Mutual Funds", instrument: "mutual_fund" },
+  { id: "gold", label: "Gold", instrument: "gold" },
+  { id: "crypto", label: "Crypto", instrument: "crypto" },
+  { id: "watchlist", label: "Watchlist" },
+  { id: "alerts", label: "Alerts" },
+  { id: "analytics", label: "Analytics" },
+];
+
+function ComingSoon({ title }: { title: string }) {
+  return (
+    <div className="bento-card p-12 text-center space-y-3">
+      <h3 className="text-lg font-bold">{title}</h3>
+      <p className="text-sm text-muted-foreground">Coming soon in a future release.</p>
+    </div>
+  );
+}
+
+export default function InvestmentsHubPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get("tab") as TabId) || "stocks";
+  const { needsOnboarding, needsImport, loading: settingsLoading } = usePortfolioSettings();
+  const { deleteHolding } = useHoldings();
+  const { transactions } = usePortfolioTransactions();
+  const { addToWatchlist } = useWatchlist();
+
+  const currentTab = TABS.find((t) => t.id === activeTab) ?? TABS[0];
+  const instrumentFilter = currentTab.instrument;
+
+  const {
+    holdings,
+    summary,
+    allocation,
+    sectorAllocation,
+    etfAllocation,
+    snapshots,
+    loading,
+    quotesLoading,
+    isRefreshing,
+    lastUpdated,
+  } = usePortfolioMetrics(instrumentFilter);
+
+  const [showAddHolding, setShowAddHolding] = useState(false);
+  const [buyHolding, setBuyHolding] = useState<HoldingWithMetrics | null>(null);
+  const [sellHolding, setSellHolding] = useState<HoldingWithMetrics | null>(null);
+  const [historyHolding, setHistoryHolding] = useState<HoldingWithMetrics | null>(null);
+  const [editingHolding, setEditingHolding] = useState<HoldingWithMetrics | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (needsImport) setShowAddHolding(true);
+  }, [needsImport]);
+
+  useEffect(() => {
+    if (searchParams.get("add") !== "true") return;
+    setShowAddHolding(true);
+    setSearchParams({ tab: "stocks" }, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const setTab = useCallback(
+    (tab: TabId) => {
+      setSearchParams({ tab }, { replace: true });
+    },
+    [setSearchParams]
+  );
+
+  const tabPills = useMemo(
+    () => TABS.map((t) => ({ id: t.id, label: t.label })),
+    []
+  );
+
+  const handleWatchlistAdd = (result: SearchResult) => {
+    void addToWatchlist({
+      symbol: result.symbol,
+      yahooSymbol: result.yahooSymbol,
+      name: result.name,
+      exchange: result.exchange,
+      instrumentType: result.instrumentType,
+    });
+  };
+
+  if (settingsLoading || loading) {
+    return (
+      <PageShell>
+        <PortfolioSkeleton />
+      </PageShell>
+    );
+  }
+
+  if (needsOnboarding || showOnboarding) {
+    return (
+      <PageShell>
+        <OnboardingWizard
+          onComplete={() => {
+            setShowOnboarding(false);
+            if (needsOnboarding) setShowAddHolding(true);
+          }}
+        />
+      </PageShell>
+    );
+  }
+
+  const isAssetTab = !!instrumentFilter;
+  const isFutureTab = activeTab === "crypto";
+
+  return (
+    <PortfolioErrorBoundary>
+      <PageShell>
+        <PageHeader
+          title="Investments"
+          subtitle="Read-only portfolio tracking · Live quotes refresh every 15 min"
+          tabs={tabPills}
+          activeTab={activeTab}
+          onTabChange={(tab: string) => setTab(tab as TabId)}
+          rightElement={
+            isAssetTab && activeTab !== "crypto" ? (
+              <Button onClick={() => { setEditingHolding(null); setShowAddHolding(true); }} icon={<Plus size={16} />}>
+                Add Holding
+              </Button>
+            ) : undefined
+          }
+        />
+
+        {isAssetTab && !isFutureTab && (
+          <div className="space-y-8 mt-6">
+            <PortfolioDashboard
+              summary={summary}
+              isRefreshing={isRefreshing || quotesLoading}
+              lastUpdated={lastUpdated}
+              liveQuoteCount={holdings.filter((h) => h.hasLiveQuote).length}
+              totalHoldings={holdings.length}
+            />
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <AllocationPieChart data={allocation} title="Portfolio Allocation" />
+              <AllocationPieChart data={sectorAllocation} title="Sector Allocation" />
+              {activeTab === "etfs" && (
+                <AllocationPieChart data={etfAllocation} title="ETF Allocation" />
+              )}
+            </div>
+
+            <HoldingsTable
+              holdings={holdings}
+              onEdit={(holding) => {
+                setEditingHolding(holding);
+                setShowAddHolding(true);
+              }}
+              onDelete={deleteHolding}
+              onViewHistory={setHistoryHolding}
+              onMockBuy={setBuyHolding}
+              onMockSell={setSellHolding}
+            />
+          </div>
+        )}
+
+        {activeTab === "mutual_funds" && holdings.length === 0 && (
+          <ComingSoon title="Mutual Funds" />
+        )}
+
+        {activeTab === "gold" && holdings.length === 0 && (
+          <ComingSoon title="Gold" />
+        )}
+
+        {activeTab === "crypto" && <ComingSoon title="Crypto" />}
+
+        {activeTab === "watchlist" && (
+          <div className="space-y-6 mt-6">
+            <div className="bento-card p-5">
+              <h3 className="font-bold mb-3 flex items-center gap-2">
+                <Search size={16} /> Add to Watchlist
+              </h3>
+              <SymbolSearchInput value="" onSelect={handleWatchlistAdd} />
+            </div>
+            <WatchlistPanel />
+          </div>
+        )}
+
+        {activeTab === "alerts" && (
+          <div className="mt-6">
+            <AlertsPanel />
+          </div>
+        )}
+
+        {activeTab === "analytics" && (
+          <div className="mt-6">
+            <PortfolioCharts snapshots={snapshots} transactions={transactions} />
+          </div>
+        )}
+
+        <AddHoldingModal
+          isOpen={showAddHolding}
+          onClose={() => {
+            setShowAddHolding(false);
+            setEditingHolding(null);
+          }}
+          defaultInstrumentType={activeTab === "etfs" ? "etf" : "stock"}
+          editingHolding={editingHolding}
+        />
+        <MockBuyModal
+          isOpen={!!buyHolding}
+          onClose={() => setBuyHolding(null)}
+          holding={buyHolding}
+        />
+        <MockSellModal
+          isOpen={!!sellHolding}
+          onClose={() => setSellHolding(null)}
+          holding={sellHolding}
+        />
+        <TransactionHistoryModal
+          isOpen={!!historyHolding}
+          onClose={() => setHistoryHolding(null)}
+          holding={historyHolding}
+        />
+      </PageShell>
+    </PortfolioErrorBoundary>
+  );
+}

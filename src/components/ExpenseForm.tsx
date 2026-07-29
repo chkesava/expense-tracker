@@ -9,6 +9,7 @@ import { useExpenses } from "../hooks/useExpenses";
 import { useIncomes } from "../hooks/useIncomes";
 import { useAccountPayments } from "../hooks/useAccountPayments";
 import { useAccountEntries } from "../hooks/useAccountEntries";
+import { useAccountTransfers } from "../hooks/useAccountTransfers";
 import { getAccountKind } from "../utils/accountKind";
 import { previewBalanceAfterTransaction } from "../utils/accountBalance";
 import { currentMonthKey, monthFromDateKey, todayDateKey } from "../utils/dates";
@@ -52,6 +53,7 @@ const BalancePreviewBadge = memo(function BalancePreviewBadge({
   const { incomes } = useIncomes();
   const { payments } = useAccountPayments();
   const { entries } = useAccountEntries();
+  const { transfers } = useAccountTransfers();
 
   // Defer the amount to avoid blocking user input while recalculating
   const deferredAmount = useDeferredValue(amount);
@@ -70,6 +72,7 @@ const BalancePreviewBadge = memo(function BalancePreviewBadge({
       num,
       payments,
       entries,
+      transfers,
       excludeId
     );
   }, [
@@ -81,6 +84,7 @@ const BalancePreviewBadge = memo(function BalancePreviewBadge({
     incomes,
     payments,
     entries,
+    transfers,
     editingExpenseId,
     editingIncomeId,
   ]);

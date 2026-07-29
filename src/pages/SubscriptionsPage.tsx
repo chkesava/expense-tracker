@@ -11,10 +11,13 @@ import {
   Trash2,
   Activity,
   Repeat,
+  ArrowLeftRight,
   ToggleLeft,
   ToggleRight,
 } from "lucide-react";
 import { useAccounts } from "../hooks/useAccounts";
+import { useAccountTypes } from "../hooks/useAccountTypes";
+import { getAccountKind } from "../utils/accountKind";
 import { CATEGORIES } from "../types/expense";
 import type { Subscription } from "../types/subscription";
 import Modal from "../components/common/Modal";
@@ -23,6 +26,7 @@ import PageHeader from "../components/layout/PageHeader";
 import Amount from "../components/common/Amount";
 import SegmentedTabs from "../components/ui/SegmentedTabs";
 import ConfirmDialog from "../components/common/ConfirmDialog";
+import { toast } from "react-toastify";
 
 import { useLedgerState, type SubTab } from "../hooks/useLedgerState";
 
@@ -31,6 +35,7 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
   const { subscriptions, loading, addSubscription, updateSubscription, deleteSubscription } =
     useSubscriptions();
   const { accounts } = useAccounts();
+  const { accountTypes } = useAccountTypes();
 
   const { subscriptionsTab: activeTab, setSubscriptionsTab: setActiveTab } = useLedgerState();
   const [isAddingSub, setIsAddingSub] = useState(false);
@@ -41,7 +46,8 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
     category: "Subscriptions",
     day: "1",
     accountId: "",
-    type: "subscription" as "subscription" | "emi",
+    toAccountId: "",
+    type: "subscription" as "subscription" | "emi" | "transfer",
     endMonth: (new Date().getMonth() + 1).toString(),
     endYear: new Date().getFullYear().toString(),
   };
@@ -51,13 +57,18 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const stats = useMemo(() => {
-    const active = subscriptions.filter((s) => s.isActive);
+    const active = subscriptions.filter((s) => s.isActive && s.type !== "transfer");
     const totalMonthly = active.reduce((acc, s) => acc + s.amount, 0);
     const emiCount = active.filter((s) => s.type === "emi").length;
     const subCount = active.filter((s) => s.type === "subscription").length;
     const totalYearly = totalMonthly * 12;
     return { totalMonthly, emiCount, subCount, totalYearly };
   }, [subscriptions]);
+
+  const transferableAccounts = useMemo(() => {
+    const typeNameById = new Map(accountTypes.map((type) => [type.id, type.name]));
+    return accounts.filter((account) => getAccountKind(typeNameById.get(account.typeId) || "") !== "credit");
+  }, [accounts, accountTypes]);
 
   const handleEdit = (sub: Subscription) => {
     setEditingSub(sub);
@@ -67,6 +78,7 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
       category: sub.category,
       day: sub.dayOfMonth.toString(),
       accountId: sub.accountId || "",
+      toAccountId: sub.toAccountId || "",
       type: sub.type || "subscription",
       endMonth: (sub.endMonth || new Date().getMonth() + 1).toString(),
       endYear: (sub.endYear || new Date().getFullYear()).toString(),
@@ -76,6 +88,14 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
 
   const handleSubSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.type === "transfer" && (!formData.accountId || !formData.toAccountId)) {
+      toast.error("Choose a source and destination account for the transfer");
+      return;
+    }
+    if (formData.type === "transfer" && formData.accountId === formData.toAccountId) {
+      toast.error("Source and destination accounts must differ");
+      return;
+    }
     const subData = {
       ...formData,
       amount: Number(formData.amount),
@@ -125,7 +145,7 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
             >
               <Plus size={16} />
               <span className="hidden sm:inline">
-                New {activeTab === "recurring" ? "Bill" : "Trip"}
+                New {activeTab === "recurring" ? "Recurring item" : "Trip"}
               </span>
               <span className="sm:hidden">New</span>
             </button>
@@ -164,9 +184,9 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
                       <Plus size={22} />
                     </div>
                     <div className="text-left">
-                      <div className="text-base font-black tracking-tight">Add Recurring Bill</div>
+                      <div className="text-base font-black tracking-tight">Add Recurring Item</div>
                       <div className="text-[10px] font-bold opacity-70 uppercase tracking-widest">
-                        Subscription, EMI, or Bill
+                        Bill, EMI, or account transfer
                       </div>
                     </div>
                   </div>
@@ -183,8 +203,8 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
               ) : subscriptions.length === 0 ? (
                 <div className="py-20 text-center text-slate-400 bg-white/40 dark:bg-slate-900/40 rounded-[2.5rem] border border-dashed border-white/60 dark:border-slate-800/60">
                   <CreditCard size={48} className="mx-auto mb-4 opacity-20" />
-                  <p className="font-bold">No recurring bills yet</p>
-                  <p className="text-sm mt-1 opacity-60">Tap + New Bill to get started</p>
+                  <p className="font-bold">No recurring items yet</p>
+                  <p className="text-sm mt-1 opacity-60">Tap + New Recurring Item to get started</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -283,7 +303,7 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
           setIsAddingSub(false);
           setEditingSub(null);
         }}
-        title={editingSub ? "Modify Bill" : "New Recurring Bill"}
+        title={editingSub ? "Modify Recurring Item" : "New Recurring Item"}
       >
         <form onSubmit={handleSubSubmit} className="space-y-4">
           {/* Name */}
@@ -335,7 +355,7 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
 
           {/* Category + Type */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
+            {formData.type !== "transfer" && <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
                 Category
               </label>
@@ -350,20 +370,21 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
                   </option>
                 ))}
               </select>
-            </div>
-            <div className="space-y-1.5">
+            </div>}
+            <div className={`space-y-1.5 ${formData.type === "transfer" ? "col-span-2" : ""}`}>
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
                 Type
               </label>
               <select
                 value={formData.type}
                 onChange={(e) =>
-                  setFormData({ ...formData, type: e.target.value as "subscription" | "emi" })
+                  setFormData({ ...formData, type: e.target.value as "subscription" | "emi" | "transfer" })
                 }
                 className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-blue-500"
               >
                 <option value="subscription">Subscription</option>
                 <option value="emi">EMI / Loan</option>
+                <option value="transfer">Account transfer</option>
               </select>
             </div>
           </div>
@@ -412,15 +433,15 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
           {/* Account */}
           <div className="space-y-1.5">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-              Auto-Deduct From
+              {formData.type === "transfer" ? "Transfer From" : "Auto-Deduct From"}
             </label>
             <select
               value={formData.accountId}
               onChange={(e) => setFormData({ ...formData, accountId: e.target.value })}
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-blue-500"
             >
-              <option value="">Manual / No Account</option>
-              {accounts.map((acc) => (
+              <option value="">{formData.type === "transfer" ? "Select source account" : "Manual / No Account"}</option>
+              {(formData.type === "transfer" ? transferableAccounts : accounts).map((acc) => (
                 <option key={acc.id} value={acc.id}>
                   {acc.name}
                 </option>
@@ -428,18 +449,40 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
             </select>
           </div>
 
+          {formData.type === "transfer" && (
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                Transfer To
+              </label>
+              <select
+                value={formData.toAccountId}
+                onChange={(e) => setFormData({ ...formData, toAccountId: e.target.value })}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-blue-500"
+                required
+              >
+                <option value="">Select destination account</option>
+                {transferableAccounts
+                  .filter((account) => account.id !== formData.accountId)
+                  .map((account) => (
+                    <option key={account.id} value={account.id}>{account.name}</option>
+                  ))}
+              </select>
+              <p className="text-xs text-slate-400">This moves money internally. It will not be counted as income or an expense.</p>
+            </div>
+          )}
+
           <button
             type="submit"
             className="w-full py-4 mt-2 bg-blue-600 text-white font-black rounded-3xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all"
           >
-            {editingSub ? "Update Bill" : "Create Bill"}
+            {editingSub ? "Update Recurring Item" : "Create Recurring Item"}
           </button>
         </form>
       </Modal>
       <ConfirmDialog
         open={!!deleteTargetId}
-        title="Archive recurring bill?"
-        message="You can re-enable it later. Existing records remain unchanged."
+        title="Archive recurring item?"
+        message="This removes the recurring schedule and its automatically created records."
         variant="warning"
         confirmText="Archive"
         cancelText="Cancel"
@@ -458,6 +501,9 @@ export default function SubscriptionsPage({ hideHeader }: { hideHeader?: boolean
 function SubscriptionRow({ sub, accounts, onEdit, onToggle, onDelete }: any) {
   const accountName =
     accounts.find((a: any) => a.id === sub.accountId)?.name || "External";
+  const destinationAccountName =
+    accounts.find((a: any) => a.id === sub.toAccountId)?.name || "Unknown account";
+  const isTransfer = sub.type === "transfer";
 
   return (
     <div
@@ -470,17 +516,22 @@ function SubscriptionRow({ sub, accounts, onEdit, onToggle, onDelete }: any) {
       <div className="flex items-center gap-4 p-4">
         {/* Avatar */}
         <div className="w-12 h-12 shrink-0 bg-slate-900 dark:bg-white rounded-xl flex items-center justify-center font-black text-white dark:text-slate-900 text-lg shadow-md">
-          {sub.name[0].toUpperCase()}
+          {isTransfer ? <ArrowLeftRight size={20} /> : sub.name[0].toUpperCase()}
         </div>
 
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-0.5">
-            {sub.type === "emi" ? "EMI / Installment" : "Monthly Service"}
+            {isTransfer ? "Internal account transfer" : sub.type === "emi" ? "EMI / Installment" : "Monthly Service"}
           </div>
           <h4 className="text-base font-bold text-slate-900 dark:text-white truncate leading-tight">
             {sub.name}
           </h4>
+          {isTransfer && (
+            <p className="text-[11px] font-medium text-slate-400 truncate">
+              To {destinationAccountName}
+            </p>
+          )}
           <p className="text-[11px] font-medium text-slate-400 mt-0.5 truncate">
             Day {sub.dayOfMonth} • {accountName}
           </p>

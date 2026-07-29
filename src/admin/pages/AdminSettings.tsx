@@ -12,6 +12,7 @@ interface SystemSettings {
     defaultCurrency: string;
     enableAIFeatures: boolean;
     allowDataExport: boolean;
+    enableInvestments: boolean;
 }
 
 import { useSystemSettings } from "../../hooks/useSystemSettings";
@@ -234,6 +235,29 @@ export default function AdminSettings() {
                                     onChange={(e) => updateSetting("allowDataExport", e.target.checked)}
                                 />
                                 <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                            </label>
+                        </div>
+
+                        <hr className="border-slate-100" />
+
+                        <div className="flex items-start justify-between">
+                            <div className="flex items-start gap-3">
+                                <div className="mt-0.5 p-2 bg-amber-50 rounded-lg">
+                                    <Globe className="w-4 h-4 text-amber-600" />
+                                </div>
+                                <div>
+                                    <h3 className="font-medium text-slate-900">Investments Feature</h3>
+                                    <p className="text-sm text-slate-500 mt-0.5">Show or hide the Investments area across the app for all users.</p>
+                                </div>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                                <input
+                                    type="checkbox"
+                                    className="sr-only peer"
+                                    checked={settings.enableInvestments}
+                                    onChange={(e) => updateSetting("enableInvestments", e.target.checked)}
+                                />
+                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
                             </label>
                         </div>
 

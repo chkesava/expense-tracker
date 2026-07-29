@@ -1,13 +1,14 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, ArrowDownLeft, ArrowUpRight, ArrowLeftRight } from "lucide-react";
 import { useAccounts } from "../hooks/useAccounts";
 import { useAccountTypes } from "../hooks/useAccountTypes";
 import { useExpenses } from "../hooks/useExpenses";
 import { useIncomes } from "../hooks/useIncomes";
 import { useAccountPayments } from "../hooks/useAccountPayments";
 import { useAccountEntries } from "../hooks/useAccountEntries";
+import { useAccountTransfers } from "../hooks/useAccountTransfers";
 import Amount from "../components/common/Amount";
 import PayCreditBillModal from "../components/PayCreditBillModal";
 import { cn } from "../lib/utils";
@@ -30,6 +31,7 @@ export default function AccountDetailPage() {
   const { incomes } = useIncomes();
   const { payments } = useAccountPayments();
   const { entries } = useAccountEntries();
+  const { transfers } = useAccountTransfers();
   const [showPayBill, setShowPayBill] = useState(false);
   const { setAccountEntryAccount } = useModals();
 
@@ -52,8 +54,8 @@ export default function AccountDetailPage() {
 
   const bankBalance = useMemo(() => {
     if (!account || kind === "credit") return null;
-    return computeBankBalance(account, expenses, incomes, payments, entries);
-  }, [account, kind, expenses, incomes, payments, entries]);
+    return computeBankBalance(account, expenses, incomes, payments, entries, transfers);
+  }, [account, kind, expenses, incomes, payments, entries, transfers]);
 
   const creditUsage = useMemo(() => {
     if (!account || kind !== "credit" || !account.billGenerationDay) return null;
@@ -76,9 +78,10 @@ export default function AccountDetailPage() {
       incomes,
       payments,
       entries,
+      transfers,
       accountNameById
     );
-  }, [account, typeName, expenses, incomes, payments, entries, accountNameById]);
+  }, [account, typeName, expenses, incomes, payments, entries, transfers, accountNameById]);
 
   if (accountsLoading) {
     return (
@@ -129,8 +132,8 @@ export default function AccountDetailPage() {
               <>
                 <Amount value={bankBalance ?? 0} className="mt-2 text-4xl font-black" />
                 <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-                  Starts from your entered balance, then adds income and subtracts expenses and credit-card
-                  bill payments on this account. It updates automatically as transactions are linked here.
+                  Starts from your entered balance, then adds income and transfers in, and subtracts expenses,
+                  transfers out, and credit-card bill payments. It updates automatically as transactions are linked here.
                 </p>
               </>
             ) : (
@@ -150,7 +153,7 @@ export default function AccountDetailPage() {
                 onClick={() => setAccountEntryAccount(account)}
                 className="mt-4 w-full rounded-xl border border-border bg-muted/50 py-2.5 text-xs font-black uppercase tracking-wider text-foreground"
               >
-                Add funds or debit
+                Add funds, debit, or transfer
               </button>
             )}
           </div>
@@ -219,7 +222,9 @@ export default function AccountDetailPage() {
                   <div
                     className={cn(
                       "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
-                      act.type === "debit"
+                      act.isTransfer
+                        ? "bg-violet-500/10 text-violet-600"
+                        : act.type === "debit"
                         ? act.isBillPayment
                           ? "bg-indigo-500/10 text-indigo-600"
                           : act.isManualEntry
@@ -230,7 +235,9 @@ export default function AccountDetailPage() {
                           : "bg-emerald-500/10 text-emerald-600"
                     )}
                   >
-                    {act.type === "debit" ? (
+                    {act.isTransfer ? (
+                      <ArrowLeftRight className="h-4 w-4" />
+                    ) : act.type === "debit" ? (
                       <ArrowUpRight className="h-4 w-4" />
                     ) : (
                       <ArrowDownLeft className="h-4 w-4" />
@@ -238,7 +245,9 @@ export default function AccountDetailPage() {
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold text-foreground">
-                      {act.isBillPayment
+                      {act.isTransfer
+                        ? act.note || (act.type === "debit" ? "Transfer to account" : "Transfer from account")
+                        : act.isBillPayment
                         ? act.note || (act.type === "debit" ? "Credit card bill payment" : "Bill payment received")
                         : act.isManualEntry
                           ? act.note ||
@@ -247,7 +256,11 @@ export default function AccountDetailPage() {
                     </p>
                     <p className="text-[10px] font-medium text-muted-foreground">
                       {new Date(act.date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
-                      {act.isBillPayment
+                      {act.isTransfer
+                        ? act.type === "debit"
+                          ? ` · To ${act.counterpartyName}`
+                          : ` · From ${act.counterpartyName}`
+                        : act.isBillPayment
                         ? act.type === "debit"
                           ? ` · Paid to ${act.counterpartyName}`
                           : ` · From ${act.counterpartyName}`
@@ -264,7 +277,9 @@ export default function AccountDetailPage() {
                     value={act.amount}
                     className={cn(
                       "text-sm font-black",
-                      act.type === "debit"
+                      act.isTransfer
+                        ? "text-violet-600"
+                        : act.type === "debit"
                         ? act.isBillPayment
                           ? "text-indigo-600"
                           : act.isManualEntry

@@ -1,10 +1,11 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Home, Wallet, Users, BarChart3, Settings, Shield, LogOut, Activity, ArrowLeftRight } from "lucide-react";
+import { X, Home, Wallet, Users, BarChart3, Settings, Shield, LogOut, Activity, ArrowLeftRight, TrendingUp } from "lucide-react";
 import { useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { useAuth } from "../hooks/useAuth";
 import { useUserRole } from "../hooks/useUserRole";
+import useSettings from "../hooks/useSettings";
 import { cn } from "../lib/utils";
 import { ADMIN_NAV_ITEM, CORE_NAV_ITEMS, isNavItemActive } from "../config/navigation";
 
@@ -20,14 +21,16 @@ export default function SideDrawer({ isOpen, onClose }: SideDrawerProps) {
   const location = useLocation();
   const { logout, user } = useAuth();
   const { isAdmin } = useUserRole();
+  const { settings } = useSettings();
 
   const links = [
-    ...CORE_NAV_ITEMS.filter((item) => item.includeInDrawer),
+    ...CORE_NAV_ITEMS.filter((item) => item.includeInDrawer && (!item.requiresInvestmentsFeature || settings.enableInvestments)),
     ...(isAdmin ? [ADMIN_NAV_ITEM] : []),
   ];
   const iconById = {
     home: Home,
     ledger: Wallet,
+    investments: TrendingUp,
     vaults: Users,
     insights: BarChart3,
     settings: Settings,

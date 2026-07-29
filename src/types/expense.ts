@@ -78,6 +78,21 @@ export interface AccountEntry {
   createdAt?: unknown;
 }
 
+/** A movement of money between two non-credit accounts. It is never income or an expense. */
+export interface AccountTransfer {
+  id: string;
+  fromAccountId: string;
+  toAccountId: string;
+  amount: number;
+  date: string;
+  month?: string;
+  note?: string;
+  /** Present when a recurring transfer created this record. */
+  subscriptionId?: string;
+  recurringTransfer?: boolean;
+  createdAt?: unknown;
+}
+
 export interface AccountActivity {
   id: string;
   date: string;
@@ -90,8 +105,10 @@ export interface AccountActivity {
   linkedIncomeId?: string;
   linkedPaymentId?: string;
   linkedAccountEntryId?: string;
+  linkedTransferId?: string;
   isBillPayment?: boolean;
   isManualEntry?: boolean;
+  isTransfer?: boolean;
   counterpartyName?: string;
   runningBalance?: number;
 }

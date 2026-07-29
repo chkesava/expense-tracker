@@ -3,6 +3,7 @@ import type {
   AccountActivity,
   AccountEntry,
   AccountPayment,
+  AccountTransfer,
   Expense,
   Income,
 } from "../types/expense";
@@ -70,6 +71,14 @@ function entriesForAccount(accountId: string, entries: AccountEntry[]) {
   return entries.filter((e) => e.accountId === accountId);
 }
 
+function transfersFromAccount(accountId: string, transfers: AccountTransfer[]) {
+  return transfers.filter((transfer) => transfer.fromAccountId === accountId);
+}
+
+function transfersToAccount(accountId: string, transfers: AccountTransfer[]) {
+  return transfers.filter((transfer) => transfer.toAccountId === accountId);
+}
+
 function isOnOrAfter(date: string, baseline?: string): boolean {
   if (!baseline) return true;
   return date >= baseline;
@@ -98,7 +107,8 @@ export function computeBankBalance(
   expenses: Expense[],
   incomes: Income[],
   payments: AccountPayment[] = [],
-  entries: AccountEntry[] = []
+  entries: AccountEntry[] = [],
+  transfers: AccountTransfer[] = []
 ): number {
   const opening = account.openingBalance ?? 0;
   const baseline = account.balanceAsOfDate;
@@ -118,7 +128,13 @@ export function computeBankBalance(
         : sum,
     0
   );
-  return opening + totalIncomes - totalExpenses - billPaymentsOut + manualAdjustments;
+  const transfersOut = transfersFromAccount(account.id, transfers)
+    .filter((transfer) => isOnOrAfter(transfer.date, baseline))
+    .reduce((sum, transfer) => sum + transfer.amount, 0);
+  const transfersIn = transfersToAccount(account.id, transfers)
+    .filter((transfer) => isOnOrAfter(transfer.date, baseline))
+    .reduce((sum, transfer) => sum + transfer.amount, 0);
+  return opening + totalIncomes - totalExpenses - billPaymentsOut + manualAdjustments - transfersOut + transfersIn;
 }
 
 export function computeCreditUsage(
@@ -241,6 +257,7 @@ export function buildAccountActivities(
   incomes: Income[],
   payments: AccountPayment[] = [],
   entries: AccountEntry[] = [],
+  transfers: AccountTransfer[] = [],
   accountNameById?: Record<string, string>
 ): AccountActivity[] {
   const baseline = account.balanceAsOfDate;
@@ -264,6 +281,12 @@ export function buildAccountActivities(
   );
   const incomingPayments = paymentsToAccount(account.id, payments).filter((p) =>
     withinBaseline(p.date)
+  );
+  const outgoingTransfers = transfersFromAccount(account.id, transfers).filter((transfer) =>
+    withinBaseline(transfer.date)
+  );
+  const incomingTransfers = transfersToAccount(account.id, transfers).filter((transfer) =>
+    withinBaseline(transfer.date)
   );
 
   const activities: AccountActivity[] = [
@@ -318,6 +341,26 @@ export function buildAccountActivities(
           counterpartyName: getPaymentCounterpartyName(p, "incoming", accountNameById),
         }))
       : []),
+    ...outgoingTransfers.map((transfer) => ({
+      id: `transfer-out-${transfer.id}`,
+      date: transfer.date,
+      amount: transfer.amount,
+      type: "debit" as const,
+      note: transfer.note || "Transfer to account",
+      linkedTransferId: transfer.id,
+      isTransfer: true,
+      counterpartyName: accountNameById?.[transfer.toAccountId] ?? "Account",
+    })),
+    ...incomingTransfers.map((transfer) => ({
+      id: `transfer-in-${transfer.id}`,
+      date: transfer.date,
+      amount: transfer.amount,
+      type: "credit" as const,
+      note: transfer.note || "Transfer from account",
+      linkedTransferId: transfer.id,
+      isTransfer: true,
+      counterpartyName: accountNameById?.[transfer.fromAccountId] ?? "Account",
+    })),
   ];
 
   const chronological = [...activities].sort(compareActivitiesChronologically);
@@ -344,6 +387,7 @@ export function previewBalanceAfterTransaction(
   amount: number,
   payments: AccountPayment[] = [],
   entries: AccountEntry[] = [],
+  transfers: AccountTransfer[] = [],
   excludeId?: string
 ): number | null {
   const kind = getAccountKind(typeName);
@@ -359,7 +403,8 @@ export function previewBalanceAfterTransaction(
       filteredExpenses,
       filteredIncomes,
       payments,
-      entries
+      entries,
+      transfers
     );
     if (transactionType === "expense") balance -= amount;
     else balance += amount;
@@ -378,7 +423,8 @@ export function previewBalanceAfterBillPayment(
   incomes: Income[],
   payments: AccountPayment[],
   entries: AccountEntry[],
+  transfers: AccountTransfer[] = [],
   amount: number
 ): number {
-  return computeBankBalance(fromAccount, expenses, incomes, payments, entries) - amount;
+  return computeBankBalance(fromAccount, expenses, incomes, payments, entries, transfers) - amount;
 }

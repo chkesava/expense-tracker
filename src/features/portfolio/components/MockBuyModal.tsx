@@ -1,0 +1,133 @@
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Modal from "../../../components/common/Modal";
+import FormField from "../../../components/ui/FormField";
+import Button from "../../../components/ui/Button";
+import { mockBuySchema, type MockBuyInput } from "../schemas";
+import { useHoldings } from "../hooks/useHoldings";
+import { usePortfolioTransactions } from "../hooks/usePortfolioTransactions";
+import { usePortfolioSettings } from "../hooks/usePortfolioSettings";
+import type { HoldingWithMetrics } from "../types";
+import { fieldClass } from "../utils/styles";
+import { toLocalDateKey } from "../../../utils/dates";
+
+interface MockBuyModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  holding: HoldingWithMetrics | null;
+}
+
+export default function MockBuyModal({ isOpen, onClose, holding }: MockBuyModalProps) {
+  const { applyBuyToHolding } = useHoldings();
+  const { addTransaction } = usePortfolioTransactions();
+  const { settings, updateCashBalance } = usePortfolioSettings();
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<MockBuyInput>({
+    resolver: zodResolver(mockBuySchema),
+    defaultValues: {
+      quantity: 1,
+      price: 0,
+      fees: 0,
+      date: toLocalDateKey(new Date()),
+      notes: "",
+    },
+  });
+
+  useEffect(() => {
+    if (isOpen && holding) {
+      reset({
+        quantity: 1,
+        price: holding.currentPrice,
+        fees: 0,
+        date: toLocalDateKey(new Date()),
+        notes: "",
+      });
+    }
+  }, [isOpen, holding, reset]);
+
+  const quantity = watch("quantity");
+  const price = watch("price");
+  const fees = watch("fees");
+  const totalCost = (Number(quantity) || 0) * (Number(price) || 0) + (Number(fees) || 0);
+
+  const onSubmit = handleSubmit(async (data) => {
+    if (!holding) return;
+
+    const cash = settings?.cashBalance ?? 0;
+    if (totalCost > cash) {
+      return;
+    }
+
+    await addTransaction({
+      holdingId: holding.id,
+      symbol: holding.symbol,
+      type: "BUY",
+      quantity: data.quantity,
+      price: data.price,
+      fees: data.fees,
+      broker: data.broker,
+      date: data.date,
+      notes: data.notes,
+      orderStatus: "executed",
+    });
+
+    await applyBuyToHolding(holding.id, data.quantity, data.price);
+    await updateCashBalance(cash - totalCost);
+    onClose();
+  });
+
+  if (!holding) return null;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={`Mock Buy — ${holding.symbol}`}>
+      <p className="text-xs text-amber-500 font-medium mb-4">
+        Paper trade only. No real order is placed.
+      </p>
+      <form onSubmit={onSubmit} className="space-y-4">
+        <FormField id="buy-qty" label="Quantity" error={errors.quantity?.message}>
+          <input id="buy-qty" type="number" step="0.001" {...register("quantity", { valueAsNumber: true })} className={fieldClass} />
+        </FormField>
+        <FormField id="buy-price" label="Price" error={errors.price?.message}>
+          <input id="buy-price" type="number" step="0.01" {...register("price", { valueAsNumber: true })} className={fieldClass} />
+        </FormField>
+        <FormField id="buy-broker" label="Broker" optional error={errors.broker?.message}>
+          <select id="buy-broker" {...register("broker")} className={fieldClass}>
+            <option value="">Select broker</option>
+            <option value="Groww">Groww</option>
+            <option value="Zerodha">Zerodha</option>
+            <option value="Upstox">Upstox</option>
+            <option value="Angel One">Angel One</option>
+          </select>
+        </FormField>
+        <FormField id="buy-date" label="Date" error={errors.date?.message}>
+          <input id="buy-date" type="date" {...register("date")} className={fieldClass} />
+        </FormField>
+        <FormField id="buy-fees" label="Fees" error={errors.fees?.message}>
+          <input id="buy-fees" type="number" step="0.01" {...register("fees", { valueAsNumber: true })} className={fieldClass} />
+        </FormField>
+        <FormField id="buy-notes" label="Notes" optional error={errors.notes?.message}>
+          <textarea id="buy-notes" {...register("notes")} rows={2} className={fieldClass} />
+        </FormField>
+
+        <div className="text-sm font-medium">
+          Total: ₹{totalCost.toFixed(2)} · Cash: ₹{(settings?.cashBalance ?? 0).toFixed(2)}
+        </div>
+
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={isSubmitting || totalCost > (settings?.cashBalance ?? 0)}
+        >
+          Execute Mock Buy
+        </Button>
+      </form>
+    </Modal>
+  );
+}

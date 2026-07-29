@@ -12,7 +12,8 @@ import {
   Wallet,
   Users,
   EyeOff,
-  RefreshCw
+  RefreshCw,
+  TrendingUp,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import useOnline from "../hooks/useOnline";
@@ -51,12 +52,15 @@ export default function Header() {
   const { pendingSyncCount } = useExpenses();
 
   const desktopLinks = [
-    ...CORE_NAV_ITEMS.filter((item) => item.id !== "settings"),
+    ...CORE_NAV_ITEMS.filter(
+      (item) => item.id !== "settings" && (!item.requiresInvestmentsFeature || settings.enableInvestments)
+    ),
     ...(isAdmin ? [ADMIN_NAV_ITEM] : []),
   ];
   const iconById = {
     home: Home,
     ledger: Wallet,
+    investments: TrendingUp,
     vaults: Users,
     insights: BarChart3,
     admin: Shield,

@@ -2,24 +2,29 @@ import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "../lib/utils";
 import { motion } from "framer-motion";
 import { useModals } from "../hooks/useModals";
-import { BarChart3, Home, Plus, Wallet, Users } from "lucide-react";
+import { BarChart3, Home, Plus, Wallet, Users, TrendingUp } from "lucide-react";
 import { CORE_NAV_ITEMS, isNavItemActive } from "../config/navigation";
+import useSettings from "../hooks/useSettings";
 
 export default function BottomNav() {
   const location = useLocation();
   const { setIsAddExpenseOpen } = useModals();
+  const { settings } = useSettings();
   type ActionLink = { id: "add"; path: "#add"; label: "Add"; isAction: true };
 
   const iconById = {
     home: Home,
     ledger: Wallet,
+    investments: TrendingUp,
     vaults: Users,
     insights: BarChart3,
   } as const;
-  const navLinks = CORE_NAV_ITEMS.filter((item) => item.includeInBottomNav);
+  const navLinks = CORE_NAV_ITEMS.filter(
+    (item) => item.includeInBottomNav && (!item.requiresInvestmentsFeature || settings.enableInvestments)
+  );
   const actionLink: ActionLink = { id: "add", path: "#add", label: "Add", isAction: true };
   const allLinks = [
-    ...CORE_NAV_ITEMS.filter((item) => item.includeInBottomNav),
+    ...CORE_NAV_ITEMS.filter((item) => item.includeInBottomNav && (!item.requiresInvestmentsFeature || settings.enableInvestments)),
     actionLink,
   ];
 

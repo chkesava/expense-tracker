@@ -96,6 +96,20 @@ service cloud.firestore {
       && optionalValidDateKey('appliedCycleEnd');
   }
 
+  function isValidAccountTransferData() {
+    let d = request.resource.data;
+    return isNonEmptyString(d.fromAccountId)
+      && isNonEmptyString(d.toAccountId)
+      && d.fromAccountId != d.toAccountId
+      && isPositiveNumber(d.amount)
+      && isValidDateKey(d.date)
+      && d.note is string
+      && hasValidCreatedAt()
+      && (!('month' in d) || isValidMonthKey(d.month))
+      && (!('subscriptionId' in d) || isNonEmptyString(d.subscriptionId))
+      && (!('recurringTransfer' in d) || d.recurringTransfer is bool);
+  }
+
   function isValidAccountData() {
     let d = request.resource.data;
     return isNonEmptyString(d.name)
@@ -172,6 +186,72 @@ service cloud.firestore {
       );
   }
 
+  function isValidHoldingData() {
+    let d = request.resource.data;
+    return isNonEmptyString(d.symbol)
+      && isNonEmptyString(d.yahooSymbol)
+      && isNonEmptyString(d.name)
+      && (d.exchange == 'NSE' || d.exchange == 'BSE' || d.exchange == 'US')
+      && (d.instrumentType == 'stock' || d.instrumentType == 'etf' || d.instrumentType == 'mutual_fund' || d.instrumentType == 'gold' || d.instrumentType == 'crypto')
+      && d.quantity is number && d.quantity > 0
+      && d.averageBuyPrice is number && d.averageBuyPrice > 0
+      && (!('targetPrice' in d) || (d.targetPrice is number && d.targetPrice > 0))
+      && hasValidCreatedAt()
+      && optionalValidDateKey('datePurchased');
+  }
+
+  function isValidPortfolioTransactionData() {
+    let d = request.resource.data;
+    return isNonEmptyString(d.holdingId)
+      && isNonEmptyString(d.symbol)
+      && (d.type == 'BUY' || d.type == 'SELL' || d.type == 'BONUS' || d.type == 'SPLIT' || d.type == 'DIVIDEND')
+      && d.quantity is number && d.quantity > 0
+      && d.price is number && d.price >= 0
+      && d.fees is number && d.fees >= 0
+      && isValidDateKey(d.date)
+      && (d.orderStatus == 'pending' || d.orderStatus == 'executed' || d.orderStatus == 'cancelled')
+      && hasValidCreatedAt();
+  }
+
+  function isValidWatchlistData() {
+    let d = request.resource.data;
+    return isNonEmptyString(d.symbol)
+      && isNonEmptyString(d.yahooSymbol)
+      && isNonEmptyString(d.name)
+      && (d.exchange == 'NSE' || d.exchange == 'BSE' || d.exchange == 'US')
+      && hasValidCreatedAt();
+  }
+
+  function isValidAlertData() {
+    let d = request.resource.data;
+    return isNonEmptyString(d.symbol)
+      && isNonEmptyString(d.yahooSymbol)
+      && isNonEmptyString(d.name)
+      && (d.condition == 'price_above' || d.condition == 'price_below' || d.condition == 'profit_above' || d.condition == 'loss_above')
+      && d.threshold is number && d.threshold > 0
+      && d.isActive is bool
+      && hasValidCreatedAt();
+  }
+
+  function isValidPortfolioSnapshotData() {
+    let d = request.resource.data;
+    return isValidDateKey(d.date)
+      && d.portfolioValue is number
+      && d.investedValue is number
+      && d.profit is number
+      && d.profitPercent is number
+      && d.netWorth is number
+      && hasValidCreatedAt();
+  }
+
+  function isValidPortfolioSettingsData() {
+    let d = request.resource.data;
+    return (!('initialInvestmentAmount' in d) || (d.initialInvestmentAmount is number && d.initialInvestmentAmount >= 0))
+      && (!('cashBalance' in d) || (d.cashBalance is number && d.cashBalance >= 0))
+      && (!('hasExistingHoldings' in d) || d.hasExistingHoldings is bool)
+      && (!('onboardingComplete' in d) || d.onboardingComplete is bool);
+  }
+
   match /users/{userId} {
     allow read: if request.auth != null;
     allow create: if isOwner(userId) && (!('role' in request.resource.data) || request.resource.data.role == "USER");
@@ -205,9 +285,44 @@ service cloud.firestore {
       allow create, update: if canAccessUser(userId) && isValidAccountPaymentData();
     }
 
+    match /accountTransfers/{transferId} {
+      allow read, delete: if canAccessUser(userId);
+      allow create, update: if canAccessUser(userId) && isValidAccountTransferData();
+    }
+
     match /investments/{investmentId} {
       allow read, delete: if canAccessUser(userId);
       allow create, update: if canAccessUser(userId) && isValidInvestmentData();
+    }
+
+    match /holdings/{holdingId} {
+      allow read, delete: if canAccessUser(userId);
+      allow create, update: if canAccessUser(userId) && isValidHoldingData();
+    }
+
+    match /portfolioTransactions/{transactionId} {
+      allow read, delete: if canAccessUser(userId);
+      allow create, update: if canAccessUser(userId) && isValidPortfolioTransactionData();
+    }
+
+    match /watchlist/{itemId} {
+      allow read, delete: if canAccessUser(userId);
+      allow create, update: if canAccessUser(userId) && isValidWatchlistData();
+    }
+
+    match /alerts/{alertId} {
+      allow read, delete: if canAccessUser(userId);
+      allow create, update: if canAccessUser(userId) && isValidAlertData();
+    }
+
+    match /portfolioSnapshots/{snapshotId} {
+      allow read, delete: if canAccessUser(userId);
+      allow create, update: if canAccessUser(userId) && isValidPortfolioSnapshotData();
+    }
+
+    match /portfolioSettings/{docId} {
+      allow read, delete: if canAccessUser(userId);
+      allow create, update: if canAccessUser(userId) && isValidPortfolioSettingsData();
     }
 
     match /daily_logs/{date} {
@@ -224,7 +339,7 @@ service cloud.firestore {
 
     match /{collection}/{docId} {
       allow read, write: if canAccessUser(userId)
-        && !(collection in ['expenses', 'incomes', 'accounts', 'accountEntries', 'accountPayments', 'investments']);
+        && !(collection in ['expenses', 'incomes', 'accounts', 'accountEntries', 'accountPayments', 'accountTransfers', 'investments', 'holdings', 'portfolioTransactions', 'watchlist', 'alerts', 'portfolioSnapshots', 'portfolioSettings', 'daily_logs']);
     }
   }
 
