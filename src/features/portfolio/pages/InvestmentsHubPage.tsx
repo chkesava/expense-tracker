@@ -11,6 +11,7 @@ import PortfolioDashboard from "../components/PortfolioDashboard";
 import HoldingsTable from "../components/HoldingsTable";
 import AllocationPieChart from "../components/AllocationPieChart";
 import AddHoldingModal from "../components/AddHoldingModal";
+import CsvImportModal from "../components/CsvImportModal";
 import MockBuyModal from "../components/MockBuyModal";
 import MockSellModal from "../components/MockSellModal";
 import TransactionHistoryModal from "../components/TransactionHistoryModal";
@@ -55,7 +56,7 @@ function ComingSoon({ title }: { title: string }) {
 export default function InvestmentsHubPage({ hideHeader }: { hideHeader?: boolean } = {}) {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get("ptab") as TabId) || "all";
-  const { needsOnboarding, needsImport, loading: settingsLoading, resetOnboarding } = usePortfolioSettings();
+  const { needsOnboarding, needsImport, loading: settingsLoading, resetOnboarding, completeOnboarding } = usePortfolioSettings();
   const { deleteHolding } = useHoldings();
   const { transactions } = usePortfolioTransactions();
   const { addToWatchlist } = useWatchlist();
@@ -79,6 +80,7 @@ export default function InvestmentsHubPage({ hideHeader }: { hideHeader?: boolea
   useProcessLimitOrders(holdings);
 
   const [showAddHolding, setShowAddHolding] = useState(false);
+  const [showCsvImport, setShowCsvImport] = useState(needsImport);
   const [buyHolding, setBuyHolding] = useState<HoldingWithMetrics | null>(null);
   const [sellHolding, setSellHolding] = useState<HoldingWithMetrics | null>(null);
   const [historyHolding, setHistoryHolding] = useState<HoldingWithMetrics | null>(null);
@@ -132,12 +134,26 @@ export default function InvestmentsHubPage({ hideHeader }: { hideHeader?: boolea
 
   if (needsOnboarding || showOnboarding) {
     const onboardingContent = (
-      <OnboardingWizard
-        onComplete={() => {
-          setShowOnboarding(false);
-          if (needsOnboarding) setShowAddHolding(true);
-        }}
-      />
+      <>
+        <OnboardingWizard
+          onComplete={() => {
+            setShowOnboarding(false);
+            if (needsImport) {
+              setShowCsvImport(true);
+            } else if (needsOnboarding) {
+              setShowAddHolding(true);
+            }
+          }}
+        />
+        <CsvImportModal
+          isOpen={showCsvImport}
+          onClose={() => setShowCsvImport(false)}
+          onSuccess={() => {
+            setShowCsvImport(false);
+            void completeOnboarding();
+          }}
+        />
+      </>
     );
     return hideHeader ? onboardingContent : <PageShell>{onboardingContent}</PageShell>;
   }
@@ -182,6 +198,9 @@ export default function InvestmentsHubPage({ hideHeader }: { hideHeader?: boolea
               <Button variant="ghost" className="text-muted-foreground hover:text-red-500" onClick={handleReset} icon={<RotateCcw size={16} />}>
                 Reset Setup
               </Button>
+              <Button variant="secondary" onClick={() => setShowCsvImport(true)}>
+                Import CSV
+              </Button>
               <Button onClick={() => { setEditingHolding(null); setShowAddHolding(true); }} icon={<Plus size={16} />}>
                 Add Holding
               </Button>
@@ -200,6 +219,9 @@ export default function InvestmentsHubPage({ hideHeader }: { hideHeader?: boolea
               <div className="flex items-center gap-2">
                 <Button variant="ghost" className="text-muted-foreground hover:text-red-500" onClick={handleReset} icon={<RotateCcw size={16} />}>
                   Reset Setup
+                </Button>
+                <Button variant="secondary" onClick={() => setShowCsvImport(true)}>
+                  Import CSV
                 </Button>
                 <Button onClick={() => { setEditingHolding(null); setShowAddHolding(true); }} icon={<Plus size={16} />}>
                   Add Holding
@@ -290,6 +312,10 @@ export default function InvestmentsHubPage({ hideHeader }: { hideHeader?: boolea
         }}
         defaultInstrumentType={activeTab === "etfs" ? "etf" : "stock"}
         editingHolding={editingHolding}
+      />
+      <CsvImportModal
+        isOpen={showCsvImport}
+        onClose={() => setShowCsvImport(false)}
       />
       <MockBuyModal
         isOpen={!!buyHolding}

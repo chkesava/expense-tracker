@@ -150,6 +150,35 @@ export function useHoldings() {
       (h) => h.symbol === symbol.toUpperCase() && h.exchange === exchange
     );
 
+  const overwriteHoldings = async (newHoldings: CreateHoldingInput[]) => {
+    if (!user) return false;
+    try {
+      const { writeBatch } = await import("firebase/firestore");
+      const batch = writeBatch(db);
+
+      holdings.forEach((h) => {
+        const ref = doc(db, "users", user.uid, "holdings", h.id);
+        batch.delete(ref);
+      });
+
+      newHoldings.forEach((h) => {
+        const ref = doc(collection(db, "users", user.uid, "holdings"));
+        batch.set(ref, {
+          ...stripUndefined(h),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      });
+
+      await batch.commit();
+      return true;
+    } catch (err) {
+      console.error("Failed to overwrite holdings", err);
+      toast.error("Failed to import CSV");
+      return false;
+    }
+  };
+
   return {
     holdings,
     loading,
@@ -160,6 +189,7 @@ export function useHoldings() {
     applyBuyToHolding,
     applySellToHolding,
     findBySymbol,
+    overwriteHoldings,
   };
 }
 
