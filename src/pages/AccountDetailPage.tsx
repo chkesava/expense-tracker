@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowDownLeft, ArrowUpRight, ArrowLeftRight } from "lucide-react";
+import { ArrowLeft, ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Edit3 } from "lucide-react";
 import { useAccounts } from "../hooks/useAccounts";
 import { useAccountTypes } from "../hooks/useAccountTypes";
 import { useExpenses } from "../hooks/useExpenses";
@@ -11,6 +11,7 @@ import { useAccountEntries } from "../hooks/useAccountEntries";
 import { useAccountTransfers } from "../hooks/useAccountTransfers";
 import Amount from "../components/common/Amount";
 import PayCreditBillModal from "../components/PayCreditBillModal";
+import EditAccountModal from "../components/EditAccountModal";
 import { cn } from "../lib/utils";
 import { useModals } from "../hooks/useModals";
 import { getAccountKind } from "../utils/accountKind";
@@ -33,6 +34,7 @@ export default function AccountDetailPage() {
   const { entries } = useAccountEntries();
   const { transfers } = useAccountTransfers();
   const [showPayBill, setShowPayBill] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const { setAccountEntryAccount } = useModals();
 
   const account = useMemo(
@@ -122,8 +124,20 @@ export default function AccountDetailPage() {
       </button>
 
       <div className="bento-card p-6">
-        <h1 className="text-2xl font-black text-foreground">{account.name}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{typeName}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-black text-foreground">{account.name}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{typeName}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowEditModal(true)}
+            className="flex items-center gap-1.5 rounded-xl border border-primary/20 bg-primary/10 px-3 py-2 text-xs font-black text-primary hover:bg-primary/20 transition-all"
+          >
+            <Edit3 className="h-3.5 w-3.5" />
+            Edit Cash Balance
+          </button>
+        </div>
 
         {kind !== "credit" && (
           <div className="mt-6">
@@ -335,6 +349,13 @@ export default function AccountDetailPage() {
         />
       )}
 
+      {showEditModal && (
+        <EditAccountModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          account={account}
+        />
+      )}
     </motion.main>
   );
 }

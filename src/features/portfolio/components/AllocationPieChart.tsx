@@ -25,7 +25,7 @@ export default function AllocationPieChart({
       <h3 className="font-bold text-sm uppercase tracking-wider text-muted-foreground">
         {title}
       </h3>
-      <ResponsiveContainer width="100%" height={height}>
+      <ResponsiveContainer width="100%" height={height} minWidth={0} minHeight={0}>
         <PieChart>
           <Pie
             data={data}

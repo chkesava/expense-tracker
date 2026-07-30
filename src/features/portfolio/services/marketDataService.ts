@@ -29,10 +29,6 @@ function setCache(key: string, data: unknown, ttlMs = CACHE_TTL_MS) {
   cache.set(key, { data, expiresAt: Date.now() + ttlMs });
 }
 
-function stripLegacySuffix(symbol: string) {
-  return symbol.replace(/\.(NS|BO)$/i, "").trim().toUpperCase();
-}
-
 function exchangeFromSymbol(symbol: string): Exchange {
   const normalized = symbol.toUpperCase();
   if (normalized.endsWith(".BO")) return "BSE";
@@ -72,12 +68,10 @@ export async function searchSymbols(query: string): Promise<SearchResult[]> {
         name: item.name,
         exchange: exchangeFromSymbol(item.ticker),
         instrumentType: mapInstrumentType(item.type, item.ticker, item.name),
-        // Existing portfolio documents use this field name. It now stores the Twelve Data ticker.
         yahooSymbol: item.ticker,
       }))
     );
   } catch (error) {
-    // Local symbols keep the form usable when offline, rate-limited, or before the proxy is configured.
     if (local.length > 0 || error instanceof TwelveDataConfigurationError) return local;
     throw error;
   }
@@ -104,11 +98,11 @@ export async function fetchQuotes(marketSymbols: string[]): Promise<Map<string, 
       }
 
       try {
-        const quote = await getQuote(stripLegacySuffix(marketSymbol));
+        const quote = await getQuote(marketSymbol);
         const mapped: MarketQuote = {
-          symbol: stripLegacySuffix(marketSymbol),
+          symbol: quote.ticker || marketSymbol,
           name: quote.name,
-          exchange: exchangeFromSymbol(marketSymbol),
+          exchange: exchangeFromSymbol(quote.ticker || marketSymbol),
           currency: quote.currency,
           currentPrice: quote.price,
           previousClose: quote.previousClose,
@@ -122,9 +116,8 @@ export async function fetchQuotes(marketSymbols: string[]): Promise<Map<string, 
         setCache(cacheKey, mapped);
         quotes.set(marketSymbol, mapped);
       } catch (error) {
-        // A bad or unsupported symbol must not prevent the rest of the portfolio from rendering.
         if (!(error instanceof TwelveDataConfigurationError)) {
-          console.warn(`Twelve Data quote failed for ${marketSymbol}:`, error);
+          console.warn(`Yahoo Finance quote failed for ${marketSymbol}:`, error);
         }
       }
     })

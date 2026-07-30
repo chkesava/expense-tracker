@@ -210,7 +210,7 @@ function AppRoutes() {
                 <Route path="/ledger" element={<LedgerHub />} />
                 <Route
                   path="/investments"
-                  element={settings.enableInvestments ? <InvestmentsHubPage /> : <Navigate to="/dashboard" replace />}
+                  element={<Navigate to="/ledger?tab=investments" replace />}
                 />
                 <Route path="/accounts/:accountId" element={<AccountDetailPage />} />
                 <Route

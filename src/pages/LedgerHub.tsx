@@ -1,13 +1,15 @@
-import { Suspense, useCallback, useMemo } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wallet, Users, RefreshCw, Plane, CreditCard, Landmark, QrCode, PiggyBank } from "lucide-react";
+import { Wallet, Users, RefreshCw, Plane, CreditCard, Landmark, QrCode, TrendingUp, PiggyBank, LineChart } from "lucide-react";
 import PageHeader from "../components/layout/PageHeader";
 import PageShell from "../components/layout/PageShell";
 import { lazyWithRetry } from "../utils/lazyWithRetry";
 import useSettings from "../hooks/useSettings";
+import { cn } from "../lib/utils";
 
 type LedgerTab = "expenses" | "splits" | "subscriptions" | "travel" | "cards" | "accounts" | "investments" | "collect";
+type InvestmentSubTab = "stocks" | "fixed";
 
 const ExpenseListPage = lazyWithRetry(() => import("./ExpenseListPage"));
 const SplitPage = lazyWithRetry(() => import("./SplitPage"));
@@ -16,6 +18,7 @@ const TripsPage = lazyWithRetry(() => import("./TripsPage"));
 const CardsPage = lazyWithRetry(() => import("./CardsPage"));
 const AccountsPage = lazyWithRetry(() => import("./AccountsPage"));
 const InvestmentsPage = lazyWithRetry(() => import("./InvestmentsPage"));
+const InvestmentsHubPage = lazyWithRetry(() => import("../features/portfolio/pages/InvestmentsHubPage"));
 const PaymentRequestsPage = lazyWithRetry(() => import("./PaymentRequestsPage"));
 
 function TabFallback() {
@@ -33,12 +36,16 @@ export default function LedgerHub() {
   
   const searchParams = new URLSearchParams(location.search);
   const tabFromUrl = searchParams.get("tab");
+  const subFromUrl = (searchParams.get("sub") as InvestmentSubTab) || "stocks";
+
   const allowedTabs = settings.enableInvestments
     ? ["expenses", "splits", "subscriptions", "travel", "cards", "accounts", "investments", "collect"]
     : ["expenses", "splits", "subscriptions", "travel", "cards", "accounts", "collect"];
   const activeTab = (tabFromUrl && allowedTabs.includes(tabFromUrl))
     ? (tabFromUrl as LedgerTab)
     : "expenses";
+
+  const [invSubTab, setInvSubTab] = useState<InvestmentSubTab>(subFromUrl);
 
   const handleTabChange = useCallback((tabId: string) => {
     if (tabId === activeTab) return;
@@ -48,6 +55,14 @@ export default function LedgerHub() {
     navigate({ search: params.toString() }, { replace: true });
   }, [activeTab, location.search, navigate]);
 
+  const handleInvSubTabChange = (sub: InvestmentSubTab) => {
+    setInvSubTab(sub);
+    const params = new URLSearchParams(location.search);
+    params.set("tab", "investments");
+    params.set("sub", sub);
+    navigate({ search: params.toString() }, { replace: true });
+  };
+
   const tabs = useMemo(() => [
     { id: "expenses", label: "Journal", icon: <Wallet size={16} /> },
     { id: "splits", label: "Splits", icon: <Users size={16} /> },
@@ -55,7 +70,7 @@ export default function LedgerHub() {
     { id: "travel", label: "Travel", icon: <Plane size={16} /> },
     { id: "cards", label: "Cards", icon: <CreditCard size={16} /> },
     { id: "accounts", label: "Accounts", icon: <Landmark size={16} /> },
-    ...(settings.enableInvestments ? [{ id: "investments", label: "Fixed & MF", icon: <PiggyBank size={16} /> }] : []),
+    ...(settings.enableInvestments ? [{ id: "investments", label: "Investments", icon: <TrendingUp size={16} /> }] : []),
     { id: "collect", label: "Collect", icon: <QrCode size={16} /> },
   ], [settings.enableInvestments]);
 
@@ -91,7 +106,45 @@ export default function LedgerHub() {
               {activeTab === "travel" && <TripsPage hideHeader />}
               {activeTab === "cards" && <CardsPage hideHeader />}
               {activeTab === "accounts" && <AccountsPage hideHeader />}
-              {settings.enableInvestments && activeTab === "investments" && <InvestmentsPage hideHeader />}
+              {settings.enableInvestments && activeTab === "investments" && (
+                <div className="space-y-6">
+                  {/* Sub-tab navigation for Stocks/Portfolio vs Fixed Deposits */}
+                  <div className="flex items-center gap-2 rounded-2xl border border-border/80 bg-muted/40 p-1.5 backdrop-blur-xl">
+                    <button
+                      type="button"
+                      onClick={() => handleInvSubTabChange("stocks")}
+                      className={cn(
+                        "flex flex-1 items-center justify-center gap-2 rounded-xl py-2 text-xs font-black transition-all",
+                        invSubTab === "stocks"
+                          ? "bg-card text-foreground shadow-sm border border-border"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <LineChart size={14} className="text-primary" />
+                      Stocks & Portfolio
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleInvSubTabChange("fixed")}
+                      className={cn(
+                        "flex flex-1 items-center justify-center gap-2 rounded-xl py-2 text-xs font-black transition-all",
+                        invSubTab === "fixed"
+                          ? "bg-card text-foreground shadow-sm border border-border"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <PiggyBank size={14} className="text-primary" />
+                      Fixed Deposits & Savings
+                    </button>
+                  </div>
+
+                  {invSubTab === "stocks" ? (
+                    <InvestmentsHubPage hideHeader />
+                  ) : (
+                    <InvestmentsPage hideHeader />
+                  )}
+                </div>
+              )}
               {activeTab === "collect" && <PaymentRequestsPage hideHeader />}
             </Suspense>
           </motion.div>

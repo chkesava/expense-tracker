@@ -1,16 +1,16 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronRight, Plus, TrendingUp, PiggyBank, LineChart } from "lucide-react";
+import { ChevronRight, Plus, TrendingUp, PiggyBank, LineChart, Edit3 } from "lucide-react";
 import { useInvestments } from "../hooks/useInvestments";
 import Amount from "../components/common/Amount";
 import CreateInvestmentModal from "../components/CreateInvestmentModal";
+import EditInvestmentModal from "../components/EditInvestmentModal";
 import { getInvestmentValuation, totalPortfolioValue } from "../utils/investmentInterest";
 import type { Investment, InvestmentKind } from "../types/investment";
 import { todayDateKey } from "../utils/dates";
 import { cn } from "../lib/utils";
 import EmptyState from "../components/common/EmptyState";
-import Button from "../components/ui/Button";
 
 const KIND_LABELS: Record<InvestmentKind, string> = {
   fixed_deposit: "Fixed deposit",
@@ -35,6 +35,7 @@ export default function InvestmentsPage({ hideHeader }: { hideHeader?: boolean }
   const navigate = useNavigate();
   const { investments, loading } = useInvestments();
   const [showCreate, setShowCreate] = useState(false);
+  const [editingInvestment, setEditingInvestment] = useState<Investment | null>(null);
   const asOf = todayDateKey();
 
   const active = useMemo(
@@ -62,51 +63,51 @@ export default function InvestmentsPage({ hideHeader }: { hideHeader?: boolean }
       inv.maturityDate && inv.status === "active" && daysUntil(inv.maturityDate) <= 30;
 
     return (
-      <motion.button
+      <div
         key={inv.id}
-        type="button"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        onClick={() => navigate(`/investments/${inv.id}`)}
         className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-card/80 p-4 text-left backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:shadow-lg"
       >
-        <div className="min-w-0">
-          <div className="truncate text-sm font-black text-foreground">{inv.name}</div>
-          <div className="mt-0.5 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground">
-              {KIND_LABELS[inv.kind]}
-            </span>
-            {inv.status !== "active" && (
-              <span
-                className={cn(
-                  "rounded-full px-2 py-0.5 text-[9px] font-black uppercase",
-                  inv.status === "matured"
-                    ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
-                    : "bg-muted text-muted-foreground"
-                )}
-              >
-                {inv.status}
+        <button
+          type="button"
+          onClick={() => navigate(`/investments/${inv.id}`)}
+          className="flex flex-1 items-center justify-between gap-3 min-w-0 text-left"
+        >
+          <div className="min-w-0">
+            <div className="truncate text-sm font-black text-foreground">{inv.name}</div>
+            <div className="mt-0.5 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">
+                {KIND_LABELS[inv.kind]}
               </span>
+              {inv.status !== "active" && (
+                <span
+                  className={cn(
+                    "rounded-full px-2 py-0.5 text-[9px] font-black uppercase",
+                    inv.status === "matured"
+                      ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                      : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  {inv.status}
+                </span>
+              )}
+            </div>
+            {inv.kind !== "mutual_fund" && inv.annualInterestRate != null && (
+              <p className="mt-1 text-[10px] font-bold text-muted-foreground">
+                {inv.annualInterestRate}% · {inv.interestMethod} · {inv.creditFrequency}
+              </p>
+            )}
+            {inv.kind === "mutual_fund" && inv.units != null && (
+              <p className="mt-1 text-[10px] font-bold text-muted-foreground">
+                {inv.units} units · NAV {(inv.currentNav ?? inv.purchaseNav)?.toFixed(2)}
+              </p>
+            )}
+            {maturitySoon && (
+              <p className="mt-1 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                Matures in {daysUntil(inv.maturityDate!)} days
+              </p>
             )}
           </div>
-          {inv.kind !== "mutual_fund" && inv.annualInterestRate != null && (
-            <p className="mt-1 text-[10px] font-bold text-muted-foreground">
-              {inv.annualInterestRate}% · {inv.interestMethod} · {inv.creditFrequency}
-            </p>
-          )}
-          {inv.kind === "mutual_fund" && inv.units != null && (
-            <p className="mt-1 text-[10px] font-bold text-muted-foreground">
-              {inv.units} units · NAV {(inv.currentNav ?? inv.purchaseNav)?.toFixed(2)}
-            </p>
-          )}
-          {maturitySoon && (
-            <p className="mt-1 text-[10px] font-bold text-amber-600 dark:text-amber-400">
-              Matures in {daysUntil(inv.maturityDate!)} days
-            </p>
-          )}
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <div className="text-right">
+          <div className="text-right shrink-0">
             <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
               Value
             </p>
@@ -117,9 +118,29 @@ export default function InvestmentsPage({ hideHeader }: { hideHeader?: boolean }
               </p>
             )}
           </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </button>
+
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            title="Edit investment"
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditingInvestment(inv);
+            }}
+            className="rounded-xl border border-border p-2 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+          >
+            <Edit3 className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(`/investments/${inv.id}`)}
+            className="p-1 text-muted-foreground hover:text-foreground"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
         </div>
-      </motion.button>
+      </div>
     );
   };
 
@@ -191,6 +212,14 @@ export default function InvestmentsPage({ hideHeader }: { hideHeader?: boolean }
       )}
 
       <CreateInvestmentModal isOpen={showCreate} onClose={() => setShowCreate(false)} />
+
+      {editingInvestment && (
+        <EditInvestmentModal
+          isOpen={!!editingInvestment}
+          onClose={() => setEditingInvestment(null)}
+          investment={editingInvestment}
+        />
+      )}
     </div>
   );
 }

@@ -119,12 +119,25 @@ export function usePortfolioSettings() {
     }
   };
 
+  const resetOnboarding = async () => {
+    if (!user) return;
+    try {
+      const { deleteDoc } = await import("firebase/firestore");
+      await deleteDoc(doc(db, "users", user.uid, "portfolioSettings", SETTINGS_DOC_ID));
+      toast.success("Portfolio settings reset");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to reset portfolio settings");
+    }
+  };
+
   return {
     settings,
     loading,
     saveOnboarding,
     completeOnboarding,
     updateCashBalance,
+    resetOnboarding,
     needsOnboarding: !loading && !settings,
     needsImport: !loading && !!settings && !settings.onboardingComplete,
   };

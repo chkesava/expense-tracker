@@ -1,13 +1,85 @@
 /// <reference types="vitest/config" />
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 import { VitePWA } from 'vite-plugin-pwa';
 
-// https://vite.dev/config/
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
+function yahooStockPlugin() {
+  return {
+    name: 'yahoo-stock-plugin',
+    configureServer(server: any) {
+      server.middlewares.use(async (req: any, res: any, next: any) => {
+        if (req.url && (req.url.startsWith('/.netlify/functions/stock') || req.url.startsWith('/api/stock'))) {
+          const url = new URL(req.url, 'http://localhost');
+          const rawSymbol = url.searchParams.get('symbol');
+          if (!rawSymbol) {
+            res.statusCode = 400;
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(JSON.stringify({ success: false, message: "Query parameter 'symbol' is required" }));
+          }
 
+          let symbol = rawSymbol.trim().toUpperCase();
+          if (!symbol.includes('.') && !['AAPL', 'TSLA', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'QQQ', 'SPY'].includes(symbol)) {
+            symbol = `${symbol}.NS`;
+          }
+
+          try {
+            const m: any = await import('yahoo-finance2');
+            const TargetClass = m?.YahooFinance || m?.default?.YahooFinance || m?.default || m;
+            let yahooFinance: any;
+            if (typeof TargetClass === 'function') {
+              try {
+                yahooFinance = new TargetClass({ suppressNotices: ['yahooSurvey'] });
+              } catch {
+                yahooFinance = new TargetClass();
+              }
+            } else {
+              yahooFinance = TargetClass;
+            }
+
+            const quote: any = await yahooFinance.quote(symbol);
+            if (!quote || typeof quote.regularMarketPrice !== 'number') {
+              res.statusCode = 404;
+              res.setHeader('Content-Type', 'application/json');
+              return res.end(JSON.stringify({ success: false, message: `No quote found for ${symbol}` }));
+            }
+
+            const price = quote.regularMarketPrice ?? quote.postMarketPrice ?? quote.preMarketPrice ?? 0;
+            const previousClose = quote.regularMarketPreviousClose ?? price;
+            const change = quote.regularMarketChange ?? (price - previousClose);
+            const changePercent = quote.regularMarketChangePercent ?? (previousClose > 0 ? (change / previousClose) * 100 : 0);
+
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(JSON.stringify({
+              symbol: quote.symbol || symbol,
+              name: quote.longName || quote.shortName || symbol,
+              price,
+              currency: quote.currency || 'INR',
+              change,
+              changePercent,
+              previousClose,
+              dayHigh: quote.regularMarketDayHigh ?? price,
+              dayLow: quote.regularMarketDayLow ?? price,
+              marketTime: quote.regularMarketTime ? new Date(quote.regularMarketTime).toISOString() : new Date().toISOString(),
+              exchange: quote.exchange || 'NSE',
+              success: true,
+            }));
+          } catch (err: any) {
+            console.error(`Vite Yahoo Finance plugin error for ${symbol}:`, err?.message || err);
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(JSON.stringify({ success: false, message: err?.message || 'Error fetching stock data' }));
+          }
+        }
+        next();
+      });
+    },
+  };
+}
+
+// https://vite.dev/config/
+export default defineConfig(() => {
   return {
   plugins: [
     react({
@@ -15,6 +87,7 @@ export default defineConfig(({ mode }) => {
         plugins: [['babel-plugin-react-compiler']],
       },
     }),
+    yahooStockPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['logo.svg', 'vite.svg'],
@@ -87,18 +160,6 @@ export default defineConfig(({ mode }) => {
         }
       }
     }
-  },
-  server: {
-    proxy: {
-      '/api/twelve-data': {
-        target: 'https://api.twelvedata.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/twelve-data/, ''),
-        headers: env.TWELVE_DATA_API_KEY
-          ? { Authorization: `apikey ${env.TWELVE_DATA_API_KEY}` }
-          : undefined,
-      },
-    },
   },
   }
 })

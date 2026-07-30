@@ -67,7 +67,7 @@ export default function PortfolioCharts({
             Historical data builds daily. Check back tomorrow.
           </p>
         ) : (
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={220} minWidth={0} minHeight={0}>
             <AreaChart data={growthData}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
               <XAxis dataKey="date" tick={{ fontSize: 11 }} />
@@ -101,7 +101,7 @@ export default function PortfolioCharts({
         {growthData.length < 1 ? (
           <p className="text-sm text-muted-foreground text-center py-8">No data yet</p>
         ) : (
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={220} minWidth={0} minHeight={0}>
             <BarChart data={growthData.slice(-6)}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
               <XAxis dataKey="date" tick={{ fontSize: 11 }} />

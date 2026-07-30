@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Landmark, CreditCard, Wallet, ChevronRight } from "lucide-react";
+import { Landmark, CreditCard, Wallet, ChevronRight, Edit3 } from "lucide-react";
 import { useAccounts } from "../hooks/useAccounts";
 import { useAccountTypes } from "../hooks/useAccountTypes";
 import { useExpenses } from "../hooks/useExpenses";
@@ -16,6 +16,8 @@ import { Skeleton } from "../components/common/Skeleton";
 import { getAccountKind } from "../utils/accountKind";
 import { computeBankBalance, computeCreditUsage } from "../utils/accountBalance";
 import NetWorthCard from "../components/NetWorthCard";
+import EditAccountModal from "../components/EditAccountModal";
+import type { Account } from "../types/expense";
 
 export default function AccountsPage({ hideHeader }: { hideHeader?: boolean }) {
   const navigate = useNavigate();
@@ -28,6 +30,8 @@ export default function AccountsPage({ hideHeader }: { hideHeader?: boolean }) {
   const { transfers } = useAccountTransfers();
   const { investments, loading: investmentsLoading } = useInvestments();
   const { portfolioValue, loading: portfolioLoading } = usePortfolioNetWorth();
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+
   const accountTypeNameById = useMemo(
     () => new Map(accountTypes.map((type) => [type.id, type.name])),
     [accountTypes]
@@ -69,31 +73,55 @@ export default function AccountsPage({ hideHeader }: { hideHeader?: boolean }) {
     }
 
     return (
-      <button
+      <div
         key={acc.id}
-        type="button"
-        onClick={() => navigate(`/accounts/${acc.id}`)}
         className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/30 hover:bg-muted/30"
       >
-        <div className="min-w-0">
-          <div className="truncate text-sm font-black text-foreground">{acc.name}</div>
-          <div className="mt-0.5 text-xs font-medium text-muted-foreground">{typeName}</div>
-          {secondaryLabel && (
-            <div className="mt-1 text-[10px] font-bold text-muted-foreground">{secondaryLabel}</div>
-          )}
+        <button
+          type="button"
+          onClick={() => navigate(`/accounts/${acc.id}`)}
+          className="flex flex-1 items-center justify-between gap-3 min-w-0 text-left"
+        >
+          <div className="min-w-0">
+            <div className="truncate text-sm font-black text-foreground">{acc.name}</div>
+            <div className="mt-0.5 text-xs font-medium text-muted-foreground">{typeName}</div>
+            {secondaryLabel && (
+              <div className="mt-1 text-[10px] font-bold text-muted-foreground">{secondaryLabel}</div>
+            )}
+          </div>
+          <div className="text-right shrink-0">
+            {primaryValue != null ? (
+              <>
+                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">{primaryLabel}</p>
+                <Amount value={primaryValue} className="text-lg font-black" />
+              </>
+            ) : (
+              <span className="text-xs font-bold text-amber-600 dark:text-amber-400">{primaryLabel}</span>
+            )}
+          </div>
+        </button>
+
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            title="Edit cash balance / account"
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditingAccount(acc);
+            }}
+            className="rounded-xl border border-border p-2 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+          >
+            <Edit3 className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(`/accounts/${acc.id}`)}
+            className="p-1 text-muted-foreground hover:text-foreground"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {primaryValue != null ? (
-            <div className="text-right">
-              <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">{primaryLabel}</p>
-              <Amount value={primaryValue} className="text-lg font-black" />
-            </div>
-          ) : (
-            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">{primaryLabel}</span>
-          )}
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </div>
-      </button>
+      </div>
     );
   };
 
@@ -158,6 +186,13 @@ export default function AccountsPage({ hideHeader }: { hideHeader?: boolean }) {
         </section>
       )}
 
+      {editingAccount && (
+        <EditAccountModal
+          isOpen={!!editingAccount}
+          onClose={() => setEditingAccount(null)}
+          account={editingAccount}
+        />
+      )}
     </div>
   );
 }
