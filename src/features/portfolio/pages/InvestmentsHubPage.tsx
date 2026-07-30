@@ -16,6 +16,7 @@ import MockSellModal from "../components/MockSellModal";
 import TransactionHistoryModal from "../components/TransactionHistoryModal";
 import WatchlistPanel from "../components/WatchlistPanel";
 import AlertsPanel from "../components/AlertsPanel";
+import OrdersPanel from "../components/OrdersPanel";
 import PortfolioCharts from "../components/PortfolioCharts";
 import SymbolSearchInput from "../components/SymbolSearchInput";
 import { usePortfolioSettings } from "../hooks/usePortfolioSettings";
@@ -23,10 +24,11 @@ import { usePortfolioMetrics } from "../hooks/usePortfolioMetrics";
 import { useHoldings } from "../hooks/useHoldings";
 import { usePortfolioTransactions } from "../hooks/usePortfolioTransactions";
 import { useWatchlist } from "../hooks/useWatchlist";
+import { useProcessLimitOrders } from "../hooks/useProcessLimitOrders";
 import { cn } from "../../../lib/utils";
 import type { HoldingWithMetrics, InstrumentType, SearchResult } from "../types";
 
-type TabId = "all" | "stocks" | "etfs" | "mutual_funds" | "gold" | "crypto" | "watchlist" | "alerts" | "analytics";
+type TabId = "all" | "stocks" | "etfs" | "mutual_funds" | "gold" | "crypto" | "watchlist" | "alerts" | "orders" | "analytics";
 
 const TABS: { id: TabId; label: string; instrument?: InstrumentType }[] = [
   { id: "all", label: "All Assets" },
@@ -37,6 +39,7 @@ const TABS: { id: TabId; label: string; instrument?: InstrumentType }[] = [
   { id: "crypto", label: "Crypto", instrument: "crypto" },
   { id: "watchlist", label: "Watchlist" },
   { id: "alerts", label: "Alerts" },
+  { id: "orders", label: "Orders" },
   { id: "analytics", label: "Analytics" },
 ];
 
@@ -72,6 +75,8 @@ export default function InvestmentsHubPage({ hideHeader }: { hideHeader?: boolea
     isRefreshing,
     lastUpdated,
   } = usePortfolioMetrics(instrumentFilter);
+
+  useProcessLimitOrders(holdings);
 
   const [showAddHolding, setShowAddHolding] = useState(false);
   const [buyHolding, setBuyHolding] = useState<HoldingWithMetrics | null>(null);
@@ -246,6 +251,12 @@ export default function InvestmentsHubPage({ hideHeader }: { hideHeader?: boolea
       )}
 
       {activeTab === "crypto" && <ComingSoon title="Crypto" />}
+
+      {activeTab === "orders" && (
+        <div className="mt-6">
+          <OrdersPanel />
+        </div>
+      )}
 
       {activeTab === "watchlist" && (
         <div className="space-y-6 mt-6">

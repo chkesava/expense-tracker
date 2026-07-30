@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   TrendingUp,
@@ -7,11 +7,13 @@ import {
   PieChart,
   BarChart3,
   RefreshCw,
+  Edit3,
 } from "lucide-react";
 import Amount from "../../../components/common/Amount";
 import type { PortfolioSummary } from "../types";
 import { cn } from "../../../lib/utils";
 import { formatPercent, gainClass, lossClass } from "../utils/styles";
+import EditCashBalanceModal from "./EditCashBalanceModal";
 
 interface PortfolioDashboardProps {
   summary: PortfolioSummary;
@@ -72,6 +74,7 @@ function PortfolioDashboard({
   liveQuoteCount = 0,
   totalHoldings = 0,
 }: PortfolioDashboardProps) {
+  const [showEditCash, setShowEditCash] = useState(false);
   const todayPositive = summary.todayGainLoss >= 0;
   const overallPositive = summary.overallGainLoss >= 0;
 
@@ -135,10 +138,19 @@ function PortfolioDashboard({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bento-card p-5">
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            Cash Balance
-          </span>
+        <div className="bento-card p-5 group relative">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Cash Balance
+            </span>
+            <button
+              onClick={() => setShowEditCash(true)}
+              className="p-1 rounded hover:bg-muted text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+              aria-label="Edit Cash Balance"
+            >
+              <Edit3 size={14} />
+            </button>
+          </div>
           <div className="text-xl font-black mt-2">
             <Amount value={summary.cashBalance} />
           </div>
@@ -180,6 +192,8 @@ function PortfolioDashboard({
           Profit % = (Current Value − Invested) / Invested × 100 · Prices refresh every 15 min
         </span>
       </div>
+
+      <EditCashBalanceModal isOpen={showEditCash} onClose={() => setShowEditCash(false)} />
     </div>
   );
 }

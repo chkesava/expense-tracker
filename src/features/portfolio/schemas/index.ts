@@ -26,8 +26,10 @@ export const addHoldingSchema = z.object({
 });
 
 export const mockBuySchema = z.object({
+  orderType: z.enum(["MARKET", "LIMIT"]),
   quantity: z.number().positive("Quantity must be greater than 0"),
   price: z.number().positive("Price must be greater than 0"),
+  targetPrice: z.number().positive("Target price must be greater than 0").optional(),
   broker: brokerSchema.optional(),
   date: z.string().regex(dateKeyRegex, "Invalid date"),
   fees: z.number().min(0, "Fees cannot be negative"),

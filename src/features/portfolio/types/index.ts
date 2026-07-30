@@ -119,6 +119,25 @@ export interface PortfolioSnapshot {
   createdAt?: unknown;
 }
 
+export interface PortfolioOrder {
+  id: string;
+  holdingId?: string;
+  symbol: string;
+  yahooSymbol: string;
+  name: string;
+  exchange: Exchange;
+  instrumentType: InstrumentType;
+  type: TransactionType;
+  orderType: "MARKET" | "LIMIT";
+  quantity: number;
+  targetPrice: number;
+  status: OrderStatus;
+  broker?: Broker;
+  notes?: string;
+  createdAt?: unknown;
+  executedAt?: string;
+}
+
 export interface HoldingWithMetrics extends Holding {
   currentPrice: number;
   investedValue: number;
