@@ -555,12 +555,12 @@ export default function Dashboard() {
 
   const currentOrder = useMemo(() => {
     const savedOrder = settings.dashboardOrder || [];
+    // DEFAULTS.dashboardOrder already includes "investments" — do not append it again
     const knownIds = [
       ...DEFAULTS.dashboardOrder,
       "magicChat",
       "audit",
-      ...(settings.enableInvestments ? ["investments"] : []),
-    ];
+    ].filter((id) => id !== "investments" || settings.enableInvestments);
 
     const sortedKnown = [
       ...savedOrder.filter((id) => knownIds.includes(id)),
@@ -568,7 +568,7 @@ export default function Dashboard() {
     ];
 
     return sortedKnown;
-  }, [settings.dashboardOrder]);
+  }, [settings.dashboardOrder, settings.enableInvestments]);
 
   return (
     <>

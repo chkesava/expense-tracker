@@ -252,6 +252,65 @@ service cloud.firestore {
       && (!('onboardingComplete' in d) || d.onboardingComplete is bool);
   }
 
+  function isValidSipAssetType(t) {
+    return t == 'stock' || t == 'etf' || t == 'mutual_fund' || t == 'crypto';
+  }
+
+  function isValidSipPlanData() {
+    let d = request.resource.data;
+    return isValidSipAssetType(d.assetType)
+      && isNonEmptyString(d.symbol)
+      && isNonEmptyString(d.quoteKey)
+      && isNonEmptyString(d.assetName)
+      && d.investmentAmount is number && d.investmentAmount > 0
+      && isNonEmptyString(d.currency)
+      && (d.frequency == 'daily' || d.frequency == 'weekly' || d.frequency == 'monthly' || d.frequency == 'quarterly' || d.frequency == 'yearly')
+      && d.executionDay is number && d.executionDay >= 0 && d.executionDay <= 31
+      && isValidDateKey(d.startDate)
+      && (!('endDate' in d) || d.endDate == null || d.endDate == '' || isValidDateKey(d.endDate))
+      && (d.status == 'active' || d.status == 'paused' || d.status == 'completed' || d.status == 'cancelled')
+      && isValidDateKey(d.nextExecutionDate)
+      && d.skipNextExecution is bool
+      && d.totalInvested is number && d.totalInvested >= 0
+      && d.totalUnits is number && d.totalUnits >= 0
+      && d.executionCount is number && d.executionCount >= 0;
+  }
+
+  function isValidSipTransactionData() {
+    let d = request.resource.data;
+    return isNonEmptyString(d.sipId)
+      && isValidDateKey(d.date)
+      && isValidSipAssetType(d.assetType)
+      && isNonEmptyString(d.symbol)
+      && isNonEmptyString(d.quoteKey)
+      && d.marketPrice is number && d.marketPrice >= 0
+      && d.investmentAmount is number && d.investmentAmount >= 0
+      && d.unitsPurchased is number && d.unitsPurchased >= 0
+      && d.totalUnitsAfterPurchase is number && d.totalUnitsAfterPurchase >= 0
+      && d.averageBuyPriceAfter is number && d.averageBuyPriceAfter >= 0
+      && (d.status == 'executed' || d.status == 'skipped' || d.status == 'failed');
+  }
+
+  function isValidVirtualPositionData() {
+    let d = request.resource.data;
+    return isValidSipAssetType(d.assetType)
+      && isNonEmptyString(d.symbol)
+      && isNonEmptyString(d.quoteKey)
+      && isNonEmptyString(d.assetName)
+      && d.totalUnits is number && d.totalUnits >= 0
+      && d.averageBuyPrice is number && d.averageBuyPrice >= 0
+      && d.totalInvested is number && d.totalInvested >= 0
+      && d.sipIds is list;
+  }
+
+  function isValidNotificationData() {
+    let d = request.resource.data;
+    return isNonEmptyString(d.type)
+      && isNonEmptyString(d.title)
+      && isNonEmptyString(d.body)
+      && d.read is bool;
+  }
+
   match /users/{userId} {
     allow read: if request.auth != null;
     allow create: if isOwner(userId) && (!('role' in request.resource.data) || request.resource.data.role == "USER");
@@ -325,6 +384,26 @@ service cloud.firestore {
       allow create, update: if canAccessUser(userId) && isValidPortfolioSettingsData();
     }
 
+    match /sipPlans/{sipId} {
+      allow read, delete: if canAccessUser(userId);
+      allow create, update: if canAccessUser(userId) && isValidSipPlanData();
+    }
+
+    match /sipTransactions/{txId} {
+      allow read, delete: if canAccessUser(userId);
+      allow create, update: if canAccessUser(userId) && isValidSipTransactionData();
+    }
+
+    match /virtualPortfolio/{posId} {
+      allow read, delete: if canAccessUser(userId);
+      allow create, update: if canAccessUser(userId) && isValidVirtualPositionData();
+    }
+
+    match /notifications/{notificationId} {
+      allow read, delete: if canAccessUser(userId);
+      allow create, update: if canAccessUser(userId) && isValidNotificationData();
+    }
+
     match /daily_logs/{date} {
       allow read, write: if canAccessUser(userId);
       
@@ -339,7 +418,7 @@ service cloud.firestore {
 
     match /{collection}/{docId} {
       allow read, write: if canAccessUser(userId)
-        && !(collection in ['expenses', 'incomes', 'accounts', 'accountEntries', 'accountPayments', 'accountTransfers', 'investments', 'holdings', 'portfolioTransactions', 'watchlist', 'alerts', 'portfolioSnapshots', 'portfolioSettings', 'daily_logs']);
+        && !(collection in ['expenses', 'incomes', 'accounts', 'accountEntries', 'accountPayments', 'accountTransfers', 'investments', 'holdings', 'portfolioTransactions', 'watchlist', 'alerts', 'portfolioSnapshots', 'portfolioSettings', 'daily_logs', 'sipPlans', 'sipTransactions', 'virtualPortfolio', 'notifications']);
     }
   }
 

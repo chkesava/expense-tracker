@@ -1,10 +1,11 @@
 import { TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
 import Amount from "./common/Amount";
-import type { YahooStockResponse } from "../services/stockService";
+import type { StockQuoteDTO } from "../services/stockService";
+import { computePositionMetrics } from "../types/market";
 import { cn } from "../lib/utils";
 
 interface StockCardProps {
-  data: YahooStockResponse | null;
+  data: StockQuoteDTO | null;
   loading?: boolean;
   error?: string | null;
   onRefresh?: () => void;
@@ -53,16 +54,11 @@ export default function StockCard({
   const isPositive = data.change >= 0;
   const hasPosition = units != null && averageBuyPrice != null && units > 0;
   const currencySymbol = data.currency === "USD" ? "$" : "₹";
-
-  const currentValue = hasPosition ? units * data.price : 0;
-  const investedValue = hasPosition ? units * averageBuyPrice : 0;
-  const profitLoss = hasPosition ? currentValue - investedValue : 0;
-  const profitLossPercent = hasPosition && investedValue > 0 ? (profitLoss / investedValue) * 100 : 0;
-  const isPosProfit = profitLoss >= 0;
+  const metrics = hasPosition ? computePositionMetrics(data.price, units, averageBuyPrice) : null;
+  const isPosProfit = (metrics?.profitLoss ?? 0) >= 0;
 
   return (
     <div className="bento-card p-5 space-y-4">
-      {/* Top Header */}
       <div className="flex items-start justify-between">
         <div>
           <h4 className="font-bold text-base text-foreground leading-snug">{data.name}</h4>
@@ -82,9 +78,9 @@ export default function StockCard({
         )}
       </div>
 
-      {/* Main Price & Day Change */}
       <div className="flex items-baseline justify-between pt-1">
         <div>
+          <div className="text-[10px] font-bold uppercase text-muted-foreground">Current Price</div>
           <div className="text-2xl font-black tracking-tight text-foreground">
             <Amount value={data.price} prefix={currencySymbol} />
           </div>
@@ -105,17 +101,26 @@ export default function StockCard({
         </div>
       </div>
 
-      {/* Portfolio Position Metrics (if units/avgBuyPrice supplied) */}
-      {hasPosition && (
-        <div className="rounded-xl bg-muted/40 border border-border/50 p-3 grid grid-cols-2 gap-2 text-xs">
+      {metrics && (
+        <div className="rounded-xl bg-muted/40 border border-border/50 p-3 grid grid-cols-2 gap-3 text-xs">
           <div>
-            <span className="text-[10px] font-bold uppercase text-muted-foreground">Invested ({units} qty)</span>
+            <span className="text-[10px] font-bold uppercase text-muted-foreground">Quantity</span>
+            <div className="font-bold text-foreground">{units}</div>
+          </div>
+          <div className="text-right">
+            <span className="text-[10px] font-bold uppercase text-muted-foreground">Invested</span>
             <div className="font-bold text-foreground">
-              <Amount value={investedValue} prefix={currencySymbol} />
+              <Amount value={metrics.investedValue} prefix={currencySymbol} />
+            </div>
+          </div>
+          <div>
+            <span className="text-[10px] font-bold uppercase text-muted-foreground">Current Value</span>
+            <div className="font-bold text-foreground">
+              <Amount value={metrics.currentValue} prefix={currencySymbol} />
             </div>
           </div>
           <div className="text-right">
-            <span className="text-[10px] font-bold uppercase text-muted-foreground">P&L</span>
+            <span className="text-[10px] font-bold uppercase text-muted-foreground">P&L / Return</span>
             <div
               className={cn(
                 "font-bold",
@@ -123,14 +128,13 @@ export default function StockCard({
               )}
             >
               {isPosProfit ? "+" : ""}
-              <Amount value={profitLoss} prefix={currencySymbol} /> ({isPosProfit ? "+" : ""}
-              {profitLossPercent.toFixed(2)}%)
+              <Amount value={metrics.profitLoss} prefix={currencySymbol} /> ({isPosProfit ? "+" : ""}
+              {metrics.returnPercent.toFixed(2)}%)
             </div>
           </div>
         </div>
       )}
 
-      {/* High / Low / Previous Close */}
       <div className="grid grid-cols-3 gap-2 border-t border-border/50 pt-3 text-[11px]">
         <div>
           <span className="text-muted-foreground font-medium block">Prev Close</span>
@@ -152,7 +156,6 @@ export default function StockCard({
         </div>
       </div>
 
-      {/* Footer Timestamp */}
       <div className="text-[10px] text-muted-foreground text-right pt-1 border-t border-border/30">
         Updated: {new Date(data.marketTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
       </div>

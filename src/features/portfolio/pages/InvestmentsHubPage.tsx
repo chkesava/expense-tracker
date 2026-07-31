@@ -9,10 +9,12 @@ import PortfolioSkeleton from "../components/PortfolioSkeleton";
 import OnboardingWizard from "../components/OnboardingWizard";
 import PortfolioDashboard from "../components/PortfolioDashboard";
 import HoldingsTable from "../components/HoldingsTable";
+import HoldingCardsGrid from "../components/HoldingCardsGrid";
 import AllocationPieChart from "../components/AllocationPieChart";
 import AddHoldingModal from "../components/AddHoldingModal";
 import CsvImportModal from "../components/CsvImportModal";
 import MockBuyModal from "../components/MockBuyModal";
+import HistoricalPerformanceChart from "../components/HistoricalPerformanceChart";
 import MockSellModal from "../components/MockSellModal";
 import TransactionHistoryModal from "../components/TransactionHistoryModal";
 import WatchlistPanel from "../components/WatchlistPanel";
@@ -26,10 +28,13 @@ import { useHoldings } from "../hooks/useHoldings";
 import { usePortfolioTransactions } from "../hooks/usePortfolioTransactions";
 import { useWatchlist } from "../hooks/useWatchlist";
 import { useProcessLimitOrders } from "../hooks/useProcessLimitOrders";
+import { useHistoricalBackfill } from "../hooks/useHistoricalBackfill";
 import { cn } from "../../../lib/utils";
 import type { HoldingWithMetrics, InstrumentType, SearchResult } from "../types";
+import { SipDashboard, SipDetailPanel } from "../../sip";
 
-type TabId = "all" | "stocks" | "etfs" | "mutual_funds" | "gold" | "crypto" | "watchlist" | "alerts" | "orders" | "analytics";
+type TabId = "all" | "stocks" | "etfs" | "mutual_funds" | "gold" | "crypto" | "sip" | "watchlist" | "alerts" | "orders" | "analytics";
+type AddableInstrument = "stock" | "etf" | "mutual_fund" | "crypto";
 
 const TABS: { id: TabId; label: string; instrument?: InstrumentType }[] = [
   { id: "all", label: "All Assets" },
@@ -38,6 +43,7 @@ const TABS: { id: TabId; label: string; instrument?: InstrumentType }[] = [
   { id: "mutual_funds", label: "Mutual Funds", instrument: "mutual_fund" },
   { id: "gold", label: "Gold", instrument: "gold" },
   { id: "crypto", label: "Crypto", instrument: "crypto" },
+  { id: "sip", label: "Virtual SIP" },
   { id: "watchlist", label: "Watchlist" },
   { id: "alerts", label: "Alerts" },
   { id: "orders", label: "Orders" },
@@ -53,6 +59,13 @@ function ComingSoon({ title }: { title: string }) {
   );
 }
 
+function defaultInstrumentForTab(tab: TabId): AddableInstrument {
+  if (tab === "etfs") return "etf";
+  if (tab === "mutual_funds") return "mutual_fund";
+  if (tab === "crypto") return "crypto";
+  return "stock";
+}
+
 export default function InvestmentsHubPage({ hideHeader }: { hideHeader?: boolean } = {}) {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get("ptab") as TabId) || "all";
@@ -63,6 +76,24 @@ export default function InvestmentsHubPage({ hideHeader }: { hideHeader?: boolea
 
   const currentTab = TABS.find((t) => t.id === activeTab) ?? TABS[0];
   const instrumentFilter = currentTab.instrument;
+  const isGoldTab = activeTab === "gold";
+  const isSipTab = activeTab === "sip";
+  const showLiveAssetView = (activeTab === "all" || !!instrumentFilter) && !isGoldTab && !isSipTab;
+  const showCardGrid = activeTab === "mutual_funds" || activeTab === "crypto";
+  const selectedSipId = searchParams.get("sipId");
+
+  const setSelectedSip = useCallback(
+    (id: string | null) => {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("ptab", "sip");
+        if (id) next.set("sipId", id);
+        else next.delete("sipId");
+        return next;
+      }, { replace: true });
+    },
+    [setSearchParams]
+  );
 
   const {
     holdings,
@@ -76,6 +107,8 @@ export default function InvestmentsHubPage({ hideHeader }: { hideHeader?: boolea
     isRefreshing,
     lastUpdated,
   } = usePortfolioMetrics(instrumentFilter);
+
+  const { syncHistoricalData, syncing } = useHistoricalBackfill();
 
   useProcessLimitOrders(holdings);
 
@@ -158,9 +191,6 @@ export default function InvestmentsHubPage({ hideHeader }: { hideHeader?: boolea
     return hideHeader ? onboardingContent : <PageShell>{onboardingContent}</PageShell>;
   }
 
-  const isAssetTab = activeTab === "all" || !!instrumentFilter;
-  const isFutureTab = activeTab === "crypto";
-
   const handleReset = async () => {
     if (window.confirm("Are you sure you want to reset your entire portfolio setup? This cannot be undone.")) {
       await resetOnboarding();
@@ -171,6 +201,20 @@ export default function InvestmentsHubPage({ hideHeader }: { hideHeader?: boolea
       }, { replace: true });
     }
   };
+
+  const addHoldingActions = showLiveAssetView ? (
+    <div className="flex items-center gap-2">
+      <Button variant="ghost" className="text-muted-foreground hover:text-red-500" onClick={handleReset} icon={<RotateCcw size={16} />}>
+        Reset Setup
+      </Button>
+      <Button variant="secondary" onClick={() => setShowCsvImport(true)}>
+        Import CSV
+      </Button>
+      <Button onClick={() => { setEditingHolding(null); setShowAddHolding(true); }} icon={<Plus size={16} />}>
+        Add Holding
+      </Button>
+    </div>
+  ) : undefined;
 
   const innerContent = (
     <>
@@ -193,46 +237,20 @@ export default function InvestmentsHubPage({ hideHeader }: { hideHeader?: boolea
               </button>
             ))}
           </div>
-          {isAssetTab && activeTab !== "crypto" && (
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" className="text-muted-foreground hover:text-red-500" onClick={handleReset} icon={<RotateCcw size={16} />}>
-                Reset Setup
-              </Button>
-              <Button variant="secondary" onClick={() => setShowCsvImport(true)}>
-                Import CSV
-              </Button>
-              <Button onClick={() => { setEditingHolding(null); setShowAddHolding(true); }} icon={<Plus size={16} />}>
-                Add Holding
-              </Button>
-            </div>
-          )}
+          {addHoldingActions}
         </div>
       ) : (
         <PageHeader
           title="Investments"
-          subtitle="Read-only portfolio tracking · Live quotes refresh every 15 min"
+          subtitle="Live portfolio tracking · Quotes refresh every 15 min"
           tabs={tabPills}
           activeTab={activeTab}
           onTabChange={(tab: string) => setTab(tab as TabId)}
-          rightElement={
-            isAssetTab && activeTab !== "crypto" ? (
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" className="text-muted-foreground hover:text-red-500" onClick={handleReset} icon={<RotateCcw size={16} />}>
-                  Reset Setup
-                </Button>
-                <Button variant="secondary" onClick={() => setShowCsvImport(true)}>
-                  Import CSV
-                </Button>
-                <Button onClick={() => { setEditingHolding(null); setShowAddHolding(true); }} icon={<Plus size={16} />}>
-                  Add Holding
-                </Button>
-              </div>
-            ) : undefined
-          }
+          rightElement={addHoldingActions}
         />
       )}
 
-      {isAssetTab && !isFutureTab && (
+      {showLiveAssetView && (
         <div className="space-y-8 mt-6">
           <PortfolioDashboard
             summary={summary}
@@ -242,37 +260,90 @@ export default function InvestmentsHubPage({ hideHeader }: { hideHeader?: boolea
             totalHoldings={holdings.length}
           />
 
+          {(activeTab === "all" || activeTab === "stocks" || activeTab === "etfs") && (
+            <HistoricalPerformanceChart
+              snapshots={snapshots}
+              onSyncHistory={syncHistoricalData}
+              isSyncing={syncing}
+            />
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <AllocationPieChart data={allocation} title="Portfolio Allocation" />
-            <AllocationPieChart data={sectorAllocation} title="Sector Allocation" />
+            {(activeTab === "all" || activeTab === "stocks" || activeTab === "etfs") && (
+              <AllocationPieChart data={sectorAllocation} title="Sector Allocation" />
+            )}
             {activeTab === "etfs" && (
               <AllocationPieChart data={etfAllocation} title="ETF Allocation" />
             )}
           </div>
 
-          <HoldingsTable
-            holdings={holdings}
-            onEdit={(holding) => {
-              setEditingHolding(holding);
-              setShowAddHolding(true);
-            }}
-            onDelete={deleteHolding}
-            onViewHistory={setHistoryHolding}
-            onMockBuy={setBuyHolding}
-            onMockSell={setSellHolding}
-          />
+          {showCardGrid && holdings.length > 0 && (
+            <HoldingCardsGrid holdings={holdings} />
+          )}
+
+          {showCardGrid && holdings.length === 0 && (
+            <div className="bento-card p-10 text-center space-y-3">
+              <h3 className="text-lg font-bold">
+                {activeTab === "crypto" ? "No crypto holdings yet" : "No mutual fund holdings yet"}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Add a holding to track live prices and profit &amp; loss.
+              </p>
+              <Button onClick={() => { setEditingHolding(null); setShowAddHolding(true); }} icon={<Plus size={16} />}>
+                Add Holding
+              </Button>
+            </div>
+          )}
+
+          {!showCardGrid && (
+            <HoldingsTable
+              holdings={holdings}
+              onEdit={(holding) => {
+                setEditingHolding(holding);
+                setShowAddHolding(true);
+              }}
+              onDelete={deleteHolding}
+              onViewHistory={setHistoryHolding}
+              onMockBuy={setBuyHolding}
+              onMockSell={setSellHolding}
+            />
+          )}
+
+          {showCardGrid && holdings.length > 0 && (
+            <HoldingsTable
+              holdings={holdings}
+              onEdit={(holding) => {
+                setEditingHolding(holding);
+                setShowAddHolding(true);
+              }}
+              onDelete={deleteHolding}
+              onViewHistory={setHistoryHolding}
+              onMockBuy={setBuyHolding}
+              onMockSell={setSellHolding}
+            />
+          )}
         </div>
       )}
 
-      {activeTab === "mutual_funds" && holdings.length === 0 && (
-        <ComingSoon title="Mutual Funds" />
+      {isGoldTab && holdings.length === 0 && (
+        <div className="mt-6">
+          <ComingSoon title="Gold" />
+        </div>
       )}
 
-      {activeTab === "gold" && holdings.length === 0 && (
-        <ComingSoon title="Gold" />
+      {isSipTab && (
+        <div className="mt-6">
+          {selectedSipId ? (
+            <SipDetailPanel sipId={selectedSipId} onBack={() => setSelectedSip(null)} />
+          ) : (
+            <SipDashboard
+              selectedSipId={selectedSipId}
+              onSelectSip={setSelectedSip}
+            />
+          )}
+        </div>
       )}
-
-      {activeTab === "crypto" && <ComingSoon title="Crypto" />}
 
       {activeTab === "orders" && (
         <div className="mt-6">
@@ -310,7 +381,7 @@ export default function InvestmentsHubPage({ hideHeader }: { hideHeader?: boolea
           setShowAddHolding(false);
           setEditingHolding(null);
         }}
-        defaultInstrumentType={activeTab === "etfs" ? "etf" : "stock"}
+        defaultInstrumentType={defaultInstrumentForTab(activeTab)}
         editingHolding={editingHolding}
       />
       <CsvImportModal

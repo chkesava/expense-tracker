@@ -15,14 +15,43 @@ function createYahooClient() {
 
 const yahooFinance = createYahooClient();
 
+const JSON_HEADERS = {
+  "Content-Type": "application/json",
+  "Cache-Control": "public, max-age=60",
+} as const;
+
+function json(body: unknown, status = 200) {
+  return Response.json(body, { status, headers: JSON_HEADERS });
+}
+
+function sanitizeStockError(err: unknown, symbol: string): { message: string; status: number } {
+  const raw = String((err as any)?.message || err || "").toLowerCase();
+  if (raw.includes("not found") || raw.includes("no data") || raw.includes("invalid")) {
+    return {
+      message: `No market quote found for symbol: ${symbol}. Check the ticker and try again.`,
+      status: 404,
+    };
+  }
+  if (raw.includes("timeout") || raw.includes("timed out") || raw.includes("abort")) {
+    return {
+      message: "Stock quote request timed out. Please try again.",
+      status: 504,
+    };
+  }
+  return {
+    message: "Unable to fetch stock quote right now. Please try again later.",
+    status: 502,
+  };
+}
+
 export default async (req: Request) => {
   const url = new URL(req.url);
   const rawSymbol = url.searchParams.get("symbol");
 
   if (!rawSymbol || !rawSymbol.trim()) {
-    return Response.json(
+    return json(
       { success: false, message: "Query parameter 'symbol' is required" },
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      400
     );
   }
 
@@ -36,9 +65,9 @@ export default async (req: Request) => {
     const quote: any = await yahooFinance.quote(symbol);
 
     if (!quote || typeof quote.regularMarketPrice !== "number") {
-      return Response.json(
+      return json(
         { success: false, message: `No market quote found for symbol: ${symbol}` },
-        { status: 404, headers: { "Content-Type": "application/json" } }
+        404
       );
     }
 
@@ -47,7 +76,7 @@ export default async (req: Request) => {
     const change = quote.regularMarketChange ?? (price - previousClose);
     const changePercent = quote.regularMarketChangePercent ?? (previousClose > 0 ? (change / previousClose) * 100 : 0);
 
-    const responsePayload = {
+    return json({
       symbol: quote.symbol || symbol,
       name: quote.longName || quote.shortName || symbol,
       price,
@@ -60,23 +89,10 @@ export default async (req: Request) => {
       marketTime: quote.regularMarketTime ? new Date(quote.regularMarketTime).toISOString() : new Date().toISOString(),
       exchange: quote.exchange || "NSE",
       success: true,
-    };
-
-    return Response.json(responsePayload, {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "public, max-age=60",
-      },
     });
-  } catch (err: any) {
-    console.error(`Yahoo Finance error for ${symbol}:`, err?.message || err);
-    return Response.json(
-      {
-        success: false,
-        message: err?.message || `Failed to fetch quote for ${symbol}`,
-      },
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+  } catch (err: unknown) {
+    console.error(`Yahoo Finance error for ${symbol}:`, (err as any)?.message || err);
+    const { message, status } = sanitizeStockError(err, symbol);
+    return json({ success: false, message }, status);
   }
 };

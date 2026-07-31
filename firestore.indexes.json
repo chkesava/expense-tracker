@@ -1,0 +1,30 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "sipPlans",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "nextExecutionDate", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "sipTransactions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "sipId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "sipTransactions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "sipId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

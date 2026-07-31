@@ -31,6 +31,7 @@ import AuthPage from "./pages/AuthPage";
 import AuraBackground from "./components/layout/AuraBackground";
 import { LedgerStateProvider } from "./hooks/useLedgerState";
 import { useAlertChecker } from "./features/portfolio/hooks/useAlertChecker";
+import SipCatchUp from "./features/sip/components/SipCatchUp";
 
 const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
 const LedgerHub = lazyWithRetry(() => import("./pages/LedgerHub"));
@@ -156,6 +157,7 @@ function AppRoutes() {
 
   return (
     <>
+      <SipCatchUp />
       <AuraBackground />
       {isAddExpenseOpen && (
         <Modal

@@ -30,6 +30,7 @@ import { currentMonthKey } from "../utils/dates";
 import { ADMIN_NAV_ITEM, CORE_NAV_ITEMS, isNavItemActive } from "../config/navigation";
 import { useExpenses } from "../hooks/useExpenses";
 import AnnouncementBanner from "./AnnouncementBanner";
+import NotificationBell from "../features/sip/components/NotificationBell";
 
 function formatMonthLabel(month: string, short = false) {
   if (!month) return "This Month";
@@ -195,6 +196,7 @@ export default function Header() {
 
         <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2 relative">
           <VaultMemberIndicator />
+          {settings.enableInvestments && <NotificationBell />}
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}

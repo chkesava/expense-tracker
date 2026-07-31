@@ -58,41 +58,6 @@ export default function PortfolioCharts({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="bento-card p-5 space-y-4">
-        <h3 className="font-bold text-sm uppercase tracking-wider text-muted-foreground">
-          Portfolio Growth
-        </h3>
-        {growthData.length < 2 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">
-            Historical data builds daily. Check back tomorrow.
-          </p>
-        ) : (
-          <ResponsiveContainer width="100%" height={220} minWidth={0} minHeight={0}>
-            <AreaChart data={growthData}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip />
-              <Area
-                type="monotone"
-                dataKey="value"
-                stroke="#00D09C"
-                fill="#00D09C"
-                fillOpacity={0.15}
-                name="Portfolio Value"
-              />
-              <Area
-                type="monotone"
-                dataKey="invested"
-                stroke="#5367FF"
-                fill="#5367FF"
-                fillOpacity={0.1}
-                name="Invested"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        )}
-      </div>
 
       <div className="bento-card p-5 space-y-4">
         <h3 className="font-bold text-sm uppercase tracking-wider text-muted-foreground">
