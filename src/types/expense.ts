@@ -1,4 +1,10 @@
-export const CATEGORIES = [
+import { PARENT_CATEGORY_NAMES } from "../data/categoryTaxonomy";
+
+/** Top-level category names from the hierarchical taxonomy. */
+export const CATEGORIES = PARENT_CATEGORY_NAMES;
+
+/** @deprecated Prefer CATEGORIES; kept for older imports. */
+export const LEGACY_FLAT_CATEGORIES = [
   "Food",
   "Rent",
   "Travel",
@@ -26,10 +32,23 @@ export const INCOME_SOURCES = [
   "Other",
 ] as const;
 
+export type CategoryKind = "category" | "subcategory";
+
 export interface Category {
   id: string;
   name: string;
+  /** Parent category for subcategories; null/undefined for top-level. */
+  parentId?: string | null;
+  kind?: CategoryKind;
+  icon?: string;
+  /** Hex or CSS color for UI accents. */
+  color?: string;
+  isDefault?: boolean;
   isArchived?: boolean;
+  /** Soft-hide from pickers without deleting. */
+  isHidden?: boolean;
+  isFavorite?: boolean;
+  sortOrder?: number;
   createdAt?: unknown;
 }
 
@@ -116,6 +135,8 @@ export interface AccountActivity {
 export interface CategoryBudget {
   id: string;
   category: string;
+  /** Optional leaf budget; when set, budget applies to Category › Subcategory. */
+  subcategory?: string;
   amount: number;
   month: string;
   createdAt?: unknown;
@@ -134,13 +155,19 @@ export interface CategorizationRule {
   id: string;
   keyword: string;
   category: string;
+  subcategory?: string;
   createdAt?: unknown;
 }
 
 export interface Expense {
   id?: string;
   amount: number;
+  /** Parent category name (e.g. "Food & Dining"). */
   category: string;
+  /** Subcategory name (e.g. "Groceries"). */
+  subcategory?: string;
+  /** Optional free-form tags. */
+  tags?: string[];
   note: string;
   date: string;
   month: string;

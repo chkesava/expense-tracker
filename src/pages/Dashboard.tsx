@@ -157,7 +157,11 @@ export default function Dashboard() {
       .filter((budget) => budget.month === selectedMonth)
       .map((budget) => {
         const spent = filteredExpenses
-          .filter((expense) => expense.category === budget.category)
+          .filter((expense) => {
+            if (expense.category !== budget.category) return false;
+            if (budget.subcategory) return expense.subcategory === budget.subcategory;
+            return true;
+          })
           .reduce((total, expense) => total + expense.amount, 0);
         const percent = budget.amount > 0 ? Math.round((spent / budget.amount) * 100) : 0;
         const level = percent >= 100 ? "danger" : percent >= 80 ? "warning" : "ok";
@@ -195,7 +199,7 @@ export default function Dashboard() {
 
   const auditableCount = useMemo(() => {
     return expenses.filter(e => {
-      const needsCategory = !e.category || e.category === "Other" || e.category === "Uncategorized";
+      const needsCategory = !e.category || e.category === "Other" || e.category === "Uncategorized" || e.category === "Miscellaneous";
       const needsNote = !e.note || e.note.trim() === "" || e.note.toLowerCase().includes("no note");
       return (needsCategory || needsNote) && !e.isAudited;
     }).length;
@@ -453,7 +457,10 @@ export default function Dashboard() {
               <div key={budget.id} className={cn("rounded-2xl border p-4", budget.level === "danger" ? "border-red-200 bg-red-50/80 dark:border-red-500/20 dark:bg-red-500/10" : "border-amber-200 bg-amber-50/80 dark:border-amber-500/20 dark:bg-amber-500/10")}>
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{budget.category}</div>
+                    <div className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                      {budget.category}
+                      {budget.subcategory ? ` › ${budget.subcategory}` : ""}
+                    </div>
                     <div className="text-xs font-medium text-slate-500 dark:text-slate-400"><Amount value={budget.spent} /> of <Amount value={budget.amount} /></div>
                   </div>
                   <Badge variant={budget.level === "danger" ? "danger" : "warning"} className="px-2 py-0.5 text-[9px]">
@@ -530,7 +537,12 @@ export default function Dashboard() {
                     {expense.category[0]}
                   </div>
                   <div>
-                    <div className="font-bold text-sm text-slate-900 dark:text-white leading-tight">{expense.category}</div>
+                    <div className="font-bold text-sm text-slate-900 dark:text-white leading-tight">
+                      {expense.category}
+                      {expense.subcategory ? (
+                        <span className="text-slate-400 font-semibold"> › {expense.subcategory}</span>
+                      ) : null}
+                    </div>
                     <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{expense.date}</div>
                   </div>
                 </div>

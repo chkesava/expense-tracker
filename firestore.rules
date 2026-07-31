@@ -50,7 +50,9 @@ service cloud.firestore {
       && d.note is string
       && isValidDateKey(d.date)
       && isValidMonthKey(d.month)
-      && hasValidCreatedAt();
+      && hasValidCreatedAt()
+      && (!('subcategory' in d) || d.subcategory is string)
+      && (!('tags' in d) || d.tags is list);
   }
 
   function isValidIncomeData() {

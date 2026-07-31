@@ -13,8 +13,7 @@ import { useAccountTransfers } from "../hooks/useAccountTransfers";
 import { getAccountKind } from "../utils/accountKind";
 import { previewBalanceAfterTransaction } from "../utils/accountBalance";
 import { currentMonthKey, monthFromDateKey, todayDateKey } from "../utils/dates";
-import { useCategories } from "../hooks/useCategories";
-import { CATEGORIES, INCOME_SOURCES } from "../types/expense";
+import { INCOME_SOURCES } from "../types/expense";
 import type { Account, Expense, Income } from "../types/expense";
 import { toast } from 'react-toastify';
 import useSettings from "../hooks/useSettings";
@@ -26,9 +25,11 @@ import { useTrips } from "../hooks/useTrips";
 import { shouldSuggestSplit } from "../utils/proactiveSplits";
 import { SplitSuggestionToast } from "./SplitSuggestionToast";
 import { useVaults } from "../hooks/useVaults";
-import { Users, Calendar, Tag, CreditCard, FileText, MapPin, Zap, Camera, Plus, X, Check } from "lucide-react";
+import { Users, Calendar, Tag, CreditCard, FileText, MapPin, Zap, Camera } from "lucide-react";
 import ReceiptScanner from "./ReceiptScanner";
 import type { ParsedExpense } from "../utils/magicParser";
+import { CategoryPicker } from "./CategoryPicker";
+import { suggestCategoryFromNote } from "../data/categoryTaxonomy";
 
 // ─── Extracted Balance Preview (Phase 2 perf fix) ───────────────────────────
 // This isolates the heavy context subscriptions (expenses, incomes, payments,
@@ -119,7 +120,10 @@ export default function ExpenseForm({
   const [type, setType] = useState<"expense" | "income" | "vault">("expense");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState("");
-  const [category, setCategory] = useState<string>(settings.defaultCategory || "Food");
+  const [category, setCategory] = useState<string>(settings.defaultCategory || "Food & Dining");
+  const [subcategory, setSubcategory] = useState<string>("Groceries");
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
   const [source, setSource] = useState<string>("Salary");
   const [accountId, setAccountId] = useState("");
   const [tripId, setTripId] = useState<string | null>(null);
@@ -127,22 +131,34 @@ export default function ExpenseForm({
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categoryTouched, setCategoryTouched] = useState(false);
-  const [showAddCategory, setShowAddCategory] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [suggestionHint, setSuggestionHint] = useState<string | null>(null);
 
   const { accounts } = useAccounts();
   const { accountTypes } = useAccountTypes();
-  const { categories: userCategories, addCategory } = useCategories();
   const { rules } = useCategorizationRules();
   const { trips, syncTripSpentAmount } = useTrips();
   const { vaults } = useVaults();
+
+  const handleCategoryChange = (
+    nextCategory: string,
+    nextSubcategory: string,
+    options?: { fromUser?: boolean }
+  ) => {
+    setCategory(nextCategory);
+    setSubcategory(nextSubcategory);
+    if (options?.fromUser !== false) {
+      setCategoryTouched(true);
+      setSuggestionHint(null);
+    }
+  };
 
   useEffect(() => {
     if (editingExpense) {
       setType("expense");
       setAmount(editingExpense.amount.toString());
       setCategory(editingExpense.category);
+      setSubcategory(editingExpense.subcategory || "");
+      setTags(editingExpense.tags ?? []);
       setNote(editingExpense.note ?? "");
       setDate(editingExpense.date);
       setAccountId(editingExpense.accountId ?? "");
@@ -159,7 +175,10 @@ export default function ExpenseForm({
       setCategoryTouched(true);
     } else {
       const last = localStorage.getItem("lastCategory");
+      const lastSub = localStorage.getItem("lastSubcategory");
       if (last) setCategory(last);
+      if (lastSub) setSubcategory(lastSub);
+      setTags([]);
       setDate(todayDateKey(settings.timezone));
       setCategoryTouched(false);
       const state = location.state as { tripId?: string } | null;
@@ -184,26 +203,39 @@ export default function ExpenseForm({
     if (result.amount) setAmount(result.amount.toString());
     if (result.date) setDate(result.date);
     if (result.category) setCategory(result.category);
+    if (result.subcategory) setSubcategory(result.subcategory);
     if (result.note) setNote(result.note);
     setCategoryTouched(true);
   };
 
-
   useEffect(() => {
-    if (editingExpense || categoryTouched) return;
+    if (editingExpense || categoryTouched || type === "income") return;
 
     const normalizedNote = note.trim().toLowerCase();
     if (!normalizedNote) {
+      setSuggestionHint(null);
       return;
     }
 
-    const match = rules.find((rule) => normalizedNote.includes(rule.keyword.toLowerCase()));
-    if (!match) {
+    const ruleMatch = rules.find((rule) =>
+      normalizedNote.includes(rule.keyword.toLowerCase())
+    );
+    if (ruleMatch) {
+      setCategory(ruleMatch.category);
+      if (ruleMatch.subcategory) setSubcategory(ruleMatch.subcategory);
+      setSuggestionHint(`${ruleMatch.category} › ${ruleMatch.subcategory || "…"}`);
       return;
     }
 
-    setCategory(match.category);
-  }, [note, rules, editingExpense, categoryTouched]);
+    const suggestion = suggestCategoryFromNote(note);
+    if (suggestion) {
+      setCategory(suggestion.category);
+      setSubcategory(suggestion.subcategory);
+      setSuggestionHint(`${suggestion.category} › ${suggestion.subcategory}`);
+    } else {
+      setSuggestionHint(null);
+    }
+  }, [note, rules, editingExpense, categoryTouched, type]);
 
   const currentMonth = currentMonthKey(settings.timezone);
   const isLocked = !!(settings.lockPastMonths && (
@@ -234,6 +266,8 @@ export default function ExpenseForm({
           vaultId,
           amount: Number(amount),
           category,
+          subcategory,
+          tags,
           note,
           date,
           createdAt: serverTimestamp(),
@@ -263,9 +297,14 @@ export default function ExpenseForm({
 
       if (type === "expense") {
         data.category = category;
+        data.subcategory = subcategory;
+        data.tags = tags;
         data.tripId = tripId || null;
         data.vaultId = vaultId || null;
         localStorage.setItem("lastCategory", category);
+        localStorage.setItem("lastSubcategory", subcategory);
+        const { pushRecentCategoryPair } = await import("../utils/categoryPreferences");
+        pushRecentCategoryPair(category, subcategory);
       } else {
         data.source = source;
       }
@@ -435,115 +474,74 @@ export default function ExpenseForm({
           />
         </div>
 
-        <div className="space-y-1.5">
-          <label className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
-            <Tag size={10} /> {type === "income" ? "Source" : "Category"}
-            {type !== "income" && (
-              <button
-                type="button"
-                onClick={() => {
-                  setShowAddCategory(prev => !prev);
-                  setNewCategoryName("");
-                }}
-                title={showAddCategory ? "Cancel" : "Add new category"}
-                className={cn(
-                  "ml-auto flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all",
-                  showAddCategory
-                    ? "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
-                    : "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-900/50"
-                )}
+        {type === "income" ? (
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
+              <Tag size={10} /> Source
+            </label>
+            <div className="relative">
+              <select
+                className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 appearance-none focus:outline-none focus:border-primary transition-all"
+                value={source}
+                onChange={e => setSource(e.target.value)}
               >
-                {showAddCategory ? <X size={9} /> : <Plus size={9} />}
-                {showAddCategory ? "Close" : "New"}
-              </button>
-            )}
-          </label>
+                {INCOME_SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[10px]">▼</div>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-1.5" />
+        )}
+      </div>
 
-          {/* Inline Add Category Mini-Form */}
-          <AnimatePresence>
-            {type !== "income" && showAddCategory && (
-              <motion.div
-                initial={{ opacity: 0, height: 0, y: -4 }}
-                animate={{ opacity: 1, height: "auto", y: 0 }}
-                exit={{ opacity: 0, height: 0, y: -4 }}
-                transition={{ duration: 0.18, ease: "easeOut" }}
-                className="overflow-hidden"
-              >
-                <div className="flex items-center gap-1.5 mt-1 p-2 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/50 rounded-xl">
-                  <input
-                    type="text"
-                    autoFocus
-                    placeholder="Category name…"
-                    value={newCategoryName}
-                    onChange={e => setNewCategoryName(e.target.value)}
-                    onKeyDown={async e => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        if (!newCategoryName.trim()) return;
-                        setIsAddingCategory(true);
-                        await addCategory(newCategoryName.trim());
-                        setCategory(newCategoryName.trim());
-                        setCategoryTouched(true);
-                        setNewCategoryName("");
-                        setShowAddCategory(false);
-                        setIsAddingCategory(false);
-                      }
-                      if (e.key === "Escape") {
-                        setShowAddCategory(false);
-                        setNewCategoryName("");
-                      }
-                    }}
-                    className="flex-1 min-w-0 bg-transparent text-xs font-bold text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    disabled={!newCategoryName.trim() || isAddingCategory}
-                    onClick={async () => {
-                      if (!newCategoryName.trim()) return;
-                      setIsAddingCategory(true);
-                      await addCategory(newCategoryName.trim());
-                      setCategory(newCategoryName.trim());
-                      setCategoryTouched(true);
-                      setNewCategoryName("");
-                      setShowAddCategory(false);
-                      setIsAddingCategory(false);
-                    }}
-                    className="shrink-0 flex items-center gap-1 px-2 py-1 bg-rose-500 hover:bg-rose-600 disabled:opacity-40 text-white rounded-lg text-[9px] font-black uppercase transition-all"
-                  >
-                    <Check size={9} />
-                    {isAddingCategory ? "Saving…" : "Save"}
-                  </button>
-                </div>
-                <p className="text-[9px] text-slate-400 dark:text-slate-500 ml-1 mt-0.5">Press Enter or click Save · Esc to cancel</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
+      {type !== "income" && (
+        <>
+          {suggestionHint && !categoryTouched && (
+            <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 -mt-1 ml-1">
+              Suggested from note: {suggestionHint}
+            </p>
+          )}
+          <CategoryPicker
+            category={category}
+            subcategory={subcategory}
+            onCategoryChange={handleCategoryChange}
+            disabled={isLocked}
+          />
 
-          <div className="relative">
-            <select
-              className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 appearance-none focus:outline-none focus:border-primary transition-all"
-              value={type === "income" ? source : category}
-              onChange={e => {
-                if (type !== "income") {
-                  setCategoryTouched(true);
-                  setCategory(e.target.value);
-                } else {
-                  setSource(e.target.value);
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
+              <Tag size={10} /> Tags <span className="font-medium normal-case tracking-normal text-slate-400">(optional)</span>
+            </label>
+            <div className="flex flex-wrap gap-1.5 mb-1">
+              {tags.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setTags((prev) => prev.filter((x) => x !== t))}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-300"
+                >
+                  {t} ×
+                </button>
+              ))}
+            </div>
+            <input
+              className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary transition-all"
+              placeholder="Add tag and press Enter"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  const next = tagInput.trim().toLowerCase();
+                  if (next && !tags.includes(next)) setTags((prev) => [...prev, next]);
+                  setTagInput("");
                 }
               }}
-            >
-              {type !== "income" ? (
-                userCategories.filter(c => !c.isArchived).map(c => (
-                  <option key={c.id} value={c.name}>{c.name}</option>
-                ))
-              ) : (
-                INCOME_SOURCES.map(s => <option key={s} value={s}>{s}</option>)
-              )}
-            </select>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[10px]">▼</div>
+            />
           </div>
-        </div>
-      </div>
+        </>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">

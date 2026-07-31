@@ -53,6 +53,7 @@ import { Badge } from "../components/common/Badge";
 
 import type { Income } from "../types/expense";
 import { CATEGORIES } from "../types/expense";
+import { getSubcategoriesFor } from "../data/categoryTaxonomy";
 import { getMonthlySummary } from "../utils/monthSummary";
 import { groupExpensesByDay } from "../utils/dayGrouping";
 import { exportExpensesToCSV } from "../utils/exportCsv";
@@ -109,7 +110,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
     const { incomes, loading: incomesLoading } = useIncomes();
     const loading = expensesLoading || incomesLoading;
     const { accounts } = useAccounts();
-    const { categories: userCategories } = useCategories();
+    const { visibleParents } = useCategories();
     const { accountTypes } = useAccountTypes();
     const { rules } = useCategorizationRules();
     const { syncTripSpentAmount } = useTrips();
@@ -187,7 +188,11 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
             }
             if (query) {
                 const q = query.toLowerCase();
-                const matches = (e.note || "").toLowerCase().includes(q) || e.category.toLowerCase().includes(q) || String(e.amount).includes(q);
+                const matches = (e.note || "").toLowerCase().includes(q)
+                  || e.category.toLowerCase().includes(q)
+                  || (e.subcategory || "").toLowerCase().includes(q)
+                  || (e.tags || []).some((t) => t.toLowerCase().includes(q))
+                  || String(e.amount).includes(q);
                 if (!matches) return false;
             }
             return true;
@@ -251,7 +256,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
     // --- LOGIC: AUDIT ---
     const auditableExpenses = useMemo(() => {
         return expenses.filter(e => {
-            const isUncategorized = !e.category || ["Other", "Uncategorized"].includes(e.category);
+            const isUncategorized = !e.category || ["Other", "Uncategorized", "Miscellaneous"].includes(e.category);
             const isMissingNote = !e.note || e.note.trim() === "" || e.note.toLowerCase().includes("no note");
             return (isUncategorized || isMissingNote) && !e.isAudited;
         });
@@ -491,7 +496,11 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
         if (!user || !selectedIds.size) return;
         try {
             const batch = writeBatch(db);
-            selectedIds.forEach(id => batch.update(doc(db, "users", user.uid, "expenses", id), { category }));
+            const subs = getSubcategoriesFor(category);
+            const subcategory = subs[0] ?? "Other";
+            selectedIds.forEach(id =>
+              batch.update(doc(db, "users", user.uid, "expenses", id), { category, subcategory })
+            );
             await batch.commit();
             toast.success("Updated!");
             setSelectedIds(new Set());
@@ -1351,7 +1360,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
 
             <AnimatePresence>
                 {isSelectionMode && (
-                    <BulkActionBar selectedCount={selectedIds.size} onClear={() => { setSelectedIds(new Set()); setIsSelectionMode(false); }} onDelete={() => setShowBulkDeleteConfirm(true)} onCategorize={handleBulkCategorize} userCategories={userCategories} />
+                    <BulkActionBar selectedCount={selectedIds.size} onClear={() => { setSelectedIds(new Set()); setIsSelectionMode(false); }} onDelete={() => setShowBulkDeleteConfirm(true)} onCategorize={handleBulkCategorize} userCategories={visibleParents} />
                 )}
             </AnimatePresence>
         </motion.main>
@@ -1491,7 +1500,12 @@ const ExpenseRow = memo(({ expense, accountById, isSelected, onSelect, onEdit, o
                         {expense.category[0]}
                     </div>
                     <div className="min-w-0 flex flex-col gap-0.5 flex-1">
-                        <div className="font-bold text-[16px] text-slate-900 dark:text-white tracking-tight group-hover:text-rose-600 transition-colors truncate">{expense.category}</div>
+                        <div className="font-bold text-[16px] text-slate-900 dark:text-white tracking-tight group-hover:text-rose-600 transition-colors truncate">
+                          {expense.category}
+                          {expense.subcategory ? (
+                            <span className="font-semibold text-slate-400 dark:text-slate-500"> › {expense.subcategory}</span>
+                          ) : null}
+                        </div>
                         <div className="flex items-center gap-2 overflow-hidden">
                             <span className={cn(
                                 "text-[10px] text-slate-400 font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md shrink-0",
@@ -1500,6 +1514,11 @@ const ExpenseRow = memo(({ expense, accountById, isSelected, onSelect, onEdit, o
                             {expense.note && (
                                 <span className="text-[11px] text-slate-400 dark:text-slate-500 italic font-medium truncate">
                                     {expense.note}
+                                </span>
+                            )}
+                            {expense.tags && expense.tags.length > 0 && (
+                                <span className="text-[10px] text-slate-400 font-bold truncate">
+                                  {expense.tags.map((t) => `#${t}`).join(" ")}
                                 </span>
                             )}
                         </div>
@@ -1516,6 +1535,7 @@ const ExpenseRow = memo(({ expense, accountById, isSelected, onSelect, onEdit, o
         prevProps.expense.id === nextProps.expense.id &&
         prevProps.expense.amount === nextProps.expense.amount &&
         prevProps.expense.category === nextProps.expense.category &&
+        prevProps.expense.subcategory === nextProps.expense.subcategory &&
         prevProps.expense.note === nextProps.expense.note &&
         prevProps.expense.date === nextProps.expense.date &&
         prevProps.expense.accountId === nextProps.expense.accountId &&

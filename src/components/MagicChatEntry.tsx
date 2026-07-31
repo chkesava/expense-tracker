@@ -617,13 +617,15 @@ export default function MagicChatEntry({ onSuccess, defaultMode, hideModeSwitche
         amount: parsed.amount,
         date: parsed.date,
         category: parsed.category,
+        subcategory: parsed.subcategory || "Other",
+        tags: [],
         note: parsed.note,
         month,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         createdAt: serverTimestamp(),
       });
 
-      toast.success(`Saved: ₹${amount} in ${parsed.category}`, {
+      toast.success(`Saved: ₹${amount} in ${parsed.category}${parsed.subcategory ? ` › ${parsed.subcategory}` : ""}`, {
         icon: <CheckCircle2 className="text-emerald-500" />
       });
 
@@ -675,6 +677,8 @@ export default function MagicChatEntry({ onSuccess, defaultMode, hideModeSwitche
           amount: item.amount,
           date: item.date,
           category: item.category,
+          subcategory: item.subcategory || "Other",
+          tags: [],
           note: item.note,
           month: item.date.slice(0, 7),
           time,

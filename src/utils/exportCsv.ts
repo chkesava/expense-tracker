@@ -9,7 +9,7 @@ function formatValue(v: unknown) {
 export function exportExpensesToCSV(expenses: Expense[], filename = "expenses.csv") {
   if (!expenses || expenses.length === 0) return;
 
-  const headers = ["Date", "Time", "Category", "Amount", "Note"];
+  const headers = ["Date", "Time", "Category", "Subcategory", "Tags", "Amount", "Note"];
 
   const rows = expenses.map((e) => {
     // createdAt might be a Firestore Timestamp or a JS Date or a raw object
@@ -29,7 +29,15 @@ export function exportExpensesToCSV(expenses: Expense[], filename = "expenses.cs
       }
     }
 
-    return [e.date ?? "", timeStr, e.category ?? "", e.amount ?? "", e.note ?? ""];
+    return [
+      e.date ?? "",
+      timeStr,
+      e.category ?? "",
+      e.subcategory ?? "",
+      (e.tags || []).join("; "),
+      e.amount ?? "",
+      e.note ?? "",
+    ];
   });
 
   const csvContent = [headers.join(","),

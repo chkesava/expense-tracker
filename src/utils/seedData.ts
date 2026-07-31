@@ -1,6 +1,6 @@
 import { addDoc, collection, deleteDoc, doc, getDocs, query, where, serverTimestamp, writeBatch } from "firebase/firestore";
 import { db } from "../firebase";
-import { CATEGORIES } from "../types/expense";
+import { CATEGORY_TAXONOMY } from "../data/categoryTaxonomy";
 import { toLocalDateKey, todayDateKey } from "./dates";
 
 function pad(n: number) {
@@ -9,6 +9,12 @@ function pad(n: number) {
 
 function randomFrom<T>(arr: readonly T[]) {
   return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function randomCategoryPair() {
+  const parent = randomFrom(CATEGORY_TAXONOMY);
+  const subcategory = randomFrom(parent.subcategories);
+  return { category: parent.name, subcategory };
 }
 
 type SeedExpenseOptions = {
@@ -61,7 +67,7 @@ export async function seedDemoExpensesForUser(uid: string, monthsOrOptions: numb
 
     for (let i = 0; i < entries; i++) {
       const amount = Math.round((Math.random() * 900 + 50)); // 50 - 950
-      const category = randomFrom(CATEGORIES);
+      const { category, subcategory } = randomCategoryPair();
       const note = Math.random() < 0.2 ? "Coffee" : Math.random() < 0.1 ? "Groceries" : "";
       const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
       const time = `${pad(Math.floor(Math.random() * 24))}:${pad(Math.floor(Math.random() * 60))}`;
@@ -76,6 +82,8 @@ export async function seedDemoExpensesForUser(uid: string, monthsOrOptions: numb
           date,
           time,
           category,
+          subcategory,
+          tags: [],
           note,
           month,
           ...(accountId ? { accountId } : {}),

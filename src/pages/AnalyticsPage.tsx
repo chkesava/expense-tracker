@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { cn } from "../lib/utils";
 import { useExpenses } from "../hooks/useExpenses";
 import { useIncomes } from "../hooks/useIncomes";
-import { groupByCategory, groupByMonth } from "../utils/analytics";
+import { groupByCategory, groupByMonth, groupBySubcategory } from "../utils/analytics";
 import { groupByDay } from "../utils/groupByDay";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart3, PieChart, Activity, Info } from "lucide-react";
@@ -15,19 +15,26 @@ import DailyTrend from "../components/charts/DailyTrend";
 import InsightBentoGrid from "../components/analytics/InsightBentoGrid";
 import CategoryBars from "../components/analytics/CategoryBars";
 import AccountSpendingBars from "../components/analytics/AccountSpendingBars";
+import {
+  BudgetVsActualPanel,
+  FocusedSpendingPanel,
+  TopSpendLists,
+} from "../components/analytics/CategoryInsightsPanels";
 import { useAccounts } from "../hooks/useAccounts";
+import { useCategoryBudgets } from "../hooks/useCategoryBudgets";
 import { Skeleton } from "../components/common/Skeleton";
 import PageHeader from "../components/layout/PageHeader";
 import { useModals } from "../hooks/useModals";
 import SegmentedTabs from "../components/ui/SegmentedTabs";
 
-type AnalyticsTab = "overview" | "distribution" | "trends";
+type AnalyticsTab = "overview" | "distribution" | "insights" | "trends";
 
 export default function AnalyticsPage({ hideHeader }: { hideHeader?: boolean }) {
   const { expenses, loading: expensesLoading } = useExpenses();
   const { incomes, loading: incomesLoading } = useIncomes();
   const loading = expensesLoading || incomesLoading;
   const { accounts } = useAccounts();
+  const { budgets } = useCategoryBudgets();
   const [activeTab, setActiveTab] = useState<AnalyticsTab>("overview");
 
   // ✅ FIX: Read from globalMonth context (shared with Dashboard & header drawer)
@@ -52,7 +59,8 @@ export default function AnalyticsPage({ hideHeader }: { hideHeader?: boolean }) 
   const tabs = [
     { id: "overview", label: "Overview", icon: <Info size={16} /> },
     { id: "distribution", label: "Distribution", icon: <PieChart size={16} /> },
-    { id: "trends", label: "Trends", icon: <Activity size={16} /> },
+    { id: "insights", label: "Insights", icon: <Activity size={16} /> },
+    { id: "trends", label: "Trends", icon: <BarChart3 size={16} /> },
   ];
 
   return (
@@ -159,9 +167,53 @@ export default function AnalyticsPage({ hideHeader }: { hideHeader?: boolean }) 
 
               <section className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 p-10 shadow-sm">
                 <h2 className="mb-10 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 text-center">
+                  Subcategory Breakdown
+                </h2>
+                <div className="space-y-10">
+                  <div className="flex h-64 items-center justify-center">
+                    <CategoryPie data={groupBySubcategory(filteredExpenses).slice(0, 12)} />
+                  </div>
+                  <div className="h-px bg-slate-100 dark:bg-white/5" />
+                  <CategoryBars
+                    expenses={filteredExpenses}
+                    groupFn={groupBySubcategory}
+                    label="Subcategories"
+                  />
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 p-10 shadow-sm lg:col-span-2">
+                <h2 className="mb-10 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 text-center">
                   Account Allocation
                 </h2>
                 <AccountSpendingBars expenses={filteredExpenses} accounts={accounts} />
+              </section>
+            </div>
+          )}
+
+          {activeTab === "insights" && (
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-white/5 dark:bg-slate-900/40">
+                <h2 className="mb-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">
+                  Top Spending
+                </h2>
+                <TopSpendLists expenses={filteredExpenses} />
+              </section>
+              <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-white/5 dark:bg-slate-900/40">
+                <h2 className="mb-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">
+                  Focused Lenses
+                </h2>
+                <FocusedSpendingPanel expenses={filteredExpenses} />
+              </section>
+              <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-white/5 dark:bg-slate-900/40 lg:col-span-2">
+                <h2 className="mb-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">
+                  Budget vs Actual
+                </h2>
+                <BudgetVsActualPanel
+                  expenses={expenses}
+                  budgets={budgets}
+                  month={selectedMonth}
+                />
               </section>
             </div>
           )}

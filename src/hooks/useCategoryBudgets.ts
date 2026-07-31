@@ -31,17 +31,27 @@ export const useCategoryBudgets = () => {
     });
   }, [user]);
 
-  const addBudget = async (category: string, amount: number, month: string) => {
+  const addBudget = async (
+    category: string,
+    amount: number,
+    month: string,
+    subcategory?: string
+  ) => {
     if (!user || !category.trim() || !month || amount <= 0) return;
 
     try {
       await addDoc(collection(db, "users", user.uid, "categoryBudgets"), {
         category: category.trim(),
+        ...(subcategory?.trim() ? { subcategory: subcategory.trim() } : {}),
         amount: Number(amount),
         month,
         createdAt: serverTimestamp(),
       });
-      toast.success("Category budget added");
+      toast.success(
+        subcategory?.trim()
+          ? "Subcategory budget added"
+          : "Category budget added"
+      );
     } catch (err) {
       console.error(err);
       toast.error("Failed to add category budget");

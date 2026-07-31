@@ -1,6 +1,15 @@
 import type { Expense, Income } from "../types/expense";
 
-const FIXED_CATEGORIES = ["Rent", "Utilities", "Subscriptions", "Insurance", "EMIS"];
+const FIXED_CATEGORIES = [
+  "Housing",
+  "Bills",
+  "Finance",
+  "Rent",
+  "Utilities",
+  "Subscriptions",
+  "Insurance",
+  "EMIS",
+];
 
 /**
  * Gets day details for the selected month.

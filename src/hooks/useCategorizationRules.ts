@@ -31,13 +31,14 @@ export const useCategorizationRules = () => {
     });
   }, [user]);
 
-  const addRule = async (keyword: string, category: string) => {
+  const addRule = async (keyword: string, category: string, subcategory?: string) => {
     if (!user || !keyword.trim() || !category.trim()) return;
 
     try {
       await addDoc(collection(db, "users", user.uid, "categorizationRules"), {
         keyword: keyword.trim().toLowerCase(),
         category: category.trim(),
+        ...(subcategory?.trim() ? { subcategory: subcategory.trim() } : {}),
         createdAt: serverTimestamp(),
       });
       toast.success("Auto-category rule added");

@@ -33,7 +33,7 @@ type Settings = {
 export const DEFAULTS: Settings = {
   lockPastMonths: true,
   compactListMode: false,
-  defaultCategory: "Food",
+  defaultCategory: "Food & Dining",
   defaultView: "dashboard",
   exportYear: new Date().getFullYear(),
   monthlyBudget: 0,
