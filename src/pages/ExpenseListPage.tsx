@@ -1518,7 +1518,7 @@ const ExpenseRow = memo(({ expense, accountById, isSelected, onSelect, onEdit, o
                             )}
                             {expense.tags && expense.tags.length > 0 && (
                                 <span className="text-[10px] text-slate-400 font-bold truncate">
-                                  {expense.tags.map((t) => `#${t}`).join(" ")}
+                                  {expense.tags.map((t: string) => `#${t}`).join(" ")}
                                 </span>
                             )}
                         </div>

@@ -520,7 +520,7 @@ export default function SettingsPage() {
               <SettingsCard title="General" subtitle="Defaults and protection." icon={SlidersHorizontal}>
                 <SettingsRow title="Default category" description="Used for quick add defaults.">
                   <select value={settings.defaultCategory} onChange={(e) => setDefaultCategory(e.target.value)} className={cn(fieldClass, "cursor-pointer appearance-none")}>
-                    {categories.filter(c => !c.isArchived).map((c) => (
+                    {parentCategories.map((c) => (
                       <option key={c.id} value={c.name}>
                         {c.name}
                       </option>
