@@ -144,6 +144,7 @@ export default function Dashboard() {
         time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         createdAt: serverTimestamp(),
       });
+      toast.success("Expense added");
     } catch (err) {
       console.error(err);
       toast.error("Failed to add expense");

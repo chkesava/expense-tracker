@@ -321,8 +321,25 @@ export default function ExpenseForm({
           createdAt: serverTimestamp(),
         });
         if (type === "expense") addXP(10);
+      }
 
-        if (type === "expense" && shouldSuggestSplit(Number(amount), note)) {
+      if (type === "expense") {
+        if (tripId) await syncTripSpentAmount(tripId);
+        const oldTripId = editingExpense?.tripId;
+        if (oldTripId && oldTripId !== tripId) await syncTripSpentAmount(oldTripId);
+      }
+
+      if (onSuccess) onSuccess();
+      else navigate(type === "expense" ? "/ledger" : "/dashboard");
+
+      toast.success(
+        editingId
+          ? `${type === "expense" ? "Expense" : "Income"} updated`
+          : `${type === "expense" ? "Expense" : "Income"} added`
+      );
+
+      if (!editingId && type === "expense" && shouldSuggestSplit(Number(amount), note)) {
+        window.setTimeout(() => {
           toast.custom(
             (id) => (
               <SplitSuggestionToast
@@ -335,19 +352,7 @@ export default function ExpenseForm({
             ),
             { duration: 10000, unstyled: true }
           );
-        }
-      }
-
-      if (type === "expense") {
-        if (tripId) await syncTripSpentAmount(tripId);
-        const oldTripId = editingExpense?.tripId;
-        if (oldTripId && oldTripId !== tripId) await syncTripSpentAmount(oldTripId);
-      }
-
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        navigate(type === "expense" ? "/ledger" : "/dashboard");
+        }, 400);
       }
     } catch (err) {
       console.error(err);

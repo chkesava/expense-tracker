@@ -37,7 +37,7 @@ function show(
   if (typeof message === "function") {
     return sonnerToast.custom(
       (id) => message({ closeToast: () => sonnerToast.dismiss(id) }) as ReactElement,
-      { duration: mapped?.duration ?? 8000, className: mapped?.className, ...mapped }
+      { duration: mapped?.duration ?? 8000, ...mapped }
     );
   }
 
@@ -47,7 +47,7 @@ function show(
   return sonnerToast[kind](message as string | ReactNode, mapped);
 }
 
-/** Drop-in toast helper (Sonner capsule UI, toastify-compatible options). */
+/** Capsule toasts via Sonner (toastify-compatible options). */
 export const toast = Object.assign(
   (message: ToastMessage, options?: LegacyOptions) => show("message", message, options),
   {

@@ -3,7 +3,7 @@ import { lazyWithRetry } from "./utils/lazyWithRetry";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
-import { Toaster } from "sonner";
+import AppToaster from "./components/AppToaster";
 
 import Header from "./components/Header";
 import MobileActionDock from "./components/MobileActionDock";
@@ -16,7 +16,6 @@ import { useSystemSettings } from "./hooks/useSystemSettings";
 import { useUserRole } from "./hooks/useUserRole";
 
 import { useSubscriptions } from "./hooks/useSubscriptions";
-import { useTheme } from "./hooks/useTheme";
 import { ModalProvider, useModals } from "./hooks/useModals";
 import { CelebrationProvider } from "./hooks/useCelebration";
 import { GamificationProvider } from "./hooks/useGamification";
@@ -268,9 +267,6 @@ function AppRoutes() {
 }
 
 export default function App() {
-  const { theme } = useTheme();
-  const darkToastThemes = new Set(["dark", "midnight", "midnight-olive", "cyberpunk", "deep-sea", "glass-3d"]);
-  const toastTheme = darkToastThemes.has(theme) ? "dark" : "light";
   return (
     <BrowserRouter>
       <SettingsProvider>
@@ -292,30 +288,7 @@ export default function App() {
           </LedgerStateProvider>
         </ModalProvider>
       </SettingsProvider>
-      <Toaster
-        position="top-center"
-        theme={toastTheme}
-        richColors
-        closeButton
-        offset={16}
-        gap={10}
-        visibleToasts={3}
-        toastOptions={{
-          duration: 2200,
-          classNames: {
-            toast:
-              "group toast !rounded-2xl !border !border-border !bg-card !text-foreground !shadow-lg !shadow-black/10 dark:!shadow-black/40 font-medium",
-            title: "!text-sm !font-semibold !tracking-tight",
-            description: "!text-xs !text-muted-foreground",
-            success: "!border-success/25",
-            error: "!border-destructive/25",
-            info: "!border-info/25",
-            warning: "!border-warning/25",
-            closeButton:
-              "!bg-muted !border-border !text-muted-foreground hover:!bg-muted/80",
-          },
-        }}
-      />
+      <AppToaster />
     </BrowserRouter>
   );
 }

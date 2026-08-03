@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import 'sonner/dist/styles.css'
 import App from './App.tsx'
 import "./styles/form.css"; // legacy form/button utilities still used by a few screens
 import { ThemeProvider } from './hooks/useTheme';

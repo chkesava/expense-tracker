@@ -1325,3 +1325,32 @@ html.theme-glass-3d body {
   box-shadow: inset 1px 1px 3px rgba(255,255,255,0.4), inset -1px -1px 3px rgba(0,0,0,0.15) !important;
   text-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
 }
+
+/* Sonner capsule toasts — high-contrast pill at top center */
+[data-sonner-toaster] {
+  z-index: 2147483646 !important;
+}
+
+[data-sonner-toast].vault-toast-capsule,
+[data-sonner-toast][data-styled="true"].vault-toast-capsule {
+  border-radius: 9999px !important;
+  padding: 12px 18px !important;
+  min-height: 48px !important;
+  width: auto !important;
+  max-width: min(92vw, 420px) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em !important;
+  box-shadow:
+    0 12px 40px rgba(15, 23, 42, 0.18),
+    0 2px 8px rgba(15, 23, 42, 0.08) !important;
+}
+
+[data-sonner-toast].vault-toast-capsule [data-close-button] {
+  border-radius: 9999px !important;
+}
+
+[data-sonner-toast].vault-toast-capsule [data-button] {
+  border-radius: 9999px !important;
+  padding-inline: 12px !important;
+}

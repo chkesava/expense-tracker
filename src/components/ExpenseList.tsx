@@ -30,26 +30,21 @@ export default function ExpenseList({ expenses }: { expenses: Expense[] }) {
       await deleteDoc(dRef);
       setDeleteTarget(null);
 
-      const toastId = toast(() => (
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div>Expense deleted</div>
-          <button
-            className="small-btn muted-btn"
-            onClick={async () => {
-              try {
-                await addDoc(collection(db, "users", user.uid, "expenses"), data as Record<string, unknown>);
-                toast.dismiss(toastId);
-                toast.success("Expense restored");
-              } catch (err) {
-                console.error(err);
-                toast.error("Failed to restore expense");
-              }
-            }}
-          >
-            Undo
-          </button>
-        </div>
-      ), { autoClose: 5000 });
+      toast.success("Expense deleted", {
+        duration: 5000,
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            try {
+              await addDoc(collection(db, "users", user.uid, "expenses"), data as Record<string, unknown>);
+              toast.success("Expense restored");
+            } catch (err) {
+              console.error(err);
+              toast.error("Failed to restore expense");
+            }
+          },
+        },
+      });
 
     } catch (err) {
       console.error(err);
