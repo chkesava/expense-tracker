@@ -5,18 +5,20 @@ import { db } from "../firebase";
 import type { FinancialGoal } from "../types/expense";
 import { useAuth } from "./useAuth";
 
-export const useFinancialGoals = () => {
+export const useFinancialGoals = (options?: { enabled?: boolean }) => {
+  const enabled = options?.enabled !== false;
   const { user } = useAuth();
   const [goals, setGoals] = useState<FinancialGoal[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !enabled) {
       setGoals([]);
       setLoading(false);
       return;
     }
 
+    setLoading(true);
     const q = query(
       collection(db, "users", user.uid, "financialGoals"),
       orderBy("createdAt", "asc")
@@ -29,7 +31,7 @@ export const useFinancialGoals = () => {
       console.error("useFinancialGoals snapshot error:", err);
       setLoading(false);
     });
-  }, [user]);
+  }, [user, enabled]);
 
   const addGoal = async (name: string, targetAmount: number, currentAmount: number, deadline?: string) => {
     if (!user || !name.trim() || targetAmount <= 0) return;

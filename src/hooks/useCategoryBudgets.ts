@@ -5,18 +5,25 @@ import { db } from "../firebase";
 import type { CategoryBudget } from "../types/expense";
 import { useAuth } from "./useAuth";
 
-export const useCategoryBudgets = () => {
+export const useCategoryBudgets = (options?: { enabled?: boolean }) => {
+  const enabled = options?.enabled !== false;
   const { user } = useAuth();
   const [budgets, setBudgets] = useState<CategoryBudget[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
-      setBudgets([]);
-      setLoading(false);
+    if (!user || !enabled) {
+      if (!enabled) {
+        setBudgets([]);
+        setLoading(false);
+      } else if (!user) {
+        setBudgets([]);
+        setLoading(false);
+      }
       return;
     }
 
+    setLoading(true);
     const q = query(
       collection(db, "users", user.uid, "categoryBudgets"),
       orderBy("month", "desc")
@@ -29,7 +36,7 @@ export const useCategoryBudgets = () => {
       console.error("useCategoryBudgets snapshot error:", err);
       setLoading(false);
     });
-  }, [user]);
+  }, [user, enabled]);
 
   const addBudget = async (
     category: string,

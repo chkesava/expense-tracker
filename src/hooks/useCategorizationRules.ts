@@ -5,18 +5,20 @@ import { db } from "../firebase";
 import type { CategorizationRule } from "../types/expense";
 import { useAuth } from "./useAuth";
 
-export const useCategorizationRules = () => {
+export const useCategorizationRules = (options?: { enabled?: boolean }) => {
+  const enabled = options?.enabled !== false;
   const { user } = useAuth();
   const [rules, setRules] = useState<CategorizationRule[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !enabled) {
       setRules([]);
       setLoading(false);
       return;
     }
 
+    setLoading(true);
     const q = query(
       collection(db, "users", user.uid, "categorizationRules"),
       orderBy("createdAt", "asc")
@@ -29,7 +31,7 @@ export const useCategorizationRules = () => {
       console.error("useCategorizationRules snapshot error:", err);
       setLoading(false);
     });
-  }, [user]);
+  }, [user, enabled]);
 
   const addRule = async (keyword: string, category: string, subcategory?: string) => {
     if (!user || !keyword.trim() || !category.trim()) return;

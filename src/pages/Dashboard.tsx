@@ -206,7 +206,7 @@ export default function Dashboard() {
   }, [expenses]);
 
   const widgetMap: Record<string, React.ReactNode> = {
-    magicChat: <MagicChatEntry />,
+    magicChat: <MagicChatEntry deferFinancialContext />,
     ...(settings.enableInvestments ? {
     investments: (
       <button

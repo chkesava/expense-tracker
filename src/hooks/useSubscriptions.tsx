@@ -1,4 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import {
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useState,
+    type ReactNode,
+} from "react";
 import {
     collection,
     query,
@@ -18,7 +25,18 @@ import { toast } from "react-toastify";
 import { useGamification } from "./useGamification";
 import { currentMonthKey, todayDateKey } from "../utils/dates";
 
-export function useSubscriptions() {
+type SubscriptionsContextType = {
+    subscriptions: Subscription[];
+    loading: boolean;
+    addSubscription: (sub: Omit<Subscription, "id" | "lastProcessed" | "createdAt">) => Promise<void>;
+    updateSubscription: (id: string, updates: Partial<Subscription>) => Promise<void>;
+    deleteSubscription: (id: string) => Promise<void>;
+    processSubscriptions: () => Promise<void>;
+};
+
+const SubscriptionsContext = createContext<SubscriptionsContextType | undefined>(undefined);
+
+export function SubscriptionsProvider({ children }: { children: ReactNode }) {
     const { user } = useAuth();
     const { addXP } = useGamification();
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
@@ -336,14 +354,28 @@ export function useSubscriptions() {
         if (processedCount > 0) {
             toast.info(`Processed ${processedCount} recurring item${processedCount > 1 ? 's' : ''}`);
         }
-    }, [user, subscriptions, loading]);
+    }, [user, subscriptions, loading, addXP]);
 
-    return {
+    const value: SubscriptionsContextType = {
         subscriptions,
         loading,
         addSubscription,
         updateSubscription,
         deleteSubscription,
-        processSubscriptions
+        processSubscriptions,
     };
+
+    return (
+        <SubscriptionsContext.Provider value={value}>
+            {children}
+        </SubscriptionsContext.Provider>
+    );
+}
+
+export function useSubscriptions() {
+    const context = useContext(SubscriptionsContext);
+    if (context === undefined) {
+        throw new Error("useSubscriptions must be used within a SubscriptionsProvider");
+    }
+    return context;
 }

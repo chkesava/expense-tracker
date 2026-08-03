@@ -42,6 +42,8 @@ interface MagicChatEntryProps {
   onSuccess?: () => void;
   defaultMode?: "record" | "advisor";
   hideModeSwitcher?: boolean;
+  /** Skip advisor Firestore listeners until the user interacts with the widget */
+  deferFinancialContext?: boolean;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -282,10 +284,22 @@ function AdvisorChart({ chartData }: { chartData: { type: "bar" | "pie" | "line"
   );
 }
 
-export default function MagicChatEntry({ onSuccess, defaultMode, hideModeSwitcher }: MagicChatEntryProps) {
+export default function MagicChatEntry({
+  onSuccess,
+  defaultMode,
+  hideModeSwitcher,
+  deferFinancialContext = false,
+}: MagicChatEntryProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { rules } = useCategorizationRules();
+  const [financialContextEnabled, setFinancialContextEnabled] = useState(
+    () => !deferFinancialContext
+  );
+  const enableFinancialContext = () => {
+    if (!financialContextEnabled) setFinancialContextEnabled(true);
+  };
+
+  const { rules } = useCategorizationRules({ enabled: financialContextEnabled });
   const { isOnline } = useOnline();
   const [input, setInput] = useState("");
   const [parsed, setParsed] = useState<ParsedExpense | null>(null);
@@ -318,13 +332,17 @@ export default function MagicChatEntry({ onSuccess, defaultMode, hideModeSwitche
   const [isThinking, setIsThinking] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
-  // Financial Data Hooks
+  // Financial Data Hooks — advisor extras are gated when deferFinancialContext is set
   const { expenses } = useExpenses();
-  const { budgets } = useCategoryBudgets();
-  const { goals } = useFinancialGoals();
+  const { budgets } = useCategoryBudgets({ enabled: financialContextEnabled });
+  const { goals } = useFinancialGoals({ enabled: financialContextEnabled });
   const { subscriptions } = useSubscriptions();
   const { accounts } = useAccounts();
-  const { trips } = useTrips();
+  const { trips } = useTrips({ enabled: financialContextEnabled });
+
+  useEffect(() => {
+    if (mode === "advisor") setFinancialContextEnabled(true);
+  }, [mode]);
 
   // Scroll to bottom whenever messages or thinking state changes
   useEffect(() => {
@@ -704,7 +722,11 @@ export default function MagicChatEntry({ onSuccess, defaultMode, hideModeSwitche
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-1 group">
+    <div
+      className="w-full max-w-2xl mx-auto px-1 group"
+      onFocusCapture={enableFinancialContext}
+      onPointerDown={enableFinancialContext}
+    >
       <motion.div 
         initial={false}
         animate={{ 

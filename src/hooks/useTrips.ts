@@ -17,18 +17,20 @@ import { db } from "../firebase";
 import { useAuth } from "./useAuth";
 import type { Trip, TripCategoryBudget } from "../types/trip";
 
-export function useTrips() {
+export function useTrips(options?: { enabled?: boolean }) {
+  const enabled = options?.enabled !== false;
   const { user } = useAuth();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !enabled) {
       setTrips([]);
       setLoading(false);
       return;
     }
 
+    setLoading(true);
     const q = query(
       collection(db, "trips"),
       where("userId", "==", user.uid),
@@ -54,7 +56,7 @@ export function useTrips() {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, enabled]);
 
   const addTrip = async (tripData: Omit<Trip, "id" | "userId" | "createdAt" | "spentAmount">, categoryBudgets: TripCategoryBudget[]) => {
     if (!user) return;

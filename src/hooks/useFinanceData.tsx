@@ -4,6 +4,7 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  limit,
   onSnapshot,
   orderBy,
   query,
@@ -16,7 +17,11 @@ import { toast } from "react-toastify";
 import { db } from "../firebase";
 import type { Account, AccountEntry, AccountPayment, AccountTransfer, AccountType, Expense, Income } from "../types/expense";
 import { isValidDateKey } from "../utils/dates";
+import { scheduleIdleWork } from "../utils/scheduleIdle";
 import { useAuth } from "./useAuth";
+
+/** First-paint expense window — full history loads after idle */
+const INITIAL_EXPENSE_LIMIT = 200;
 
 // ─── Granular Context Types ───────────────────────────────────────────────────
 
@@ -146,10 +151,14 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
     setPendingSyncCount(total);
   }, []);
 
-  // ─── Firestore Listeners (unchanged) ──────────────────────────────────────
+  // ─── Critical listeners (needed for first paint) ──────────────────────────
+
+  const limitedExpensesUnsubRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (!user) {
+      limitedExpensesUnsubRef.current?.();
+      limitedExpensesUnsubRef.current = null;
       setExpenses([]);
       setIncomes([]);
       setAccounts([]);
@@ -164,7 +173,7 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
       setPaymentsLoading(false);
       setEntriesLoading(false);
       setTransfersLoading(false);
-      
+
       pendingExpensesCountRef.current = 0;
       pendingIncomesCountRef.current = 0;
       pendingAccountsCountRef.current = 0;
@@ -180,25 +189,34 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
     setIncomesLoading(true);
     setAccountsLoading(true);
     setAccountTypesLoading(true);
+    // Secondary collections stay loading until idle hydration
     setPaymentsLoading(true);
     setEntriesLoading(true);
     setTransfersLoading(true);
 
     const base = ["users", user.uid] as const;
-    const unsubscribers = [
-      onSnapshot(
-        query(collection(db, ...base, "expenses"), orderBy("createdAt", "desc")),
-        (snap) => {
-          setExpenses(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Expense)));
-          pendingExpensesCountRef.current = snap.docs.filter((d) => d.metadata.hasPendingWrites).length;
-          updatePendingSyncCount();
-          setExpensesLoading(false);
-        },
-        (error) => {
-          console.error("Error fetching expenses:", error);
-          setExpensesLoading(false);
-        }
+
+    // Limited recent expenses for fast first paint; upgraded to full after idle
+    limitedExpensesUnsubRef.current?.();
+    limitedExpensesUnsubRef.current = onSnapshot(
+      query(
+        collection(db, ...base, "expenses"),
+        orderBy("createdAt", "desc"),
+        limit(INITIAL_EXPENSE_LIMIT)
       ),
+      (snap) => {
+        setExpenses(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Expense)));
+        pendingExpensesCountRef.current = snap.docs.filter((d) => d.metadata.hasPendingWrites).length;
+        updatePendingSyncCount();
+        setExpensesLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching expenses:", error);
+        setExpensesLoading(false);
+      }
+    );
+
+    const unsubscribers = [
       onSnapshot(
         query(collection(db, ...base, "incomes"), orderBy("createdAt", "desc")),
         (snap) => {
@@ -238,49 +256,90 @@ export function FinanceDataProvider({ children }: { children: ReactNode }) {
           setAccountTypesLoading(false);
         }
       ),
-      onSnapshot(
-        query(collection(db, ...base, "accountPayments")),
-        (snap) => {
-          setPayments(sortByDateDesc(snap.docs.map((d) => ({ id: d.id, ...d.data() } as AccountPayment))));
-          pendingPaymentsCountRef.current = snap.docs.filter((d) => d.metadata.hasPendingWrites).length;
-          updatePendingSyncCount();
-          setPaymentsLoading(false);
-        },
-        (error) => {
-          console.error("useAccountPayments snapshot error:", error);
-          setPaymentsLoading(false);
-        }
-      ),
-      onSnapshot(
-        query(collection(db, ...base, "accountEntries")),
-        (snap) => {
-          setEntries(sortByDateDesc(snap.docs.map((d) => ({ id: d.id, ...d.data() } as AccountEntry))));
-          pendingEntriesCountRef.current = snap.docs.filter((d) => d.metadata.hasPendingWrites).length;
-          updatePendingSyncCount();
-          setEntriesLoading(false);
-        },
-        (error) => {
-          console.error("useAccountEntries snapshot error:", error);
-          setEntriesLoading(false);
-        }
-      ),
-      onSnapshot(
-        query(collection(db, ...base, "accountTransfers")),
-        (snap) => {
-          setTransfers(sortByDateDesc(snap.docs.map((d) => ({ id: d.id, ...d.data() } as AccountTransfer))));
-          pendingTransfersCountRef.current = snap.docs.filter((d) => d.metadata.hasPendingWrites).length;
-          updatePendingSyncCount();
-          setTransfersLoading(false);
-        },
-        (error) => {
-          console.error("useAccountTransfers snapshot error:", error);
-          setTransfersLoading(false);
-        }
-      ),
     ];
 
     return () => {
+      limitedExpensesUnsubRef.current?.();
+      limitedExpensesUnsubRef.current = null;
       unsubscribers.forEach((unsubscribe) => unsubscribe());
+    };
+  }, [user, updatePendingSyncCount]);
+
+  // ─── Deferred: full expense history + account activity collections ────────
+
+  useEffect(() => {
+    if (!user) return;
+
+    let secondaryUnsubs: Array<() => void> = [];
+    let expensesUpgradeUnsub: (() => void) | undefined;
+
+    const cancelIdle = scheduleIdleWork(() => {
+      const base = ["users", user.uid] as const;
+
+      // Drop the limited listener before attaching the full history listener
+      limitedExpensesUnsubRef.current?.();
+      limitedExpensesUnsubRef.current = null;
+
+      expensesUpgradeUnsub = onSnapshot(
+        query(collection(db, ...base, "expenses"), orderBy("createdAt", "desc")),
+        (snap) => {
+          setExpenses(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Expense)));
+          pendingExpensesCountRef.current = snap.docs.filter((d) => d.metadata.hasPendingWrites).length;
+          updatePendingSyncCount();
+          setExpensesLoading(false);
+        },
+        (error) => {
+          console.error("Error fetching full expenses:", error);
+        }
+      );
+
+      secondaryUnsubs = [
+        onSnapshot(
+          query(collection(db, ...base, "accountPayments")),
+          (snap) => {
+            setPayments(sortByDateDesc(snap.docs.map((d) => ({ id: d.id, ...d.data() } as AccountPayment))));
+            pendingPaymentsCountRef.current = snap.docs.filter((d) => d.metadata.hasPendingWrites).length;
+            updatePendingSyncCount();
+            setPaymentsLoading(false);
+          },
+          (error) => {
+            console.error("useAccountPayments snapshot error:", error);
+            setPaymentsLoading(false);
+          }
+        ),
+        onSnapshot(
+          query(collection(db, ...base, "accountEntries")),
+          (snap) => {
+            setEntries(sortByDateDesc(snap.docs.map((d) => ({ id: d.id, ...d.data() } as AccountEntry))));
+            pendingEntriesCountRef.current = snap.docs.filter((d) => d.metadata.hasPendingWrites).length;
+            updatePendingSyncCount();
+            setEntriesLoading(false);
+          },
+          (error) => {
+            console.error("useAccountEntries snapshot error:", error);
+            setEntriesLoading(false);
+          }
+        ),
+        onSnapshot(
+          query(collection(db, ...base, "accountTransfers")),
+          (snap) => {
+            setTransfers(sortByDateDesc(snap.docs.map((d) => ({ id: d.id, ...d.data() } as AccountTransfer))));
+            pendingTransfersCountRef.current = snap.docs.filter((d) => d.metadata.hasPendingWrites).length;
+            updatePendingSyncCount();
+            setTransfersLoading(false);
+          },
+          (error) => {
+            console.error("useAccountTransfers snapshot error:", error);
+            setTransfersLoading(false);
+          }
+        ),
+      ];
+    }, { timeoutMs: 2000, fallbackDelayMs: 800 });
+
+    return () => {
+      cancelIdle();
+      expensesUpgradeUnsub?.();
+      secondaryUnsubs.forEach((unsubscribe) => unsubscribe());
     };
   }, [user, updatePendingSyncCount]);
 

@@ -20,6 +20,8 @@ import { useSubscriptions } from "./hooks/useSubscriptions";
 import { useTheme } from "./hooks/useTheme";
 import { ModalProvider, useModals } from "./hooks/useModals";
 import { CelebrationProvider } from "./hooks/useCelebration";
+import { GamificationProvider } from "./hooks/useGamification";
+import { SubscriptionsProvider } from "./hooks/useSubscriptions";
 import Modal from "./components/common/Modal";
 import ExpenseForm from "./components/ExpenseForm";
 import MonthDrawer from "./components/MonthDrawer";
@@ -30,8 +32,8 @@ import AdminRouteGuard from "./guards/AdminRouteGuard";
 import AuthPage from "./pages/AuthPage";
 import AuraBackground from "./components/layout/AuraBackground";
 import { LedgerStateProvider } from "./hooks/useLedgerState";
-import { useAlertChecker } from "./features/portfolio/hooks/useAlertChecker";
-import SipCatchUp from "./features/sip/components/SipCatchUp";
+import DeferredStartupEffects from "./components/DeferredStartupEffects";
+import { scheduleIdleWork } from "./utils/scheduleIdle";
 
 const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
 const LedgerHub = lazyWithRetry(() => import("./pages/LedgerHub"));
@@ -85,7 +87,13 @@ function AppContent() {
   };
 
   useEffect(() => {
-    if (user) processSubscriptions();
+    if (!user) return;
+    return scheduleIdleWork(
+      () => {
+        void processSubscriptions();
+      },
+      { timeoutMs: 3000, fallbackDelayMs: 1500 }
+    );
   }, [processSubscriptions, user]);
 
   useEffect(() => {
@@ -137,7 +145,6 @@ function AppContent() {
 }
 
 function AppRoutes() {
-  useAlertChecker();
   const location = useLocation();
   const { settings } = useSettings();
   const {
@@ -157,7 +164,7 @@ function AppRoutes() {
 
   return (
     <>
-      <SipCatchUp />
+      <DeferredStartupEffects />
       <AuraBackground />
       {isAddExpenseOpen && (
         <Modal
@@ -271,13 +278,17 @@ export default function App() {
         <ModalProvider>
           <LedgerStateProvider>
             <CelebrationProvider>
-              <Suspense fallback={<RouteFallback />}>
-                <Routes>
-                  <Route path="/payment/:slug" element={<PaymentRequestPage />} />
-                  <Route path="/pay/:slug" element={<PaySlugRedirect />} />
-                  <Route path="*" element={<AppContent />} />
-                </Routes>
-              </Suspense>
+              <GamificationProvider>
+                <SubscriptionsProvider>
+                  <Suspense fallback={<RouteFallback />}>
+                    <Routes>
+                      <Route path="/payment/:slug" element={<PaymentRequestPage />} />
+                      <Route path="/pay/:slug" element={<PaySlugRedirect />} />
+                      <Route path="*" element={<AppContent />} />
+                    </Routes>
+                  </Suspense>
+                </SubscriptionsProvider>
+              </GamificationProvider>
             </CelebrationProvider>
           </LedgerStateProvider>
         </ModalProvider>

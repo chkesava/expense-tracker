@@ -1,17 +1,18 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useAuth } from "./useAuth";
 import { db } from "../firebase";
-import { doc, onSnapshot, setDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
+import { useUserDoc } from "./useUserDoc";
 
-type Theme = 
-  | "light" 
-  | "dark" 
-  | "midnight" 
-  | "midnight-olive" 
-  | "vintage-parchment" 
-  | "sakura-bloom" 
-  | "cyberpunk" 
-  | "nordic" 
+type Theme =
+  | "light"
+  | "dark"
+  | "midnight"
+  | "midnight-olive"
+  | "vintage-parchment"
+  | "sakura-bloom"
+  | "cyberpunk"
+  | "nordic"
   | "deep-sea"
   | "glass-3d"
   | "claymorphism";
@@ -27,42 +28,31 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const { realUser } = useAuth();
+  const { data } = useUserDoc();
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window === "undefined") return "light";
     const stored = window.localStorage.getItem(STORAGE_KEY);
     return (stored as Theme) || "light";
   });
 
-  // Listen to Firestore settings changes to sync theme
+  // Sync theme from the shared user doc listener (no extra onSnapshot)
   useEffect(() => {
-    if (!realUser) return;
-
-    const ref = doc(db, "users", realUser.uid);
-    const unsub = onSnapshot(ref, (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        if (data.theme) {
-          setThemeState(data.theme as Theme);
-        }
-      }
-    });
-
-    return () => unsub();
-  }, [realUser]);
+    if (data?.theme) {
+      setThemeState(data.theme as Theme);
+    }
+  }, [data?.theme]);
 
   useEffect(() => {
     const root = document.documentElement;
-    // Remove all possible theme classes
     const themeClasses = [
-      "light", "dark", "theme-midnight", "theme-midnight-olive", 
-      "theme-vintage-parchment", "theme-sakura-bloom", 
+      "light", "dark", "theme-midnight", "theme-midnight-olive",
+      "theme-vintage-parchment", "theme-sakura-bloom",
       "theme-cyberpunk", "theme-nordic", "theme-deep-sea", "theme-glass-3d",
       "theme-claymorphism"
     ];
     root.classList.remove(...themeClasses);
     root.classList.remove("dark");
-    
-    // Add the appropriate class
+
     if (theme === "dark" || theme === "light") {
       root.classList.add(theme);
     } else {
@@ -71,7 +61,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         root.classList.add("dark");
       }
     }
-    
+
     window.localStorage.setItem(STORAGE_KEY, theme);
   }, [theme]);
 

@@ -2,7 +2,8 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { useAuth } from "./useAuth";
 import { db } from "../firebase";
-import { doc, onSnapshot, setDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
+import { useUserDoc } from "./useUserDoc";
 
 type Settings = {
   lockPastMonths: boolean;
@@ -80,42 +81,44 @@ type SettingsContextType = {
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
+function mergeSettingsFromDoc(data: Record<string, unknown> | null): Settings {
+  if (!data) return DEFAULTS;
+  return {
+    ...DEFAULTS,
+    ...data,
+    dashboardWidgets: {
+      ...DEFAULTS.dashboardWidgets,
+      ...((data.dashboardWidgets as Settings["dashboardWidgets"]) || {}),
+    },
+    dashboardOrder: (data.dashboardOrder as string[]) || DEFAULTS.dashboardOrder,
+    ghostMode: (data.ghostMode as boolean | undefined) ?? DEFAULTS.ghostMode,
+  } as Settings;
+}
+
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const { realUser } = useAuth();
+  const { data, exists, loading: userDocLoading } = useUserDoc();
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
-  const [loading, setLoading] = useState(true);
+  const [seedAttempted, setSeedAttempted] = useState(false);
 
-  // Load settings from Firestore
+  // Derive settings from the shared user doc (no extra onSnapshot)
   useEffect(() => {
     if (!realUser) {
       setSettings(DEFAULTS);
-      setLoading(false);
+      setSeedAttempted(false);
       return;
     }
+    if (userDocLoading) return;
 
-    const ref = doc(db, "users", realUser.uid);
-    const unsub = onSnapshot(ref, (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        setSettings({
-          ...DEFAULTS,
-          ...data,
-          dashboardWidgets: {
-            ...DEFAULTS.dashboardWidgets,
-            ...(data.dashboardWidgets || {}),
-          },
-          dashboardOrder: data.dashboardOrder || DEFAULTS.dashboardOrder,
-          ghostMode: data.ghostMode ?? DEFAULTS.ghostMode,
-        } as Settings);
-      } else {
-        setDoc(ref, DEFAULTS, { merge: true }).catch(console.error);
-        setSettings(DEFAULTS);
-      }
-      setLoading(false);
-    });
-
-    return () => unsub();
-  }, [realUser]);
+    if (exists && data) {
+      setSettings(mergeSettingsFromDoc(data as Record<string, unknown>));
+      setSeedAttempted(false);
+    } else if (!exists && !seedAttempted) {
+      setSeedAttempted(true);
+      setDoc(doc(db, "users", realUser.uid), DEFAULTS, { merge: true }).catch(console.error);
+      setSettings(DEFAULTS);
+    }
+  }, [realUser, data, exists, userDocLoading, seedAttempted]);
 
   useEffect(() => {
     if (settings.ghostMode) {
@@ -124,6 +127,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       document.body.classList.remove("ghost-mode");
     }
   }, [settings.ghostMode]);
+
+  const loading = Boolean(realUser) && userDocLoading;
 
   const updateSettings = async (updates: Partial<Settings>) => {
     if (!realUser) return;
@@ -144,7 +149,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const setMonthlyBudget = (val: number) => updateSettings({ monthlyBudget: val });
   const setTimezone = (val: string) => updateSettings({ timezone: val });
   const setUpiId = (val: string) => updateSettings({ upiId: val });
-  
 
   const toggleDashboardWidget = (key: keyof Settings["dashboardWidgets"]) => {
     const newWidgets = { ...settings.dashboardWidgets, [key]: !settings.dashboardWidgets[key] };
