@@ -3,7 +3,7 @@ import { doc, setDoc, onSnapshot, getDoc, collection, query, where, getDocs } fr
 import { db } from '../firebase';
 import { useAuth } from './useAuth';
 import type { FocusSession } from '../types/focus';
-import { toast } from 'react-toastify';
+import { toast } from '../lib/toast';
 import { todayDateKey } from '../utils/dates';
 
 export function useFocusMode() {

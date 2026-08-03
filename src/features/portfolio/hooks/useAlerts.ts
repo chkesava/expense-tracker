@@ -9,7 +9,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { toast } from "react-toastify";
+import { toast } from "../../../lib/toast";
 import { db } from "../../../firebase";
 import type { PriceAlert } from "../types";
 import { useAuth } from "../../../hooks/useAuth";

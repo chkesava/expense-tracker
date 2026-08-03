@@ -45,7 +45,7 @@ import {
   PieChart as RePieChart,
   Pie
 } from "recharts";
-import { COLORS } from "../utils/chartColors";
+import { chartTokens, chartTooltipStyle, getChartColor } from "../utils/chartColors";
 import PageHeader from "../components/layout/PageHeader";
 import Button from "../components/ui/Button";
 import { currentMonthKey, todayDateKey, toLocalDateKey } from "../utils/dates";
@@ -186,6 +186,9 @@ export default function AnalysisLab({ hideHeader }: { hideHeader?: boolean }) {
     setSelectedAccountTypeId("");
     setQuery("");
   };
+
+  const chartPalette = chartTokens();
+  const chartTip = chartTooltipStyle(chartPalette);
 
   return (
     <motion.main
@@ -372,11 +375,11 @@ export default function AnalysisLab({ hideHeader }: { hideHeader?: boolean }) {
                         <AreaChart data={analytics.trendData}>
                             <defs>
                                 <linearGradient id="colorSpend" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                    <stop offset="5%" stopColor={chartPalette.primary} stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor={chartPalette.primary} stopOpacity={0}/>
                                 </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.5} />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartPalette.border} opacity={0.5} />
                             <XAxis 
                                 dataKey="date" 
                                 hide={analytics.trendData.length > 31}
@@ -385,8 +388,8 @@ export default function AnalysisLab({ hideHeader }: { hideHeader?: boolean }) {
                                 tick={{ fontSize: 10, fill: "#94a3b8" }}
                             />
                             <YAxis hide domain={['auto', 'auto']} />
-                            <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                            <Area type="monotone" dataKey="amount" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorSpend)" />
+                            <Tooltip contentStyle={chartTip} />
+                            <Area type="monotone" dataKey="amount" stroke={chartPalette.primary} strokeWidth={3} fillOpacity={1} fill="url(#colorSpend)" />
                         </AreaChart>
                     </ResponsiveContainer>
                 </div>
@@ -398,9 +401,9 @@ export default function AnalysisLab({ hideHeader }: { hideHeader?: boolean }) {
                     <ResponsiveContainer width="100%" height="100%">
                         <RePieChart>
                             <Pie data={analytics.pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={85} paddingAngle={5}>
-                                {analytics.pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                {analytics.pieData.map((_, i) => <Cell key={i} fill={getChartColor(i, chartPalette)} />)}
                             </Pie>
-                            <Tooltip contentStyle={{ borderRadius: '16px', border: 'none' }} />
+                            <Tooltip contentStyle={chartTip} />
                         </RePieChart>
                     </ResponsiveContainer>
                 </div>
@@ -419,15 +422,15 @@ export default function AnalysisLab({ hideHeader }: { hideHeader?: boolean }) {
                         <AreaChart data={analytics.cumulativeData}>
                             <defs>
                                 <linearGradient id="colorCumulative" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                    <stop offset="5%" stopColor={chartPalette.primary} stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor={chartPalette.primary} stopOpacity={0}/>
                                 </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.5} />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartPalette.border} opacity={0.5} />
                             <XAxis dataKey="date" hide />
                             <YAxis hide />
-                            <Tooltip contentStyle={{ borderRadius: '16px', border: 'none' }} />
-                            <Area type="stepAfter" dataKey="cumulative" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorCumulative)" />
+                            <Tooltip contentStyle={chartTip} />
+                            <Area type="stepAfter" dataKey="cumulative" stroke={chartPalette.primary} strokeWidth={3} fillOpacity={1} fill="url(#colorCumulative)" />
                         </AreaChart>
                     </ResponsiveContainer>
                 </div>
@@ -441,11 +444,11 @@ export default function AnalysisLab({ hideHeader }: { hideHeader?: boolean }) {
                 <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={analytics.monthlyData}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.5} />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartPalette.border} opacity={0.5} />
                             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
                             <YAxis hide />
-                            <Tooltip contentStyle={{ borderRadius: '16px', border: 'none' }} cursor={{ fill: '#f8fafc' }} />
-                            <Bar dataKey="amount" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                            <Tooltip contentStyle={chartTip} cursor={{ fill: chartPalette.card }} />
+                            <Bar dataKey="amount" fill={chartPalette.primary} radius={[8, 8, 0, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
@@ -462,9 +465,9 @@ export default function AnalysisLab({ hideHeader }: { hideHeader?: boolean }) {
                       <BarChart data={analytics.accountData} layout="vertical">
                           <XAxis type="number" hide />
                           <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} width={100} />
-                          <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '16px', border: 'none' }} />
+                          <Tooltip cursor={{ fill: 'transparent' }} contentStyle={chartTip} />
                           <Bar dataKey="value" radius={[0, 10, 10, 0]} barSize={24}>
-                              {analytics.accountData.map((_, i) => <Cell key={i} fill={COLORS[(i + 2) % COLORS.length]} />)}
+                              {analytics.accountData.map((_, i) => <Cell key={i} fill={getChartColor(i + 2, chartPalette)} />)}
                           </Bar>
                       </BarChart>
                   </ResponsiveContainer>
@@ -546,7 +549,7 @@ export default function AnalysisLab({ hideHeader }: { hideHeader?: boolean }) {
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={analytics.dayDist}>
                             <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
-                                {analytics.dayDist.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} opacity={0.7} />)}
+                                {analytics.dayDist.map((_, i) => <Cell key={i} fill={getChartColor(i, chartPalette)} opacity={0.7} />)}
                             </Bar>
                              <Tooltip cursor={{ fill: 'transparent' }} />
                              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9 }} />

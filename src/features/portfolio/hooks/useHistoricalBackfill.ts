@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { toast } from "react-toastify";
+import { toast } from "../../../lib/toast";
 import { doc, serverTimestamp, writeBatch } from "firebase/firestore";
 import { db } from "../../../firebase";
 import { useAuth } from "../../../hooks/useAuth";

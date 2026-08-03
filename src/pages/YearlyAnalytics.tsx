@@ -8,7 +8,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell, AreaChart, Area, PieChart, Pie
 } from "recharts";
-import { COLORS } from "../utils/chartColors";
+import { chartAxisTick, chartTokens, chartTooltipStyle, getChartColor } from "../utils/chartColors";
 import Amount from "../components/common/Amount";
 import { Skeleton } from "../components/common/Skeleton";
 import { TrendingDown, TrendingUp, Minus } from "lucide-react";
@@ -93,6 +93,10 @@ export default function YearlyAnalytics({ year }: YearlyAnalyticsProps) {
     );
   }
 
+  const tokens = chartTokens();
+  const tip = chartTooltipStyle(tokens);
+  const tick = chartAxisTick(tokens);
+
   return (
     <div className="space-y-6">
       {/* Year selector */}
@@ -137,54 +141,54 @@ export default function YearlyAnalytics({ year }: YearlyAnalyticsProps) {
       </div>
 
       {/* Monthly Income vs Spend bar chart */}
-      <div className="rounded-[2rem] border border-white/60 bg-white p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-sm font-bold">Monthly Breakdown</h3>
-          <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-400 inline-block" />Spent</span>
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" />Earned</span>
+      <div className="bento-card p-6">
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-foreground">Monthly breakdown</h3>
+          <div className="flex items-center gap-4 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full bg-destructive" />Spent</span>
+            <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full bg-success" />Earned</span>
           </div>
         </div>
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={monthlyData} barGap={4} barSize={10}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.5} />
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94a3b8" }} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={tokens.border} opacity={0.5} />
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={tick} />
               <YAxis hide />
               <Tooltip
-                contentStyle={{ borderRadius: "16px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
+                contentStyle={tip}
                 formatter={(v: number | undefined) => [`₹${(v ?? 0).toLocaleString()}`, ""]}
               />
-              <Bar dataKey="earned" fill="#34d399" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="spent" fill="#fb7185" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="earned" fill={tokens.success} radius={[6, 6, 0, 0]} />
+              <Bar dataKey="spent" fill={tokens.destructive} radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       {/* Savings trajectory */}
-      <div className="rounded-[2rem] border border-white/60 bg-white p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-sm font-bold">Savings Trajectory</h3>
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Month by Month</span>
+      <div className="bento-card p-6">
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-foreground">Savings trajectory</h3>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Month by month</span>
         </div>
         <div className="h-48 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={monthlyData}>
               <defs>
                 <linearGradient id="savingsGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                  <stop offset="5%" stopColor={tokens.primary} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={tokens.primary} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.4} />
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94a3b8" }} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={tokens.border} opacity={0.4} />
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={tick} />
               <YAxis hide />
               <Tooltip
-                contentStyle={{ borderRadius: "16px", border: "none" }}
+                contentStyle={tip}
                 formatter={(v: number | undefined) => [`₹${(v ?? 0).toLocaleString()}`, "Savings"]}
               />
-              <Area type="monotone" dataKey="savings" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#savingsGradient)" dot={{ r: 4, fill: "#6366f1" }} />
+              <Area type="monotone" dataKey="savings" stroke={tokens.primary} strokeWidth={3} fillOpacity={1} fill="url(#savingsGradient)" dot={{ r: 4, fill: tokens.primary }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -193,25 +197,25 @@ export default function YearlyAnalytics({ year }: YearlyAnalyticsProps) {
       {/* Category breakdown + Pie */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Category bars */}
-        <div className="rounded-[2rem] border border-white/60 bg-white p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900">
-          <h3 className="text-sm font-bold mb-6">Top Categories</h3>
+        <div className="bento-card p-6">
+          <h3 className="mb-6 text-sm font-semibold text-foreground">Top categories</h3>
           <div className="space-y-3">
             {categoryData.length === 0 ? (
-              <p className="text-slate-400 text-sm text-center py-8">No expenses for {selectedYear}</p>
+              <p className="py-8 text-center text-sm text-muted-foreground">No expenses for {selectedYear}</p>
             ) : (
               categoryData.map((cat, i) => (
                 <div key={cat.category} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="text-slate-700 dark:text-slate-200">{cat.category}</span>
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <span className="text-foreground">{cat.category}</span>
                     <Amount value={cat.value} />
                   </div>
-                  <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${totalSpent > 0 ? (cat.value / totalSpent) * 100 : 0}%` }}
                       transition={{ duration: 0.6, delay: i * 0.05 }}
                       className="h-full rounded-full"
-                      style={{ backgroundColor: COLORS[i % COLORS.length] }}
+                      style={{ backgroundColor: getChartColor(i, tokens) }}
                     />
                   </div>
                 </div>
@@ -221,10 +225,10 @@ export default function YearlyAnalytics({ year }: YearlyAnalyticsProps) {
         </div>
 
         {/* Pie */}
-        <div className="rounded-[2rem] border border-white/60 bg-white p-6 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900">
-          <h3 className="text-sm font-bold mb-4 text-center">Category Share</h3>
+        <div className="bento-card p-6">
+          <h3 className="mb-4 text-center text-sm font-semibold text-foreground">Category share</h3>
           {pieData.length === 0 ? (
-            <p className="text-slate-400 text-sm text-center py-16">No data</p>
+            <p className="py-16 text-center text-sm text-muted-foreground">No data</p>
           ) : (
             <div className="h-56 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -240,11 +244,11 @@ export default function YearlyAnalytics({ year }: YearlyAnalyticsProps) {
                     paddingAngle={4}
                   >
                     {pieData.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                      <Cell key={i} fill={getChartColor(i, tokens)} />
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{ borderRadius: "16px", border: "none" }}
+                    contentStyle={tip}
                     formatter={(v: number | undefined) => [`₹${(v ?? 0).toLocaleString()}`, ""]}
                   />
                 </PieChart>
@@ -256,17 +260,17 @@ export default function YearlyAnalytics({ year }: YearlyAnalyticsProps) {
 
       {/* Best / Worst highlights */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="rounded-[2rem] bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/30 p-6">
-          <div className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-2">Best Savings Month</div>
-          <div className="text-3xl font-black text-slate-900 dark:text-white">{bestMonth?.month ?? "—"}</div>
-          <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+        <div className="rounded-2xl border border-success/20 bg-success/10 p-6">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-success">Best savings month</div>
+          <div className="text-3xl font-semibold text-foreground">{bestMonth?.month ?? "—"}</div>
+          <div className="mt-1 text-sm font-semibold text-success">
             <Amount value={bestMonth?.savings ?? 0} prefix={bestMonth?.savings >= 0 ? "+" : ""} />
           </div>
         </div>
-        <div className="rounded-[2rem] bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-800/30 p-6">
-          <div className="text-[10px] font-black uppercase tracking-widest text-rose-600 dark:text-rose-400 mb-2">Highest Spend Month</div>
-          <div className="text-3xl font-black text-slate-900 dark:text-white">{worstMonth?.month ?? "—"}</div>
-          <div className="text-sm font-bold text-rose-600 dark:text-rose-400 mt-1">
+        <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-6">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-destructive">Highest spend month</div>
+          <div className="text-3xl font-semibold text-foreground">{worstMonth?.month ?? "—"}</div>
+          <div className="mt-1 text-sm font-semibold text-destructive">
             <Amount value={worstMonth?.spent ?? 0} />
           </div>
         </div>

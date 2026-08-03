@@ -11,7 +11,7 @@ import { getAccountKind } from "../utils/accountKind";
 import { computeBankBalance, previewBalanceAfterBillPayment } from "../utils/accountBalance";
 import { todayDateKey } from "../utils/dates";
 import Amount from "./common/Amount";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 import { useNavigate } from "react-router-dom";
 import FormField from "./ui/FormField";
 import Input from "./ui/Input";

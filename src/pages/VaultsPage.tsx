@@ -155,7 +155,7 @@ function VaultCard({ vault }: { vault: SharedVault }) {
     return (
         <motion.div 
             whileHover={{ y: -5 }}
-            className="group relative overflow-hidden rounded-[2.5rem] border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-white/5 dark:bg-slate-900/80 transition-all"
+            className="group relative overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-sm transition-all"
         >
             <div className="absolute -right-4 -top-4 h-32 w-32 rounded-full blur-3xl opacity-20" style={{ backgroundColor: vault.themeColor }} />
             
@@ -166,8 +166,8 @@ function VaultCard({ vault }: { vault: SharedVault }) {
                             <Wallet size={24} />
                         </div>
                         <div>
-                          <h3 className="font-black text-lg">{vault.name}</h3>
-                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                          <h3 className="text-lg font-semibold text-foreground">{vault.name}</h3>
+                          <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                             <Users size={10} />
                             <span>{vault.memberIds.length} Members</span>
                           </div>
@@ -176,18 +176,18 @@ function VaultCard({ vault }: { vault: SharedVault }) {
                 </div>
 
                 <div className="space-y-2">
-                    <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-widest text-slate-400">
-                        <span>Saved Progress</span>
+                    <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        <span>Saved progress</span>
                         <div className="flex items-center gap-1">
                             <Target size={10} />
                             <Amount value={vault.budget} />
                         </div>
                     </div>
-                    <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden relative">
+                    <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted relative">
                         <motion.div 
                             initial={{ width: 0 }}
                             animate={{ width: `${progress}%` }}
-                            className="h-full rounded-full absolute left-0 top-0"
+                            className="absolute left-0 top-0 h-full rounded-full"
                             style={{ backgroundColor: vault.themeColor }}
                         />
                     </div>
@@ -196,9 +196,9 @@ function VaultCard({ vault }: { vault: SharedVault }) {
                 <div className="pt-2">
                     <button 
                         onClick={() => navigate(`/vaults/${vault.id}`)}
-                        className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all group/btn"
+                        className="group/btn flex w-full items-center justify-between rounded-2xl bg-muted/50 px-4 py-3 transition-colors hover:bg-muted"
                     >
-                        <span className="text-xs font-black uppercase tracking-widest">View Details</span>
+                        <span className="text-xs font-semibold uppercase tracking-wide text-foreground">View details</span>
                         <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
                     </button>
                 </div>
@@ -209,12 +209,12 @@ function VaultCard({ vault }: { vault: SharedVault }) {
 
 function FeatureCard({ icon, title, desc }: { icon: any, title: string, desc: string }) {
     return (
-        <div className="p-6 rounded-3xl bg-white/50 dark:bg-slate-900/50 border border-white dark:border-white/5 backdrop-blur-sm text-left">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center mb-4">
+        <div className="rounded-3xl border border-border bg-card p-6 text-left">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 {icon}
             </div>
-            <h4 className="font-bold mb-1">{title}</h4>
-            <p className="text-xs text-slate-500 leading-relaxed">{desc}</p>
+            <h4 className="mb-1 font-semibold text-foreground">{title}</h4>
+            <p className="text-xs leading-relaxed text-muted-foreground">{desc}</p>
         </div>
     );
 }

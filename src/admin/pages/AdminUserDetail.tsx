@@ -19,7 +19,7 @@ import {
   Legend,
 } from 'chart.js';
 import { ArrowLeft, ChevronLeft, ChevronRight, ShieldAlert, ShieldCheck } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from "../../lib/toast";
 
 ChartJS.register(
   CategoryScale,

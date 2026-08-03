@@ -16,7 +16,7 @@ import { CRYPTO_COINS } from "../data/cryptoCoins";
 import { cryptoQuoteKey, mfQuoteKey } from "../../../types/market";
 import { fieldClass } from "../utils/styles";
 import { toLocalDateKey } from "../../../utils/dates";
-import { toast } from "react-toastify";
+import { toast } from "../../../lib/toast";
 
 type AddableInstrument = "stock" | "etf" | "mutual_fund" | "crypto";
 

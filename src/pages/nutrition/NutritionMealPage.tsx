@@ -5,7 +5,7 @@ import { analyzeNutrition } from "../../services/aiService";
 import { fetchBarcodeData } from "../../services/openFoodFactsService";
 import BarcodeScanner from "../../components/nutrition/BarcodeScanner";
 import { ArrowLeft, Sparkles, Check, Trash2, ScanBarcode, X } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from "../../lib/toast";
 import type { FoodItem, Meal } from "../../types/nutrition";
 
 export default function NutritionMealPage() {

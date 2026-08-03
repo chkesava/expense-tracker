@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import { toast } from "react-toastify";
+import { toast } from "../../../lib/toast";
 import { db } from "../../../firebase";
 import { useAuth } from "../../../hooks/useAuth";
 import { executeDuePlans, executeSipPlan } from "../services/sipExecutionEngine";

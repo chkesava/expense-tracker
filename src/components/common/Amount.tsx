@@ -1,33 +1,31 @@
 import { cn } from "../../lib/utils";
 import { useSystemSettings } from "../../hooks/useSystemSettings";
-
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  INR: "₹",
-  USD: "$",
-  EUR: "€",
-  GBP: "£",
-  JPY: "¥",
-  AUD: "A$",
-  CAD: "C$",
-  SGD: "S$",
-  AED: "د.إ",
-};
+import { currencySymbol, formatAmountNumber } from "../../utils/formatCurrency";
 
 interface AmountProps {
   value: number;
   prefix?: string;
   className?: string;
   showBlur?: boolean;
+  /** Force fixed decimal places (default: smart 0–2). */
+  fractionDigits?: number;
 }
 
-export default function Amount({ value, prefix, className, showBlur = true }: AmountProps) {
+export default function Amount({
+  value,
+  prefix,
+  className,
+  showBlur = true,
+  fractionDigits,
+}: AmountProps) {
   const { settings } = useSystemSettings();
-  const defaultSymbol = CURRENCY_SYMBOLS[settings?.defaultCurrency || "INR"] || "₹";
-  const displayPrefix = prefix !== undefined ? prefix : defaultSymbol;
+  const currency = settings?.defaultCurrency || "INR";
+  const displayPrefix = prefix !== undefined ? prefix : currencySymbol(currency);
 
   return (
-    <span className={cn(className, showBlur && "privacy-blur")}>
-      {displayPrefix}{value.toLocaleString()}
+    <span className={cn("tabular-nums", className, showBlur && "privacy-blur")}>
+      {displayPrefix}
+      {formatAmountNumber(value, currency, { fractionDigits })}
     </span>
   );
 }

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useNutritionProfile } from "../../hooks/useNutritionProfile";
 import type { NutritionProfile, GoalType, ActivityLevel, DietPreference } from "../../types/nutrition";
 import { Save, Calculator } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from "../../lib/toast";
 import { motion } from "framer-motion";
 
 export default function NutritionProfilePage() {

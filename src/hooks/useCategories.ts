@@ -14,7 +14,7 @@ import { db } from "../firebase";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Category } from "../types/expense";
 import { useAuth } from "./useAuth";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 
 export const useCategories = () => {
   const { user } = useAuth();

@@ -20,9 +20,16 @@
   --color-accent-foreground: hsl(var(--accent-foreground));
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+  --color-hover: hsl(var(--hover));
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
@@ -54,10 +61,18 @@
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
+
+    --success: 152 60% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 24 10% 10%;
+    --info: 210 90% 50%;
+    --info-foreground: 0 0% 100%;
     
     --border: 220 13% 91%;
     --input: 220 13% 91%;
     --ring: 245 100% 60%;
+    --hover: 245 100% 60% / 0.08;
     
     --radius: 1rem;
     
@@ -90,12 +105,20 @@
   --accent: 245 100% 15%;
   --accent-foreground: 245 100% 65%;
   
-  --destructive: 0 63% 31%;
+  --destructive: 0 70% 45%;
   --destructive-foreground: 210 40% 98%;
+
+  --success: 152 55% 45%;
+  --success-foreground: 230 40% 4%;
+  --warning: 38 90% 55%;
+  --warning-foreground: 24 10% 10%;
+  --info: 210 90% 60%;
+  --info-foreground: 230 40% 4%;
   
   --border: 230 40% 12%;
   --input: 230 40% 12%;
   --ring: 245 100% 65%;
+  --hover: 245 100% 65% / 0.12;
 
   /* Dark Mode Elevations */
   --glass-bg: rgba(10, 12, 20, 0.85);
@@ -121,6 +144,13 @@
   --accent-foreground: 217 91% 60%;
   --destructive: 0 63% 31%;
   --destructive-foreground: 210 40% 98%;
+  --success: 152 55% 45%;
+  --success-foreground: 210 40% 98%;
+  --warning: 38 90% 55%;
+  --warning-foreground: 24 10% 10%;
+  --info: 210 90% 60%;
+  --info-foreground: 210 40% 98%;
+  --hover: 217 91% 60% / 0.12;
   --border: 222 47% 18%;
   --input: 222 47% 18%;
   --ring: 217 91% 60%;
@@ -144,6 +174,13 @@
   --accent-foreground: 75 40% 85%;
   --destructive: 0 60% 45%;
   --destructive-foreground: 0 0% 100%;
+  --success: 145 45% 42%;
+  --success-foreground: 140 15% 5%;
+  --warning: 45 80% 48%;
+  --warning-foreground: 140 15% 5%;
+  --info: 200 70% 48%;
+  --info-foreground: 140 15% 5%;
+  --hover: 75 40% 55% / 0.12;
   --border: 140 12% 18%;
   --input: 140 12% 18%;
   --ring: 75 40% 55%;
@@ -167,6 +204,13 @@
   --accent-foreground: 25 45% 30%;
   --destructive: 0 70% 40%;
   --destructive-foreground: 0 0% 100%;
+  --success: 145 40% 32%;
+  --success-foreground: 40 30% 98%;
+  --warning: 32 80% 42%;
+  --warning-foreground: 40 30% 98%;
+  --info: 205 45% 40%;
+  --info-foreground: 40 30% 98%;
+  --hover: 25 45% 35% / 0.1;
   --border: 35 20% 80%;
   --input: 35 20% 80%;
   --ring: 25 45% 35%;
@@ -190,6 +234,13 @@
   --accent-foreground: 350 40% 35%;
   --destructive: 0 85% 65%;
   --destructive-foreground: 0 0% 100%;
+  --success: 152 45% 40%;
+  --success-foreground: 0 0% 100%;
+  --warning: 35 90% 52%;
+  --warning-foreground: 24 10% 10%;
+  --info: 210 75% 55%;
+  --info-foreground: 0 0% 100%;
+  --hover: 350 65% 75% / 0.12;
   --border: 350 30% 90%;
   --input: 350 30% 90%;
   --ring: 350 65% 75%;
@@ -213,6 +264,13 @@
   --accent-foreground: 280 50% 4%;
   --destructive: 0 100% 50%;
   --destructive-foreground: 0 0% 100%;
+  --success: 150 100% 45%;
+  --success-foreground: 280 50% 4%;
+  --warning: 50 100% 50%;
+  --warning-foreground: 280 50% 4%;
+  --info: 180 100% 50%;
+  --info-foreground: 280 50% 4%;
+  --hover: 320 100% 60% / 0.15;
   --border: 280 40% 15%;
   --input: 280 40% 15%;
   --ring: 320 100% 60%;
@@ -236,6 +294,13 @@
   --accent-foreground: 30 40% 30%;
   --destructive: 10 50% 45%;
   --destructive-foreground: 0 0% 100%;
+  --success: 150 35% 38%;
+  --success-foreground: 210 20% 98%;
+  --warning: 30 70% 45%;
+  --warning-foreground: 210 20% 98%;
+  --info: 200 40% 42%;
+  --info-foreground: 210 20% 98%;
+  --hover: 200 15% 40% / 0.1;
   --border: 210 15% 85%;
   --input: 210 15% 85%;
   --ring: 200 15% 40%;
@@ -259,6 +324,13 @@
   --accent-foreground: 160 80% 95%;
   --destructive: 0 70% 50%;
   --destructive-foreground: 0 0% 100%;
+  --success: 165 80% 42%;
+  --success-foreground: 220 50% 4%;
+  --warning: 40 90% 52%;
+  --warning-foreground: 220 50% 4%;
+  --info: 190 100% 45%;
+  --info-foreground: 220 50% 4%;
+  --hover: 165 90% 45% / 0.12;
   --border: 220 40% 18%;
   --input: 220 40% 18%;
   --ring: 165 90% 45%;
@@ -282,6 +354,13 @@
   --accent-foreground: 205 20% 95%;
   --destructive: 0 70% 50%;
   --destructive-foreground: 0 0% 100%;
+  --success: 152 55% 42%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 90% 52%;
+  --warning-foreground: 24 10% 10%;
+  --info: 205 60% 50%;
+  --info-foreground: 0 0% 100%;
+  --hover: 339 80% 55% / 0.12;
   --border: 339 30% 22%;
   --input: 339 30% 22%;
   --ring: 339 80% 55%;
@@ -308,6 +387,13 @@
   --accent-foreground: 320 80% 40%;
   --destructive: 350 85% 65%;
   --destructive-foreground: 0 0% 100%;
+  --success: 152 60% 45%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 92% 55%;
+  --warning-foreground: 24 10% 10%;
+  --info: 210 85% 55%;
+  --info-foreground: 0 0% 100%;
+  --hover: 262 83% 68% / 0.12;
   --border: 260 30% 92%;
   --input: 260 30% 92%;
   --ring: 262 83% 68%;
@@ -578,68 +664,6 @@
 }
 
 @layer components {
-  .dark .settings-page .bg-white\/80 {
-    background-color: rgb(15 23 42 / 0.8);
-  }
-
-  .dark .settings-page .border-white\/60 {
-    border-color: rgb(30 41 59 / 1);
-  }
-
-  .dark .settings-page .bg-slate-50\/70,
-  .dark .settings-page .bg-slate-50\/50 {
-    background-color: rgb(2 6 23 / 0.6);
-  }
-
-  .dark .settings-page .border-slate-100\/80,
-  .dark .settings-page .border-slate-100 {
-    border-color: rgb(30 41 59 / 1);
-  }
-
-  .dark .settings-page .bg-slate-50 {
-    background-color: rgb(2 6 23 / 0.7);
-  }
-
-  .dark .settings-page .border-slate-200 {
-    border-color: rgb(51 65 85 / 1);
-  }
-
-  .dark .settings-page .bg-white {
-    background-color: rgb(2 6 23 / 1);
-  }
-
-  .dark .settings-page .text-slate-800,
-  .dark .settings-page .text-slate-900 {
-    color: rgb(241 245 249 / 1);
-  }
-
-  .dark .settings-page .text-slate-700 {
-    color: rgb(226 232 240 / 1);
-  }
-
-  .dark .settings-page .text-slate-500,
-  .dark .settings-page .text-slate-400 {
-    color: rgb(148 163 184 / 1);
-  }
-
-  .dark .settings-page .from-white {
-    --tw-gradient-from: rgb(15 23 42 / 1) var(--tw-gradient-from-position);
-    --tw-gradient-to: rgb(15 23 42 / 0) var(--tw-gradient-to-position);
-    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
-  }
-
-  .dark .settings-page .to-slate-50\/80 {
-    --tw-gradient-to: rgb(2 6 23 / 0.92) var(--tw-gradient-to-position);
-  }
-
-  .dark .settings-page .bg-red-50\/50 {
-    background-color: rgb(69 10 10 / 0.22);
-  }
-
-  .dark .settings-page .border-red-100 {
-    border-color: rgb(127 29 29 / 0.45);
-  }
-
   body.story-overlay-open .mobile-action-dock {
     opacity: 0;
     transform: translateY(1.5rem);

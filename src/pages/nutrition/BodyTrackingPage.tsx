@@ -3,7 +3,7 @@ import { useWeightHistory } from '../../hooks/useWeightHistory';
 import { useNutritionProfile } from '../../hooks/useNutritionProfile';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { Scale, Plus, Trash2 } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { toast } from '../../lib/toast';
 
 export default function BodyTrackingPage() {
   const { history, loading, addWeightRecord, deleteWeightRecord } = useWeightHistory();

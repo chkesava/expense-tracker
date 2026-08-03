@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { generateUpiLink, isMobile } from "../utils/upi";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 import { QRCodeSVG } from "qrcode.react";
 import Modal from "../components/common/Modal";
 import ConfirmDialog from "../components/common/ConfirmDialog";
@@ -58,8 +58,8 @@ export default function SplitDetailPage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center space-y-4">
-          <div className="text-lg font-bold text-slate-900 dark:text-white">Split not found</div>
-          <button onClick={() => navigate("/split")} className="text-blue-600 font-bold">Back to Splits</button>
+          <div className="text-lg font-bold text-foreground">Split not found</div>
+          <button onClick={() => navigate("/split")} className="text-primary font-bold">Back to Splits</button>
         </div>
       </div>
     );
@@ -136,21 +136,21 @@ export default function SplitDetailPage() {
       <div className="flex items-center justify-between">
         <button 
           onClick={() => navigate("/split")}
-          className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm transition-all active:scale-95"
+          className="p-3 rounded-2xl border border-border bg-card shadow-sm transition-all active:scale-95"
         >
           <ArrowLeft size={20} />
         </button>
         <div className="flex gap-2">
           <button 
             onClick={handleShare}
-            className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm transition-all active:scale-95 text-slate-600"
+            className="p-3 rounded-2xl border border-border bg-card shadow-sm transition-all active:scale-95 text-muted-foreground"
           >
             <Share2 size={20} />
           </button>
           {isCreator && (
             <button 
               onClick={() => setShowDeleteConfirm(true)}
-              className="p-3 rounded-2xl bg-rose-50 border border-rose-100 shadow-sm transition-all active:scale-95 text-rose-600"
+              className="p-3 rounded-2xl bg-destructive/10 border border-destructive/20 shadow-sm transition-all active:scale-95 text-destructive"
             >
               <Trash2 size={20} />
             </button>
@@ -161,14 +161,14 @@ export default function SplitDetailPage() {
       {/* Hero Card */}
       <motion.div 
         variants={itemVariants}
-        className="relative overflow-hidden p-6 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none"
+        className="relative overflow-hidden p-6 border border-border bg-card rounded-[2.5rem] shadow-xl"
       >
         <div className="absolute top-0 right-0 p-4">
           <div className={cn(
             "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm",
             split.settled 
-              ? "bg-emerald-500 text-white" 
-              : "bg-blue-600 text-white"
+              ? "bg-success text-success-foreground" 
+              : "bg-primary text-primary-foreground"
           )}>
             {split.settled ? (
               <><CheckCircle2 size={14} /> Settled</>
@@ -180,33 +180,33 @@ export default function SplitDetailPage() {
 
         <div className="space-y-6">
           <div>
-            <div className="flex items-center gap-2 text-blue-600 font-bold text-xs uppercase tracking-tighter mb-1">
+            <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-tighter mb-1">
               <Tag size={14} />
               {split.category}
             </div>
-            <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none">{split.title}</h2>
+            <h2 className="text-3xl font-black text-foreground tracking-tight leading-none">{split.title}</h2>
             <div className="flex flex-wrap items-center gap-3 mt-3">
-              <div className="flex items-center gap-2 text-slate-500 font-medium text-sm">
+              <div className="flex items-center gap-2 text-muted-foreground font-medium text-sm">
                 <Calendar size={14} />
                 {new Date(split.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}
               </div>
-              <div className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-500 uppercase">
+              <div className="px-2 py-0.5 rounded-lg bg-muted text-[10px] font-bold text-muted-foreground uppercase">
                 By {split.createdBy === user?.uid ? "You" : (split.createdByName || "Others")}
               </div>
             </div>
           </div>
 
-          <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Total Amount</div>
-            <div className="text-4xl font-black text-slate-900 dark:text-white">₹{split.totalAmount.toLocaleString()}</div>
+          <div className="pt-6 border-t border-border">
+            <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">Total Amount</div>
+            <div className="text-4xl font-black text-foreground">₹{split.totalAmount.toLocaleString()}</div>
           </div>
         </div>
       </motion.div>
 
       {/* Participants List */}
       <div className="space-y-4">
-        <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2 ml-1">
-          <Receipt size={22} className="text-blue-500" />
+        <h3 className="text-lg font-black text-foreground flex items-center gap-2 ml-1">
+          <Receipt size={22} className="text-primary" />
           Participants
         </h3>
 
@@ -218,17 +218,17 @@ export default function SplitDetailPage() {
               className={cn(
                 "p-4 rounded-3xl border transition-all relative overflow-hidden",
                 p.paid 
-                  ? "bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800" 
-                  : "bg-white dark:bg-slate-900 border-white shadow-sm dark:border-slate-800"
+                  ? "bg-muted/40 border-border" 
+                  : "border-border bg-card shadow-sm"
               )}
             >
               <div className="flex items-center justify-between gap-4 relative z-10">
                 <div className="flex items-center gap-4">
                   <div className={cn(
-                    "w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black overflow-hidden bg-slate-100 dark:bg-slate-800",
+                    "w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black overflow-hidden bg-muted",
                     p.paid 
-                      ? "text-emerald-600 ring-4 ring-emerald-50 dark:ring-emerald-500/10" 
-                      : "text-blue-600 ring-4 ring-blue-50 dark:ring-blue-500/10"
+                      ? "text-success ring-4 ring-success/10" 
+                      : "text-primary ring-4 ring-primary/10"
                   )}>
                     {p.photoURL ? (
                       <img src={p.photoURL} alt={p.name} className="w-full h-full object-cover" />
@@ -237,13 +237,13 @@ export default function SplitDetailPage() {
                     )}
                   </div>
                   <div>
-                    <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <div className="font-bold text-foreground flex items-center gap-2">
                       {p.name}
                       {p.userId === user?.uid && (
-                        <span className="px-2 py-0.5 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-[9px] text-blue-600 font-black uppercase">You</span>
+                        <span className="px-2 py-0.5 rounded-lg bg-primary/10 text-[9px] text-primary font-black uppercase">You</span>
                       )}
                     </div>
-                    <div className="text-sm font-black text-slate-900 dark:text-white mt-0.5">₹{p.amount.toLocaleString()}</div>
+                    <div className="text-sm font-black text-foreground mt-0.5">₹{p.amount.toLocaleString()}</div>
                   </div>
                 </div>
 
@@ -251,7 +251,7 @@ export default function SplitDetailPage() {
                   {!p.paid && p.userId !== user?.uid && (
                     <button
                       onClick={() => handlePay(p.name, p.amount, p.upiId)}
-                      className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl active:scale-95 transition-all flex items-center gap-2"
+                      className="p-3 bg-muted text-muted-foreground rounded-2xl active:scale-95 transition-all flex items-center gap-2"
                       title={isMobile() ? "Open UPI App" : "Copy UPI Payment Link"}
                     >
                       {isMobile() ? <Smartphone size={18} /> : <Copy size={18} />}
@@ -261,7 +261,7 @@ export default function SplitDetailPage() {
                   {!p.paid && p.userId !== user?.uid && (
                     <button
                       onClick={() => handleShowQr(p.name, p.amount, p.upiId)}
-                      className="p-3 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all flex items-center gap-2"
+                      className="p-3 bg-primary text-primary-foreground rounded-2xl shadow-lg shadow-primary/20 active:scale-95 transition-all flex items-center gap-2"
                       title="Show Payment QR Code"
                     >
                       <QrCodeIcon size={18} />
@@ -276,8 +276,8 @@ export default function SplitDetailPage() {
                       className={cn(
                         "p-3 rounded-2xl border transition-all active:scale-95",
                         p.paid 
-                          ? "bg-emerald-500 border-emerald-500 text-white" 
-                          : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-400"
+                          ? "bg-success border-success text-success-foreground" 
+                          : "bg-card border-border text-muted-foreground"
                       )}
                     >
                       <CheckCircle2 size={18} />
@@ -285,7 +285,7 @@ export default function SplitDetailPage() {
                   )}
 
                   {!isCreator && p.paid && (
-                    <div className="p-2 text-emerald-500">
+                    <div className="p-2 text-success">
                       <CheckCircle2 size={24} />
                     </div>
                   )}
@@ -303,9 +303,9 @@ export default function SplitDetailPage() {
       </div>
 
       {!split.settled && isCreator && (
-        <div className="p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-2xl flex items-start gap-3">
-          <Info className="text-amber-500 shrink-0 mt-0.5" size={16} />
-          <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+        <div className="p-4 bg-warning/10 border border-warning/20 rounded-2xl flex items-start gap-3">
+          <Info className="text-warning shrink-0 mt-0.5" size={16} />
+          <p className="text-xs font-medium text-warning">
             As the creator, you can mark participants as paid when you receive their share. The split will be settled once everyone has paid.
           </p>
         </div>
@@ -319,7 +319,7 @@ export default function SplitDetailPage() {
       >
         {qrData && (
           <div className="flex flex-col items-center justify-center p-4 space-y-6 text-center">
-            <div className="p-6 bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50">
+            <div className="p-6 bg-white rounded-[2.5rem] shadow-xl">
               <QRCodeSVG 
                 value={qrData.upiLink} 
                 size={220}
@@ -329,13 +329,13 @@ export default function SplitDetailPage() {
             </div>
             
             <div className="space-y-1">
-              <div className="text-xs font-black text-slate-400 uppercase tracking-widest">Paying To</div>
-              <div className="text-xl font-black text-slate-900 dark:text-white uppercase">{qrData.name}</div>
-              <div className="text-3xl font-black text-blue-600">₹{qrData.amount.toLocaleString()}</div>
+              <div className="text-xs font-black text-muted-foreground uppercase tracking-widest">Paying To</div>
+              <div className="text-xl font-black text-foreground uppercase">{qrData.name}</div>
+              <div className="text-3xl font-black text-primary">₹{qrData.amount.toLocaleString()}</div>
             </div>
 
-            <div className="w-full pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+            <div className="w-full pt-4 border-t border-border space-y-3">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
                 Scan with GPay, PhonePe, Paytm or any UPI app
               </p>
               <button
@@ -343,7 +343,7 @@ export default function SplitDetailPage() {
                   navigator.clipboard.writeText(qrData.upiLink);
                   toast.success("UPI Link copied!");
                 }}
-                className="w-full py-3 px-4 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
+                className="w-full py-3 px-4 bg-muted text-muted-foreground rounded-2xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
               >
                 <Copy size={16} /> Copy UPI Link
               </button>

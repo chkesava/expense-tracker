@@ -21,7 +21,7 @@ import {
 import { db } from "../firebase";
 import { useAuth } from "./useAuth";
 import type { Subscription } from "../types/subscription";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 import { useGamification } from "./useGamification";
 import { currentMonthKey, todayDateKey } from "../utils/dates";
 

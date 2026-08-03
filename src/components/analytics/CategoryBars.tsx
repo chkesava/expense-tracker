@@ -7,24 +7,24 @@ import Amount from "../common/Amount";
 import { ChevronDown, Calendar } from "lucide-react";
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Food: "bg-orange-500",
-  "Food & Dining": "bg-orange-500",
-  Transport: "bg-blue-500",
-  Transportation: "bg-blue-500",
-  Shopping: "bg-pink-500",
-  Entertainment: "bg-purple-500",
-  Health: "bg-red-500",
-  Education: "bg-indigo-500",
-  Other: "bg-slate-500",
-  Miscellaneous: "bg-slate-500",
-  Bills: "bg-cyan-500",
-  Travel: "bg-emerald-500",
-  Housing: "bg-amber-500",
-  Finance: "bg-teal-500",
-  Technology: "bg-sky-500",
-  Investments: "bg-lime-500",
-  Family: "bg-rose-500",
-  "Fitness & Nutrition": "bg-green-500",
+  Food: "bg-warning",
+  "Food & Dining": "bg-warning",
+  Transport: "bg-info",
+  Transportation: "bg-info",
+  Shopping: "bg-primary",
+  Entertainment: "bg-primary",
+  Health: "bg-destructive",
+  Education: "bg-info",
+  Other: "bg-muted-foreground",
+  Miscellaneous: "bg-muted-foreground",
+  Bills: "bg-info",
+  Travel: "bg-success",
+  Housing: "bg-warning",
+  Finance: "bg-success",
+  Technology: "bg-info",
+  Investments: "bg-success",
+  Family: "bg-destructive",
+  "Fitness & Nutrition": "bg-success",
 };
 
 type GroupRow = { category: string; value: number };
@@ -42,11 +42,9 @@ export default function CategoryBars({
 
   if (!expenses.length) {
     return (
-      <div className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm rounded-2xl p-6 text-center border border-white/60 dark:border-white/5">
-        <strong className="text-slate-700 dark:text-slate-300">{label}</strong>
-        <p className="mt-2 text-sm text-slate-400 font-medium">
-          No data for this month
-        </p>
+      <div className="rounded-2xl border border-border bg-card p-6 text-center">
+        <strong className="text-foreground">{label}</strong>
+        <p className="mt-2 text-sm font-medium text-muted-foreground">No data for this month</p>
       </div>
     );
   }
@@ -66,13 +64,13 @@ export default function CategoryBars({
 
   return (
     <div className="space-y-3">
-      <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Tap a row to list expenses
       </div>
       {sorted.map(([category, amount]) => {
         const percent = grandTotal === 0 ? 0 : Math.round((amount / grandTotal) * 100);
         const colorKey = category.includes(" › ") ? category.split(" › ")[0] : category;
-        const colorClass = CATEGORY_COLORS[colorKey] || "bg-blue-600";
+        const colorClass = CATEGORY_COLORS[colorKey] || "bg-primary";
         const isExpanded = expandedCategory === category;
         const categoryExpenses = matchExpenses(category);
 
@@ -81,75 +79,51 @@ export default function CategoryBars({
             key={category}
             onClick={() => setExpandedCategory(isExpanded ? null : category)}
             className={cn(
-              "p-3.5 rounded-2xl border transition-all duration-300 cursor-pointer select-none",
+              "cursor-pointer select-none rounded-2xl border p-3.5 transition-all duration-200",
               isExpanded
-                ? "bg-slate-50/80 dark:bg-white/5 border-slate-200 dark:border-white/10 shadow-sm"
-                : "bg-transparent border-transparent hover:bg-slate-50/45 dark:hover:bg-white/5"
+                ? "border-border bg-muted/40 shadow-sm"
+                : "border-transparent bg-transparent hover:bg-muted/30"
             )}
           >
-            <div className="flex justify-between items-center text-sm font-semibold mb-2 text-slate-700 dark:text-slate-200">
-              <span className="flex items-center gap-2 min-w-0">
-                <span className={cn("w-2 h-2 rounded-full shrink-0", colorClass)} />
+            <div className="mb-2 flex items-center justify-between text-sm font-semibold text-foreground">
+              <span className="flex min-w-0 items-center gap-2">
+                <span className={cn("h-2 w-2 shrink-0 rounded-full", colorClass)} />
                 <span className="truncate">{category}</span>
                 <ChevronDown
                   size={14}
                   className={cn(
-                    "text-slate-400 dark:text-slate-500 transition-transform duration-300 shrink-0",
+                    "shrink-0 text-muted-foreground transition-transform duration-200",
                     isExpanded && "rotate-180"
                   )}
                 />
               </span>
-              <span className="text-right flex items-center gap-2 shrink-0">
-                <span className="font-black text-slate-900 dark:text-white">
-                  <Amount value={amount} />
-                </span>
-                <span className="text-xs font-bold text-slate-400 dark:text-slate-500">
-                  ({percent}%)
-                </span>
+              <span className="tabular-nums">
+                <Amount value={amount} /> · {percent}%
               </span>
             </div>
-
-            <div className="h-2 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden border border-slate-200/30 dark:border-white/5">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${percent}%` }}
-                transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
-                className={cn("h-full rounded-full shadow-sm", colorClass)}
-              />
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <div className={cn("h-full rounded-full", colorClass)} style={{ width: `${percent}%` }} />
             </div>
 
-            <AnimatePresence initial={false}>
+            <AnimatePresence>
               {isExpanded && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
                   className="overflow-hidden"
                 >
-                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 space-y-2">
-                    {categoryExpenses.map((exp) => (
-                      <div
-                        key={exp.id}
-                        className="flex items-center justify-between text-xs py-2 px-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10 transition-colors"
-                      >
-                        <div className="flex flex-col gap-0.5 min-w-0 pr-2">
-                          <span className="font-bold text-slate-800 dark:text-slate-200 truncate">
-                            {exp.note?.trim() || (
-                              <span className="italic text-slate-400 dark:text-slate-500 font-medium">
-                                Unspecified note
-                              </span>
-                            )}
-                          </span>
-                          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold flex items-center gap-1">
-                            <Calendar size={10} />
-                            {exp.date}
-                            {exp.subcategory ? ` · ${exp.subcategory}` : ""}
-                          </span>
-                        </div>
-                        <div className="font-black text-slate-900 dark:text-white shrink-0">
-                          <Amount value={exp.amount} />
-                        </div>
+                  <div className="mt-3 space-y-2 border-t border-border pt-3">
+                    {categoryExpenses.map((expense) => (
+                      <div key={expense.id} className="flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                          <Calendar size={12} />
+                          {expense.date}
+                          {expense.note ? ` · ${expense.note}` : ""}
+                        </span>
+                        <span className="font-semibold tabular-nums text-foreground">
+                          <Amount value={expense.amount} />
+                        </span>
                       </div>
                     ))}
                   </div>

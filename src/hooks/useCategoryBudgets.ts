@@ -1,6 +1,6 @@
 import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 import { db } from "../firebase";
 import type { CategoryBudget } from "../types/expense";
 import { useAuth } from "./useAuth";

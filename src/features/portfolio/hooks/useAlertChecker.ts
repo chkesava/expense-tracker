@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { toast } from "react-toastify";
+import { toast } from "../../../lib/toast";
 import { useAlerts } from "./useAlerts";
 import { useHoldingsWithMetrics } from "./useMarketQuotes";
 import { useHoldings } from "./useHoldings";

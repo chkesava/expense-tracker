@@ -6,7 +6,6 @@ import {
   BarChart3,
   Calendar,
   Home,
-  Plus,
   Settings,
   Shield,
   Wallet,
@@ -31,6 +30,8 @@ import { ADMIN_NAV_ITEM, CORE_NAV_ITEMS, isNavItemActive } from "../config/navig
 import { useExpenses } from "../hooks/useExpenses";
 import AnnouncementBanner from "./AnnouncementBanner";
 import NotificationBell from "../features/sip/components/NotificationBell";
+import AddFab from "./ui/AddFab";
+import { ICON_SIZE, ICON_STROKE } from "../lib/iconSizes";
 
 function formatMonthLabel(month: string, short = false) {
   if (!month) return "This Month";
@@ -72,12 +73,12 @@ export default function Header() {
 
   const [showStory, setShowStory] = useState(false);
 
-  const isAdminRoute = location.pathname.startsWith('/admin');
+  const isAdminRoute = location.pathname.startsWith("/admin");
 
   if (isAdminRoute) {
     return (
-      <div className="fixed top-0 left-0 w-full z-50 flex flex-col pointer-events-none">
-        <div className="w-full pointer-events-auto">
+      <div className="pointer-events-none fixed top-0 left-0 z-50 flex w-full flex-col">
+        <div className="pointer-events-auto w-full">
           <AnnouncementBanner />
         </div>
       </div>
@@ -94,186 +95,193 @@ export default function Header() {
         />
       )}
 
-      <div className="fixed top-0 left-0 w-full z-50 flex flex-col pointer-events-none">
-        <div className="w-full pointer-events-auto">
+      <div className="pointer-events-none fixed top-0 left-0 z-50 flex w-full flex-col">
+        <div className="pointer-events-auto w-full">
           <AnnouncementBanner />
         </div>
-        <div className="w-full px-2 pt-2 sm:px-5 sm:pt-5 pointer-events-none">
+        <div className="pointer-events-none w-full px-2 pt-2 sm:px-5 sm:pt-5">
           <motion.header
             initial={{ y: -100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className={cn(
-              "max-w-7xl mx-auto w-full pointer-events-auto px-2.5 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4",
-              "bento-card transition-all duration-500"
+              "pointer-events-auto mx-auto flex w-full max-w-7xl items-center justify-between gap-2 px-2.5 py-2.5 sm:gap-4 sm:px-4 sm:py-3",
+              "bento-card"
             )}
           >
-        <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate("/dashboard")}
-            className="inline-flex items-center gap-2.5"
-          >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-foreground text-background shadow-xl shadow-foreground/10">
-              <Activity size={18} />
-            </div>
-            <span className="text-xl sm:text-2xl font-black tracking-tighter text-gradient-premium">
-              Vault
-            </span>
-          </motion.button>
-
-          <button
-            type="button"
-            onClick={() => setGhostMode(!settings.ghostMode)}
-            className={cn(
-              "hidden min-[360px]:inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] shadow-sm ring-1 transition-all duration-300 cursor-pointer hover:bg-muted/50",
-              settings.ghostMode
-                ? "bg-primary/10 text-primary ring-primary/40"
-                : isOnline
-                  ? "bg-emerald-500/10 text-emerald-600 ring-emerald-500/20"
-                  : "bg-red-500/10 text-red-600 ring-red-500/20"
-            )}
-            title={settings.ghostMode ? "Ghost Mode Active - Amounts blurred" : isOnline ? "Connected to database" : "Working offline"}
-            aria-pressed={settings.ghostMode}
-            aria-label={settings.ghostMode ? "Disable ghost mode" : "Enable ghost mode"}
-          >
-            {settings.ghostMode ? (
-              <EyeOff size={10} className="animate-pulse" />
-            ) : (
-              <span className="relative flex h-2 w-2">
-                {isOnline && (
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
-                )}
-                <span
-                  className={cn(
-                    "relative inline-flex rounded-full h-2 w-2",
-                    isOnline ? "bg-emerald-500" : "bg-red-500"
-                  )}
-                />
-              </span>
-            )}
-             <span className="hidden sm:inline">{settings.ghostMode ? "Ghost" : isOnline ? "Online" : "Offline"}</span>
-          </button>
-
-          {pendingSyncCount > 0 && (
-            <div
-              className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 text-blue-600 ring-1 ring-blue-500/20 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] shadow-sm"
-              title={`${pendingSyncCount} changes syncing to cloud...`}
-            >
-              <RefreshCw size={10} className="animate-spin" />
-              <span>{pendingSyncCount} syncing</span>
-            </div>
-          )}
-        </div>
-
-        <nav className="hidden lg:flex items-center gap-1 bg-slate-100/50 dark:bg-slate-800/50 backdrop-blur-md p-1.5 rounded-[1.5rem] border border-white/50 dark:border-white/5">
-          {desktopLinks.map((link) => {
-            const isActive = isNavItemActive(location.pathname, link.id);
-            const Icon = iconById[link.id];
-            return (
+            <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
               <motion.button
-                key={link.path}
-                onClick={() => navigate(link.path)}
-                className={cn(
-                  "relative px-4 py-1.5 rounded-full text-sm font-semibold transition-colors duration-200 flex items-center gap-2",
-                  isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                )}
+                type="button"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate("/dashboard")}
+                className="inline-flex items-center gap-2.5"
               >
-                {isActive && (
-                  <motion.div
-                    layoutId="header-nav-pill"
-                    className="absolute inset-0 bg-background shadow-sm rounded-2xl border border-border"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-                <Icon size={15} className="relative z-10" />
-                <span className="relative z-10">{link.label}</span>
-              </motion.button>
-            );
-          })}
-        </nav>
-
-        <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2 relative">
-          <VaultMemberIndicator />
-          {settings.enableInvestments && <NotificationBell />}
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => setIsMonthDrawerOpen(true)}
-            className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full border border-border bg-card/90 px-2 py-1.5 sm:px-3 sm:py-1.5 text-foreground shadow-sm hover:shadow-md transition-all"
-            aria-label="Choose month"
-          >
-            <Calendar size={12} />
-            <span className="text-[11px] font-black tracking-[0.08em] hidden sm:inline">{formatMonthLabel(selectedMonth, true)}</span>
-            <span className="text-[10px] font-black tracking-[0.08em] sm:hidden">{formatMonthLabel(selectedMonth, true)}</span>
-          </motion.button>
-
-
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setIsAddExpenseOpen(true)}
-            className="hidden md:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full font-bold text-sm shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-shadow"
-            aria-label="Add transaction"
-          >
-            <Plus size={16} />
-            <span>Add</span>
-          </motion.button>
-
-          {stats.currentStreak > 0 && (
-            <div
-              className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 border border-orange-100/50 dark:border-orange-500/20 rounded-full text-xs font-bold text-orange-600 dark:text-orange-400 shadow-sm"
-              title="Current Login Streak"
-            >
-              <span className="text-sm">🔥</span>
-              <span>{stats.currentStreak}</span>
-            </div>
-          )}
-
-          {isAdmin && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate("/admin")}
-              className="lg:hidden flex items-center justify-center rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 px-3 py-2 text-blue-600 dark:text-blue-400 shadow-sm hover:shadow-md transition-all gap-1.5"
-              aria-label="Open Admin Panel"
-            >
-              <Shield size={14} />
-              <span className="text-[11px] font-black tracking-wider uppercase">Admin</span>
-            </motion.button>
-          )}
-
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate("/settings")}
-            className="flex items-center justify-center rounded-xl border border-border bg-card p-2 text-foreground shadow-sm hover:shadow-md transition-all"
-            aria-label="Open settings"
-          >
-            <Settings size={18} />
-          </motion.button>
-
-          <div className="relative shrink-0">
-            <button
-              onClick={() => setShowStory(true)}
-              className="focus-visible:ring-2 focus-visible:ring-ring rounded-full"
-              aria-label="Open your monthly story"
-              title="Monthly story"
-            >
-              <span
-                className={cn(
-                  "relative grid place-items-center rounded-full p-[2px]",
-                  "bg-gradient-to-tr from-fuchsia-500 via-rose-500 to-amber-400"
-                )}
-              >
-                <span className="rounded-full bg-card p-[2px]">
-                  <Avatar src={user?.photoURL} name={user?.displayName || "User"} size={36} />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-foreground text-background">
+                  <Activity size={ICON_SIZE.sm} strokeWidth={ICON_STROKE} />
+                </div>
+                <span className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                  Vault
                 </span>
-              </span>
-            </button>
-          </div>
-        </div>
+              </motion.button>
+
+              <button
+                type="button"
+                onClick={() => setGhostMode(!settings.ghostMode)}
+                className={cn(
+                  "hidden min-[360px]:inline-flex cursor-pointer items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ring-1 transition-colors hover:bg-muted/50",
+                  settings.ghostMode
+                    ? "bg-primary/10 text-primary ring-primary/40"
+                    : isOnline
+                      ? "bg-success/10 text-success ring-success/20"
+                      : "bg-destructive/10 text-destructive ring-destructive/20"
+                )}
+                title={
+                  settings.ghostMode
+                    ? "Ghost Mode Active - Amounts blurred"
+                    : isOnline
+                      ? "Connected to database"
+                      : "Working offline"
+                }
+                aria-pressed={settings.ghostMode}
+                aria-label={settings.ghostMode ? "Disable ghost mode" : "Enable ghost mode"}
+              >
+                {settings.ghostMode ? (
+                  <EyeOff size={10} className="animate-pulse" />
+                ) : (
+                  <span className="relative flex h-2 w-2">
+                    {isOnline && (
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
+                    )}
+                    <span
+                      className={cn(
+                        "relative inline-flex h-2 w-2 rounded-full",
+                        isOnline ? "bg-success" : "bg-destructive"
+                      )}
+                    />
+                  </span>
+                )}
+                <span className="hidden sm:inline">
+                  {settings.ghostMode ? "Ghost" : isOnline ? "Online" : "Offline"}
+                </span>
+              </button>
+
+              {pendingSyncCount > 0 && (
+                <div
+                  className="inline-flex items-center gap-1.5 rounded-full bg-info/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-info ring-1 ring-info/20"
+                  title={`${pendingSyncCount} changes syncing to cloud...`}
+                >
+                  <RefreshCw size={10} className="animate-spin" />
+                  <span>{pendingSyncCount} syncing</span>
+                </div>
+              )}
+            </div>
+
+            <nav className="hidden items-center gap-1 rounded-2xl border border-border bg-muted/50 p-1.5 lg:flex">
+              {desktopLinks.map((link) => {
+                const isActive = isNavItemActive(location.pathname, link.id);
+                const Icon = iconById[link.id];
+                return (
+                  <motion.button
+                    key={link.path}
+                    type="button"
+                    onClick={() => navigate(link.path)}
+                    className={cn(
+                      "relative flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors duration-200",
+                      isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="header-nav-pill"
+                        className="absolute inset-0 rounded-2xl border border-border bg-card shadow-sm"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
+                    <Icon size={ICON_SIZE.xs} strokeWidth={ICON_STROKE} className="relative z-10" />
+                    <span className="relative z-10">{link.label}</span>
+                  </motion.button>
+                );
+              })}
+            </nav>
+
+            <div className="relative flex shrink-0 items-center justify-end gap-1.5 sm:gap-2">
+              <VaultMemberIndicator />
+              {settings.enableInvestments && <NotificationBell />}
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setIsMonthDrawerOpen(true)}
+                className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-1.5 text-foreground transition-colors hover:bg-muted/60 sm:gap-1.5 sm:px-3"
+                aria-label="Choose month"
+              >
+                <Calendar size={ICON_SIZE.xs} strokeWidth={ICON_STROKE} />
+                <span className="text-[11px] font-semibold tracking-wide sm:text-xs">
+                  {formatMonthLabel(selectedMonth, true)}
+                </span>
+              </motion.button>
+
+              <AddFab
+                withLabel
+                className="hidden md:inline-flex"
+                onClick={() => setIsAddExpenseOpen(true)}
+                aria-label="Add transaction"
+              />
+
+              {stats.currentStreak > 0 && (
+                <div
+                  className="hidden items-center gap-1.5 rounded-full border border-warning/20 bg-warning/10 px-3 py-1 text-xs font-semibold text-warning md:flex"
+                  title="Current Login Streak"
+                >
+                  <span className="text-sm" aria-hidden>
+                    🔥
+                  </span>
+                  <span>{stats.currentStreak}</span>
+                </div>
+              )}
+
+              {isAdmin && (
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => navigate("/admin")}
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-info/20 bg-info/10 px-3 py-2 text-info transition-colors hover:bg-info/15 lg:hidden"
+                  aria-label="Open Admin Panel"
+                >
+                  <Shield size={ICON_SIZE.xs} strokeWidth={ICON_STROKE} />
+                  <span className="text-[11px] font-semibold tracking-wide uppercase">Admin</span>
+                </motion.button>
+              )}
+
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => navigate("/settings")}
+                className="flex items-center justify-center rounded-xl border border-border bg-card p-2 text-foreground transition-colors hover:bg-muted/60"
+                aria-label="Open settings"
+              >
+                <Settings size={ICON_SIZE.sm} strokeWidth={ICON_STROKE} />
+              </motion.button>
+
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowStory(true)}
+                  className="rounded-full focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label="Open your monthly story"
+                  title="Monthly story"
+                >
+                  <span className="relative grid place-items-center rounded-full bg-primary/20 p-[2px]">
+                    <span className="rounded-full bg-card p-[2px]">
+                      <Avatar src={user?.photoURL} name={user?.displayName || "User"} size={36} />
+                    </span>
+                  </span>
+                </button>
+              </div>
+            </div>
           </motion.header>
         </div>
       </div>
@@ -303,31 +311,33 @@ function MonthlyStoryViewer({
 function VaultMemberIndicator() {
   const location = useLocation();
   const { vaults } = useVaults();
-  
+
   const vaultId = location.pathname.match(/\/vaults\/([^/]+)/)?.[1];
-  const vault = vaults.find(v => v.id === vaultId);
-  
+  const vault = vaults.find((v) => v.id === vaultId);
+
   if (!vault) return null;
-  
+
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="hidden sm:flex items-center gap-1.5 px-3 py-1 premium-glass rounded-full"
+      className="hidden items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 sm:flex"
     >
       <div className="flex -space-x-2">
         {vault.memberIds.slice(0, 3).map((id, i) => (
-          <Avatar key={id} size={20} name={`M ${i}`} className="border-2 border-white dark:border-slate-800" />
+          <Avatar key={id} size={20} name={`M ${i}`} className="border-2 border-card" />
         ))}
         {vault.memberIds.length > 3 && (
-          <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[8px] font-bold border-2 border-white dark:border-slate-800">
+          <div className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-card bg-muted text-[8px] font-semibold text-muted-foreground">
             +{vault.memberIds.length - 3}
           </div>
         )}
       </div>
       <div className="flex flex-col">
-        <span className="text-[11px] font-black uppercase tracking-tight text-blue-600 dark:text-blue-400">Joint Access</span>
-        <span className="text-[11px] font-semibold text-slate-400 truncate max-w-[90px]">{vault.name}</span>
+        <span className="text-[11px] font-semibold tracking-tight text-primary">Joint Access</span>
+        <span className="max-w-[90px] truncate text-[11px] font-medium text-muted-foreground">
+          {vault.name}
+        </span>
       </div>
     </motion.div>
   );

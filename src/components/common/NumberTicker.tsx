@@ -1,16 +1,20 @@
 import { useEffect, useRef } from "react";
 import { useInView, useMotionValue, useSpring } from "framer-motion";
+import { formatAmountNumber } from "../../utils/formatCurrency";
 
 export default function NumberTicker({
   value,
   direction = "up",
   delay = 0,
   className,
+  locale = "en-IN",
 }: {
   value: number;
   direction?: "up" | "down";
   delay?: number;
   className?: string;
+  /** Intl locale for digit grouping. Defaults to en-IN. */
+  locale?: string;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
   const motionValue = useMotionValue(direction === "down" ? value : 0);
@@ -31,17 +35,13 @@ export default function NumberTicker({
   useEffect(() => {
     springValue.on("change", (latest) => {
       if (ref.current) {
-        ref.current.textContent = Intl.NumberFormat("en-IN").format(
-          Math.round(latest)
-        );
+        ref.current.textContent = formatAmountNumber(Math.round(latest), "INR", {
+          locale,
+          fractionDigits: 0,
+        });
       }
     });
-  }, [springValue]);
+  }, [springValue, locale]);
 
-  return (
-    <span
-      className={className}
-      ref={ref}
-    />
-  );
+  return <span className={className} ref={ref} />;
 }

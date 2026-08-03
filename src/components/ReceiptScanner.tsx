@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Camera, Loader2, X, CheckCircle2 } from "lucide-react";
 import { extractTextFromImage } from "../services/ocrService";
 import { parseReceiptText } from "../services/aiService";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../lib/utils";
 import type { ParsedExpense } from "../utils/magicParser";

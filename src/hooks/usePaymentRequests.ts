@@ -15,7 +15,7 @@ import { useAuth } from "./useAuth";
 import type { PaymentRequest, PaymentRequestInput } from "../types/paymentRequest";
 import type { QrStyleId } from "../utils/qrStyles";
 import { generatePaymentSlug } from "../utils/paymentSlug";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 
 export async function fetchPaymentRequestBySlug(
   slug: string

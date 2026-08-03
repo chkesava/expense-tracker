@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Landmark, ArrowRightLeft } from "lucide-react";
 import Amount from "../common/Amount";
 import { cn } from "../../lib/utils";
+import { ICON_SIZE, ICON_STROKE } from "../../lib/iconSizes";
 
 interface FixedVsVariableCardProps {
   metrics: {
@@ -14,44 +15,45 @@ interface FixedVsVariableCardProps {
 
 export default function FixedVsVariableCard({ metrics }: FixedVsVariableCardProps) {
   const { fixedTotal, variableTotal, fixedPercentage, variablePercentage } = metrics;
-
   const total = fixedTotal + variableTotal;
   const isHighFixed = fixedPercentage > 50;
 
   return (
-    <div className="premium-glass p-6 rounded-3xl flex flex-col justify-between min-h-[250px] relative overflow-hidden transition-all duration-500 hover:shadow-2xl">
-      {/* Background color blob */}
-      <div className={cn(
-        "absolute -right-16 -top-16 w-36 h-36 rounded-full blur-3xl opacity-20 pointer-events-none transition-all duration-700",
-        isHighFixed ? "bg-violet-500" : "bg-sky-500"
-      )} />
+    <div className="bento-card relative flex min-h-[250px] flex-col justify-between overflow-hidden p-6 transition-shadow duration-300 hover:shadow-md">
+      <div
+        className={cn(
+          "pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full opacity-15 blur-3xl transition-colors duration-500",
+          isHighFixed ? "bg-primary" : "bg-info"
+        )}
+      />
 
-      {/* Card Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Landmark className="text-slate-400 dark:text-slate-500" size={18} />
-          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            Fixed vs. Variable Cost Split
+          <Landmark className="text-muted-foreground" size={ICON_SIZE.sm} strokeWidth={ICON_STROKE} />
+          <span className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            Fixed vs variable cost split
           </span>
         </div>
       </div>
 
-      {/* Ratios & Summary */}
-      <div className="space-y-2 mb-6">
-        <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-          Expense Structure
+      <div className="mb-6 space-y-2">
+        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Expense structure
         </div>
         <div className="flex items-baseline gap-3">
-          <span className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+          <span className="text-3xl font-semibold tracking-tight tabular-nums text-foreground">
             {fixedPercentage.toFixed(0)}%
           </span>
-          <span className="text-xs font-semibold text-slate-400 flex items-center gap-1">
-            Committed Costs <ArrowRightLeft size={10} /> {variablePercentage.toFixed(0)}% Variable
+          <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+            Committed costs <ArrowRightLeft size={10} /> {variablePercentage.toFixed(0)}% variable
           </span>
         </div>
-        <p className="text-xs text-slate-400 dark:text-slate-400 font-medium mt-1">
+        <p className="mt-1 text-xs font-medium text-muted-foreground">
           {isHighFixed ? (
-            <span>Committed expenses are high. Auditing inactive subscriptions or renegotiating bills could free up cash flow.</span>
+            <span>
+              Committed expenses are high. Auditing inactive subscriptions or renegotiating bills could free up cash
+              flow.
+            </span>
           ) : total === 0 ? (
             <span>No spending data recorded for this month yet.</span>
           ) : (
@@ -60,31 +62,28 @@ export default function FixedVsVariableCard({ metrics }: FixedVsVariableCardProp
         </p>
       </div>
 
-      {/* Split Progress Track */}
-      <div className="space-y-2 mb-4">
-        <div className="relative h-4 w-full bg-slate-100 dark:bg-slate-800/80 rounded-full overflow-hidden flex">
-          {/* Fixed spend bar */}
+      <div className="mb-4 space-y-2">
+        <div className="relative flex h-4 w-full overflow-hidden rounded-full bg-muted">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${fixedPercentage}%` }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="h-full bg-gradient-to-r from-violet-500 to-indigo-600 rounded-l-full relative"
+            className="relative h-full rounded-l-full bg-primary"
           >
             {fixedPercentage > 15 && (
-              <span className="absolute inset-0 flex items-center justify-center text-[8px] font-black text-white uppercase tracking-wider">
+              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold uppercase tracking-wide text-primary-foreground">
                 Fixed
               </span>
             )}
           </motion.div>
-          {/* Variable spend bar */}
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${variablePercentage}%` }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="h-full bg-gradient-to-r from-sky-400 to-blue-600 rounded-r-full relative"
+            className="relative h-full rounded-r-full bg-info"
           >
             {variablePercentage > 15 && (
-              <span className="absolute inset-0 flex items-center justify-center text-[8px] font-black text-white uppercase tracking-wider">
+              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold uppercase tracking-wide text-info-foreground">
                 Variable
               </span>
             )}
@@ -92,28 +91,23 @@ export default function FixedVsVariableCard({ metrics }: FixedVsVariableCardProp
         </div>
       </div>
 
-      {/* Dynamic List Info */}
-      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-white/5">
+      <div className="grid grid-cols-2 gap-4 border-t border-border pt-4">
         <div>
-          <div className="text-[10px] font-black uppercase text-violet-500 tracking-wider">
-            Fixed Outflow
-          </div>
-          <div className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-primary">Fixed outflow</div>
+          <div className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">
             <Amount value={fixedTotal} />
           </div>
-          <div className="text-[9px] font-medium text-slate-400 mt-1 truncate">
-            Rent, Subs, EMIs, Utilities
+          <div className="mt-1 truncate text-[11px] font-medium text-muted-foreground">
+            Rent, subs, EMIs, utilities
           </div>
         </div>
         <div>
-          <div className="text-[10px] font-black uppercase text-sky-500 tracking-wider">
-            Variable Outflow
-          </div>
-          <div className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-info">Variable outflow</div>
+          <div className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">
             <Amount value={variableTotal} />
           </div>
-          <div className="text-[9px] font-medium text-slate-400 mt-1 truncate">
-            Dining, Travel, Shopping
+          <div className="mt-1 truncate text-[11px] font-medium text-muted-foreground">
+            Dining, travel, shopping
           </div>
         </div>
       </div>

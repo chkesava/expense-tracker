@@ -9,7 +9,7 @@ import {
   query,
   serverTimestamp,
 } from "firebase/firestore";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 import { db } from "../firebase";
 import { useAuth } from "./useAuth";
 import type { VaultExpense } from "../types/vaultExpense";

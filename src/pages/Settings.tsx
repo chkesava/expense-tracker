@@ -5,7 +5,7 @@ import { Brush, Database, Folder, LayoutGrid, LogOut, SlidersHorizontal, Trash2,
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 
 import useSettings from "../hooks/useSettings";
 import { useAuth } from "../hooks/useAuth";
@@ -70,12 +70,12 @@ function SettingsCard({ title, subtitle, icon: Icon, children }: { title: string
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <Icon className="h-5 w-5" />
             </span>
-            <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">{title}</h2>
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">{title}</h2>
           </div>
-          {subtitle && <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">{subtitle}</p>}
+          {subtitle && <p className="mt-1 text-xs font-medium text-muted-foreground">{subtitle}</p>}
         </div>
       </div>
       <div className="mt-5 space-y-4">{children}</div>
@@ -85,10 +85,10 @@ function SettingsCard({ title, subtitle, icon: Icon, children }: { title: string
 
 function SettingsRow({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-slate-100/80 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/50 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-muted/40 p-4 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
-        <div className="text-[14px] font-semibold text-slate-900 dark:text-slate-100">{title}</div>
-        {description && <div className="mt-1 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">{description}</div>}
+        <div className="text-sm font-semibold text-foreground">{title}</div>
+        {description && <div className="mt-1 text-xs font-medium leading-4 text-muted-foreground">{description}</div>}
       </div>
       <div className="sm:shrink-0">{children}</div>
     </div>
@@ -98,8 +98,8 @@ function SettingsRow({ title, description, children }: { title: string; descript
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (next: boolean) => void }) {
   return (
     <label className="relative inline-flex cursor-pointer items-center">
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="sr-only peer" />
-      <div className="h-6 w-11 rounded-full bg-slate-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-100 dark:bg-slate-700 dark:peer-focus:ring-blue-900/20 peer-checked:bg-blue-600" />
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="peer sr-only" />
+      <div className="h-6 w-11 rounded-full bg-muted after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-border after:bg-card after:transition-all peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-card peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20" />
     </label>
   );
 }
@@ -391,10 +391,10 @@ export default function SettingsPage() {
       "flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-black uppercase tracking-wider transition-all duration-300 shrink-0",
       isActive
         ? isClay
-          ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-clay-card shadow-[inset_1px_1px_2px_rgba(255,255,255,0.4)] scale-105"
+          ? "bg-primary text-primary-foreground shadow-clay-card shadow-[inset_1px_1px_2px_rgba(255,255,255,0.4)] scale-105"
           : "bg-foreground text-background shadow-sm"
         : isClay
-          ? "bg-white/60 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 shadow-[inset_2px_2px_6px_rgba(165,140,220,0.15)] hover:bg-white"
+          ? "bg-card/60 text-muted-foreground shadow-[inset_2px_2px_6px_rgba(165,140,220,0.15)] hover:bg-card"
           : "bg-card/70 text-muted-foreground hover:bg-card"
     );
 
@@ -402,8 +402,8 @@ export default function SettingsPage() {
     <>
       <main className="settings-page mx-auto min-h-[100dvh] max-w-5xl px-4 pt-20 md:pt-24 pb-32">
         <div className="mb-5">
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Settings</h1>
-          <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">Grouped by section so it’s handy and not a long messy page.</p>
+          <h1 className="text-2xl font-black tracking-tight text-foreground">Settings</h1>
+          <p className="mt-1 text-xs font-medium text-muted-foreground">Grouped by section so it’s handy and not a long messy page.</p>
         </div>
 
         <div className="mb-5 flex gap-2 overflow-x-auto pb-2 md:hidden">
@@ -429,10 +429,10 @@ export default function SettingsPage() {
                         "w-full rounded-2xl px-4 py-3 text-left transition-all duration-300",
                         isActive
                           ? isClay
-                            ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-clay-card shadow-[inset_1px_1px_2px_rgba(255,255,255,0.4)] scale-[1.02]"
+                            ? "bg-primary text-primary-foreground shadow-clay-card shadow-[inset_1px_1px_2px_rgba(255,255,255,0.4)] scale-[1.02]"
                             : "bg-primary text-primary-foreground shadow-sm"
                           : isClay
-                            ? "hover:bg-white/40 dark:hover:bg-slate-800/40 text-slate-500 dark:text-slate-400"
+                            ? "hover:bg-muted/40 text-muted-foreground"
                             : "hover:bg-muted/60"
                       )}
                     >
@@ -442,16 +442,16 @@ export default function SettingsPage() {
                           isActive
                             ? "text-white"
                             : isClay
-                              ? "text-slate-400"
-                              : "text-slate-500 dark:text-slate-400"
+                              ? "text-muted-foreground"
+                              : "text-muted-foreground"
                         )} />
                         <div className={cn(
                           "text-sm font-black uppercase tracking-wider",
                           isActive
                             ? "text-white"
                             : isClay
-                              ? "text-slate-600 dark:text-slate-300"
-                              : "text-slate-900 dark:text-slate-100"
+                              ? "text-muted-foreground"
+                              : "text-foreground"
                         )}>{s.label}</div>
                       </div>
                     </button>
@@ -465,29 +465,29 @@ export default function SettingsPage() {
             {active === "profile" && (
               <SettingsCard title="Profile" subtitle="Update your profile settings." icon={User}>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                  <Avatar src={user?.photoURL} name={user?.displayName || "User"} size={64} className="shadow-md ring-4 ring-white dark:ring-slate-950" />
+                  <Avatar src={user?.photoURL} name={user?.displayName || "User"} size={64} className="shadow-md ring-4 ring-background" />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-lg font-black tracking-tight text-slate-900 dark:text-slate-100">{user?.displayName || "Guest User"}</div>
-                    <div className="mt-0.5 break-all text-sm font-medium text-slate-500 dark:text-slate-400">{user?.email}</div>
+                    <div className="truncate text-lg font-black tracking-tight text-foreground">{user?.displayName || "Guest User"}</div>
+                    <div className="mt-0.5 break-all text-sm font-medium text-muted-foreground">{user?.email}</div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
                   <div className="space-y-1.5">
-                    <label className="ml-1 text-xs font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Username</label>
+                    <label className="ml-1 text-xs font-black uppercase tracking-[0.18em] text-muted-foreground">Username</label>
                     <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Your username" className={fieldClass} />
                   </div>
                   <button
                     onClick={handleSaveProfile}
                     disabled={isSavingProfile}
-                    className="min-h-11 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-black text-white shadow-sm transition-colors hover:bg-blue-700 active:scale-95 disabled:opacity-50"
+                    className="min-h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 disabled:opacity-50"
                   >
                     {isSavingProfile ? "Saving..." : "Save"}
                   </button>
                 </div>
 
-                <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
-                  <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500 ml-1 mb-3">Account Security</div>
+                <div className="mt-6 border-t border-border pt-6">
+                  <div className="text-xs font-black uppercase tracking-[0.18em] text-muted-foreground ml-1 mb-3">Account Security</div>
                   
                   <div className="flex flex-col gap-3">
                     <button
@@ -495,7 +495,7 @@ export default function SettingsPage() {
                         localStorage.removeItem('selectedApp');
                         window.location.reload();
                       }}
-                      className="flex w-full items-center justify-between rounded-2xl border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-sm font-black text-emerald-700 hover:bg-emerald-100/50 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300"
+                      className="flex w-full items-center justify-between rounded-2xl border border-success/20 bg-success/10 px-4 py-3 text-sm font-semibold text-success hover:bg-success/15"
                     >
                       <span className="inline-flex items-center gap-2">
                         <ArrowLeftRight className="h-4 w-4" /> Switch App
@@ -504,7 +504,7 @@ export default function SettingsPage() {
                     </button>
                     <button
                       onClick={() => setShowLogoutConfirm(true)}
-                      className="flex w-full items-center justify-between rounded-2xl border border-red-100 bg-red-50/50 px-4 py-3 text-sm font-black text-red-700 hover:bg-red-100/50 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300"
+                      className="flex w-full items-center justify-between rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive hover:bg-destructive/15"
                     >
                       <span className="inline-flex items-center gap-2">
                         <LogOut className="h-4 w-4" /> Sign Out
@@ -597,10 +597,10 @@ export default function SettingsPage() {
                 </SettingsRow>
 
 
-                <details className="rounded-2xl border border-slate-100/80 bg-white/60 p-4 dark:border-slate-800 dark:bg-slate-950/30">
+                <details className="rounded-2xl border border-border bg-card/60 p-4 dark:border-border dark:bg-card/40">
                   <summary className="cursor-pointer list-none">
-                    <div className="text-sm font-black text-slate-900 dark:text-slate-100">Dashboard widgets</div>
-                    <div className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">Hide widgets you don’t use.</div>
+                    <div className="text-sm font-black text-foreground">Dashboard widgets</div>
+                    <div className="mt-1 text-[11px] font-medium text-muted-foreground">Hide widgets you don’t use.</div>
                   </summary>
                   <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {WIDGET_DEFS.map((widget) => (
@@ -611,10 +611,10 @@ export default function SettingsPage() {
                   </div>
                 </details>
 
-                <details className="rounded-2xl border border-slate-100/80 bg-white/60 p-4 dark:border-slate-800 dark:bg-slate-950/30">
+                <details className="rounded-2xl border border-border bg-card/60 p-4 dark:border-border dark:bg-card/40">
                   <summary className="cursor-pointer list-none">
-                    <div className="text-sm font-black text-slate-900 dark:text-slate-100">Auto-categorization ({rules.length})</div>
-                    <div className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">Assign a category when a keyword appears in note.</div>
+                    <div className="text-sm font-black text-foreground">Auto-categorization ({rules.length})</div>
+                    <div className="mt-1 text-[11px] font-medium text-muted-foreground">Assign a category when a keyword appears in note.</div>
                   </summary>
                   <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1.1fr_1fr_auto]">
                     <input value={ruleKeyword} onChange={(e) => setRuleKeyword(e.target.value)} placeholder='Keyword, e.g. "netflix"' className={fieldClass} />
@@ -633,20 +633,20 @@ export default function SettingsPage() {
                         setRuleCategory("");
                       }}
                       disabled={!ruleKeyword || !ruleCategory}
-                      className="min-h-11 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-black text-white shadow-sm transition-colors hover:bg-blue-700 active:scale-95 disabled:opacity-50"
+                      className="min-h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 disabled:opacity-50"
                     >
                       Add
                     </button>
                   </div>
                   <div className="mt-4 space-y-2">
-                    {rules.length === 0 && <div className="py-3 text-center text-xs italic text-slate-400">No rules yet.</div>}
+                    {rules.length === 0 && <div className="py-3 text-center text-xs italic text-muted-foreground">No rules yet.</div>}
                     {rules.map((r) => (
-                      <div key={r.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+                      <div key={r.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-muted/40 p-4">
                         <div className="min-w-0">
-                          <div className="truncate text-sm font-black text-slate-900 dark:text-slate-100">{r.keyword}</div>
-                          <div className="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">Assigns to {r.category}</div>
+                          <div className="truncate text-sm font-black text-foreground">{r.keyword}</div>
+                          <div className="mt-0.5 text-xs font-medium text-muted-foreground">Assigns to {r.category}</div>
                         </div>
-                        <button onClick={() => deleteRule(r.id)} className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-600 hover:bg-red-100 dark:border-red-900/30 dark:bg-red-900/10 dark:text-red-300">
+                        <button onClick={() => deleteRule(r.id)} className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs font-black text-destructive hover:bg-destructive/20 dark:border-destructive/20 dark:bg-destructive/10 dark:text-destructive">
                           Delete
                         </button>
                       </div>
@@ -658,10 +658,10 @@ export default function SettingsPage() {
 
             {active === "manage" && (
               <SettingsCard title="Manage" subtitle="Budgets and goals — kept tidy." icon={LayoutGrid}>
-                <details className="rounded-2xl border border-slate-100/80 bg-white/60 p-4 dark:border-slate-800 dark:bg-slate-950/30">
+                <details className="rounded-2xl border border-border bg-card/60 p-4 dark:border-border dark:bg-card/40">
                   <summary className="cursor-pointer list-none">
-                    <div className="text-sm font-black text-slate-900 dark:text-slate-100">Category budgets ({budgets.length})</div>
-                    <div className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">Parent or subcategory monthly limits.</div>
+                    <div className="text-sm font-black text-foreground">Category budgets ({budgets.length})</div>
+                    <div className="mt-1 text-[11px] font-medium text-muted-foreground">Parent or subcategory monthly limits.</div>
                   </summary>
                   <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <select
@@ -703,24 +703,24 @@ export default function SettingsPage() {
                       setBudgetSubcategory("");
                     }}
                     disabled={!budgetCategory || !budgetAmount || !budgetMonth}
-                    className="mt-3 min-h-11 w-full rounded-xl bg-blue-600 py-3 text-sm font-black text-white shadow-sm transition-colors hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50"
+                    className="mt-3 min-h-11 w-full rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50"
                   >
                     Add budget
                   </button>
                   <div className="mt-4 space-y-2">
-                    {budgets.length === 0 && <div className="py-3 text-center text-xs italic text-slate-400">No category budgets yet.</div>}
+                    {budgets.length === 0 && <div className="py-3 text-center text-xs italic text-muted-foreground">No category budgets yet.</div>}
                     {budgets.map((b) => (
-                      <div key={b.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+                      <div key={b.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-muted/40 p-4">
                         <div className="min-w-0">
-                          <div className="truncate text-sm font-black text-slate-900 dark:text-slate-100">
+                          <div className="truncate text-sm font-black text-foreground">
                             {b.category}
                             {b.subcategory ? ` › ${b.subcategory}` : ""}
                           </div>
-                          <div className="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                          <div className="mt-0.5 text-xs font-medium text-muted-foreground">
                             {b.month} • <Amount value={b.amount} />
                           </div>
                         </div>
-                        <button onClick={() => deleteBudget(b.id)} className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-600 hover:bg-red-100 dark:border-red-900/30 dark:bg-red-900/10 dark:text-red-300">
+                        <button onClick={() => deleteBudget(b.id)} className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs font-black text-destructive hover:bg-destructive/20 dark:border-destructive/20 dark:bg-destructive/10 dark:text-destructive">
                           Delete
                         </button>
                       </div>
@@ -728,10 +728,10 @@ export default function SettingsPage() {
                   </div>
                 </details>
 
-                <details className="rounded-2xl border border-slate-100/80 bg-white/60 p-4 dark:border-slate-800 dark:bg-slate-950/30">
+                <details className="rounded-2xl border border-border bg-card/60 p-4 dark:border-border dark:bg-card/40">
                   <summary className="cursor-pointer list-none">
-                    <div className="text-sm font-black text-slate-900 dark:text-slate-100">Financial goals ({goals.length})</div>
-                    <div className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">Track targets with progress.</div>
+                    <div className="text-sm font-black text-foreground">Financial goals ({goals.length})</div>
+                    <div className="mt-1 text-[11px] font-medium text-muted-foreground">Track targets with progress.</div>
                   </summary>
                   <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <input value={goalName} onChange={(e) => setGoalName(e.target.value)} placeholder="Goal name" className={fieldClass} />
@@ -748,34 +748,34 @@ export default function SettingsPage() {
                       setGoalDeadline("");
                     }}
                     disabled={!goalName || !goalTarget}
-                    className="mt-3 min-h-11 w-full rounded-xl bg-blue-600 py-3 text-sm font-black text-white shadow-sm transition-colors hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50"
+                    className="mt-3 min-h-11 w-full rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50"
                   >
                     Add goal
                   </button>
                   <div className="mt-4 space-y-3">
-                    {goals.length === 0 && <div className="py-3 text-center text-xs italic text-slate-400">No financial goals yet.</div>}
+                    {goals.length === 0 && <div className="py-3 text-center text-xs italic text-muted-foreground">No financial goals yet.</div>}
                     {goals.map((g) => {
                       const progress = g.targetAmount > 0 ? Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100)) : 0;
                       return (
-                        <div key={g.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+                        <div key={g.id} className="rounded-2xl border border-border bg-muted/40 p-4">
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                              <div className="truncate text-sm font-black text-slate-900 dark:text-slate-100">{g.name}</div>
-                              <div className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+                              <div className="truncate text-sm font-black text-foreground">{g.name}</div>
+                              <div className="mt-1 text-xs font-medium text-muted-foreground">
                                 Target <Amount value={g.targetAmount} />
                                 {g.deadline ? ` • by ${g.deadline}` : ""}
                               </div>
                             </div>
-                            <button onClick={() => deleteGoal(g.id)} className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-600 hover:bg-red-100 dark:border-red-900/30 dark:bg-red-900/10 dark:text-red-300">
+                            <button onClick={() => deleteGoal(g.id)} className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs font-black text-destructive hover:bg-destructive/20 dark:border-destructive/20 dark:bg-destructive/10 dark:text-destructive">
                               Delete
                             </button>
                           </div>
-                          <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-                            <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" style={{ width: `${progress}%` }} />
+                          <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+                            <div className="h-full rounded-full bg-success" style={{ width: `${progress}%` }} />
                           </div>
                           <div className="mt-3 flex items-center gap-2">
                             <input type="number" min={0} defaultValue={g.currentAmount} onBlur={(e) => updateGoalProgress(g.id, Number(e.target.value))} className={cn(fieldClass, "min-h-10 py-2")} />
-                            <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">{progress}%</span>
+                            <span className="text-xs font-semibold text-success">{progress}%</span>
                           </div>
                         </div>
                       );
@@ -787,10 +787,10 @@ export default function SettingsPage() {
 
             {active === "accounts" && (
               <SettingsCard title="Accounts" subtitle="Accounts, types, and custom categories." icon={WalletCards}>
-                <details className="rounded-2xl border border-slate-100/80 bg-white/60 p-4 dark:border-slate-800 dark:bg-slate-950/30">
+                <details className="rounded-2xl border border-border bg-card/60 p-4 dark:border-border dark:bg-card/40">
                   <summary className="cursor-pointer list-none">
-                    <div className="text-sm font-black text-slate-900 dark:text-slate-100">Account types ({accountTypes.length})</div>
-                    <div className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">Examples: Bank, Cash, Card.</div>
+                    <div className="text-sm font-black text-foreground">Account types ({accountTypes.length})</div>
+                    <div className="mt-1 text-[11px] font-medium text-muted-foreground">Examples: Bank, Cash, Card.</div>
                   </summary>
                   <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                     <input value={newAccountType} onChange={(e) => setNewAccountType(e.target.value)} placeholder="e.g. Bank" className={fieldClass} />
@@ -799,17 +799,17 @@ export default function SettingsPage() {
                         addAccountType(newAccountType);
                         setNewAccountType("");
                       }}
-                      className="min-h-11 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-black text-white hover:bg-blue-700 active:scale-95"
+                      className="min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 active:scale-95"
                     >
                       Add
                     </button>
                   </div>
                   <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {accountTypes.length === 0 && <div className="py-3 text-center text-xs italic text-slate-400 sm:col-span-2">No account types yet.</div>}
+                    {accountTypes.length === 0 && <div className="py-3 text-center text-xs italic text-muted-foreground sm:col-span-2">No account types yet.</div>}
                     {accountTypes.map((t) => (
-                      <div key={t.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/60">
-                        <div className="truncate text-sm font-black text-slate-900 dark:text-slate-100">{t.name}</div>
-                        <button onClick={() => deleteAccountType(t.id)} className="rounded-xl border border-slate-200 bg-white p-2 text-slate-400 hover:text-red-500 dark:border-slate-700 dark:bg-slate-900">
+                      <div key={t.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-muted/40 p-4">
+                        <div className="truncate text-sm font-black text-foreground">{t.name}</div>
+                        <button onClick={() => deleteAccountType(t.id)} className="rounded-xl border border-border bg-card p-2 text-muted-foreground hover:text-destructive dark:border-border dark:bg-card">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -817,10 +817,10 @@ export default function SettingsPage() {
                   </div>
                 </details>
 
-                <details className="rounded-2xl border border-slate-100/80 bg-white/60 p-4 dark:border-slate-800 dark:bg-slate-950/30">
+                <details className="rounded-2xl border border-border bg-card/60 p-4 dark:border-border dark:bg-card/40">
                   <summary className="cursor-pointer list-none">
-                    <div className="text-sm font-black text-slate-900 dark:text-slate-100">Accounts ({accounts.length})</div>
-                    <div className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">Any non-credit account can set a starting balance. Pay credit bills from non-credit accounts.</div>
+                    <div className="text-sm font-black text-foreground">Accounts ({accounts.length})</div>
+                    <div className="mt-1 text-[11px] font-medium text-muted-foreground">Any non-credit account can set a starting balance. Pay credit bills from non-credit accounts.</div>
                   </summary>
                   <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <input value={newAccountName} onChange={(e) => setNewAccountName(e.target.value)} placeholder="Account name" className={fieldClass} />
@@ -899,7 +899,7 @@ export default function SettingsPage() {
                       setNewAccountCreditLimit("");
                     }}
                     disabled={!newAccountName || !selectedAccountType}
-                    className="mt-3 min-h-11 w-full rounded-xl bg-blue-600 py-3 text-sm font-black text-white hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50"
+                    className="mt-3 min-h-11 w-full rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50"
                   >
                     Add account
                   </button>
@@ -910,13 +910,13 @@ export default function SettingsPage() {
                       const needsBalance = kind !== "credit" && !a.balanceInitialized;
                       const needsCreditLimit = kind === "credit" && !a.creditLimit;
                       return (
-                        <div key={a.id} className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+                        <div key={a.id} className="flex flex-col gap-3 rounded-2xl border border-border bg-muted/40 p-4">
                           <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
-                              <div className="truncate text-sm font-black text-slate-900 dark:text-slate-100">{a.name}</div>
-                              <div className="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">{typeName}</div>
+                              <div className="truncate text-sm font-black text-foreground">{a.name}</div>
+                              <div className="mt-0.5 text-xs font-medium text-muted-foreground">{typeName}</div>
                             </div>
-                            <button onClick={() => deleteAccount(a.id)} className="rounded-xl border border-slate-200 bg-white p-2 text-slate-400 hover:text-red-500 dark:border-slate-700 dark:bg-slate-900">
+                            <button onClick={() => deleteAccount(a.id)} className="rounded-xl border border-border bg-card p-2 text-muted-foreground hover:text-destructive dark:border-border dark:bg-card">
                               <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
@@ -939,7 +939,7 @@ export default function SettingsPage() {
                           )}
                           {kind !== "credit" && (
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                              <span className="text-xs font-semibold text-muted-foreground">
                                 Current balance:
                               </span>
                               <input
@@ -958,13 +958,13 @@ export default function SettingsPage() {
                                     balanceAsOfDate: getTodayKey(),
                                   });
                                 }}
-                                className="min-w-[8rem] flex-1 px-3 py-2 text-sm font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                                className="min-w-[8rem] flex-1 px-3 py-2 text-sm font-bold rounded-xl border border-border bg-card"
                               />
                             </div>
                           )}
                           {kind === "credit" && (
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="text-xs text-slate-500">Limit:</span>
+                              <span className="text-xs text-muted-foreground">Limit:</span>
                               <input
                                 type="number"
                                 min="0"
@@ -972,9 +972,9 @@ export default function SettingsPage() {
                                 onBlur={(e) =>
                                   updateAccount(a.id, { creditLimit: Number(e.target.value) || undefined })
                                 }
-                                className="w-24 px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-transparent"
+                                className="w-24 px-2 py-1 text-xs rounded border border-border bg-transparent"
                               />
-                              <span className="text-xs text-slate-500">Bill day:</span>
+                              <span className="text-xs text-muted-foreground">Bill day:</span>
                               <input
                                 type="number"
                                 min="1"
@@ -983,7 +983,7 @@ export default function SettingsPage() {
                                 onBlur={(e) =>
                                   updateAccount(a.id, { billGenerationDay: Number(e.target.value) || undefined })
                                 }
-                                className="w-16 px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-transparent"
+                                className="w-16 px-2 py-1 text-xs rounded border border-border bg-transparent"
                               />
                             </div>
                           )}
@@ -997,8 +997,8 @@ export default function SettingsPage() {
                     const kind = getAccountKind(typeName);
                     return (
                       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                        <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl dark:bg-slate-900">
-                          <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                        <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-xl">
+                          <h3 className="text-sm font-semibold text-foreground">
                             {kind !== "credit" ? "Set opening balance" : "Set credit limit"}
                           </h3>
                           <input
@@ -1018,7 +1018,7 @@ export default function SettingsPage() {
                             <button
                               type="button"
                               onClick={() => setSetupAccountId(null)}
-                              className="flex-1 rounded-xl border border-slate-200 py-2 text-sm font-bold dark:border-slate-700"
+                              className="flex-1 rounded-xl border border-border py-2 text-sm font-semibold text-foreground"
                             >
                               Cancel
                             </button>
@@ -1038,7 +1038,7 @@ export default function SettingsPage() {
                                 }
                                 setSetupAccountId(null);
                               }}
-                              className="flex-1 rounded-xl bg-blue-600 py-2 text-sm font-bold text-white"
+                              className="flex-1 rounded-xl bg-primary py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
                             >
                               Save
                             </button>
@@ -1049,10 +1049,10 @@ export default function SettingsPage() {
                   })()}
                 </details>
 
-                <details className="rounded-2xl border border-slate-100/80 bg-white/60 p-4 dark:border-slate-800 dark:bg-slate-950/30" open>
+                <details className="rounded-2xl border border-border bg-card/60 p-4 dark:border-border dark:bg-card/40" open>
                   <summary className="cursor-pointer list-none">
-                    <div className="text-sm font-black text-slate-900 dark:text-slate-100">Categories ({parentCategories.length})</div>
-                    <div className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                    <div className="text-sm font-black text-foreground">Categories ({parentCategories.length})</div>
+                    <div className="mt-1 text-[11px] font-medium text-muted-foreground">
                       Hide, favorite, rename, style, merge, and manage subcategories.
                     </div>
                   </summary>
@@ -1069,7 +1069,7 @@ export default function SettingsPage() {
                   <div className="flex items-center gap-3">
                     {settings.privacyPin ? (
                       <>
-                        <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-sm font-black bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-200/50 dark:border-emerald-500/20">
+                        <div className="flex items-center gap-1.5 rounded-lg border border-success/20 bg-success/10 px-3 py-1.5 text-sm font-semibold text-success">
                           <Shield className="w-4 h-4" /> Enabled
                         </div>
                         <button
@@ -1078,7 +1078,7 @@ export default function SettingsPage() {
                             setPinInput("");
                             toast.success("Privacy PIN removed");
                           }}
-                          className="px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
+                          className="px-3 py-1.5 text-xs font-bold text-destructive bg-destructive/10 hover:bg-destructive/20 dark:bg-destructive/10 dark:text-destructive dark:hover:bg-destructive/20"
                         >
                           Remove
                         </button>
@@ -1103,7 +1103,7 @@ export default function SettingsPage() {
                             }
                           }}
                           disabled={pinInput.length !== 4}
-                          className="min-h-11 rounded-xl bg-blue-600 px-4 py-2 text-sm font-black text-white hover:bg-blue-700 active:scale-95 disabled:opacity-50 transition-all"
+                          className="min-h-11 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 active:scale-95 disabled:opacity-50 transition-all"
                         >
                           Enable
                         </button>
@@ -1116,10 +1116,10 @@ export default function SettingsPage() {
                   <SettingsRow title="Biometric Unlock" description="Use Fingerprint or Face ID to unlock the app without your PIN.">
                     <div className="flex items-center gap-3">
                       {!isSupported ? (
-                        <div className="text-xs font-medium text-slate-500 italic">Not supported on this device.</div>
+                        <div className="text-xs font-medium text-muted-foreground italic">Not supported on this device.</div>
                       ) : isRegistered ? (
                         <>
-                          <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 text-sm font-black bg-blue-50 dark:bg-blue-500/10 px-3 py-1.5 rounded-lg border border-blue-200/50 dark:border-blue-500/20">
+                          <div className="flex items-center gap-1.5 bg-primary/10 text-primary border border-primary/20">
                             <Fingerprint className="w-4 h-4" /> Configured
                           </div>
                           <button
@@ -1127,7 +1127,7 @@ export default function SettingsPage() {
                               unregister();
                               toast.success("Biometric unlock removed");
                             }}
-                            className="px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
+                            className="px-3 py-1.5 text-xs font-bold text-destructive bg-destructive/10 hover:bg-destructive/20 dark:bg-destructive/10 dark:text-destructive dark:hover:bg-destructive/20"
                           >
                             Remove
                           </button>
@@ -1142,7 +1142,7 @@ export default function SettingsPage() {
                               toast.error("Failed to setup biometrics");
                             }
                           }}
-                          className="min-h-11 rounded-xl bg-blue-600 px-4 py-2 text-sm font-black text-white hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2"
+                          className="min-h-11 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all flex items-center gap-2"
                         >
                           <Fingerprint className="w-4 h-4" /> Enable Biometrics
                         </button>
@@ -1157,7 +1157,7 @@ export default function SettingsPage() {
                       <div className="flex items-center gap-3">
                         {settings.fakePin ? (
                           <>
-                            <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 text-sm font-black bg-blue-50 dark:bg-blue-500/10 px-3 py-1.5 rounded-lg border border-blue-200/50 dark:border-blue-500/20">
+                            <div className="flex items-center gap-1.5 bg-primary/10 text-primary border border-primary/20">
                               <Shield className="w-4 h-4" /> Configured
                             </div>
                             <button
@@ -1166,7 +1166,7 @@ export default function SettingsPage() {
                                 setFakePinInput("");
                                 toast.success("Fake PIN removed");
                               }}
-                              className="px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
+                              className="px-3 py-1.5 text-xs font-bold text-destructive bg-destructive/10 hover:bg-destructive/20 dark:bg-destructive/10 dark:text-destructive dark:hover:bg-destructive/20"
                             >
                               Remove
                             </button>
@@ -1195,7 +1195,7 @@ export default function SettingsPage() {
                                 }
                               }}
                               disabled={fakePinInput.length !== 4}
-                              className="min-h-11 rounded-xl bg-blue-600 px-4 py-2 text-sm font-black text-white hover:bg-blue-700 active:scale-95 disabled:opacity-50 transition-all"
+                              className="min-h-11 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 active:scale-95 disabled:opacity-50 transition-all"
                             >
                               Enable
                             </button>
@@ -1235,22 +1235,22 @@ export default function SettingsPage() {
             {active === "data" && (
               <SettingsCard title="Data" subtitle="Export, import and safety." icon={Database}>
                 {/* Vault Intelligence PDF/CSV Section */}
-                <div className="bento-card relative mb-6 overflow-hidden rounded-3xl bg-slate-900 p-6 text-white">
-                  <div className="absolute right-0 top-0 -mr-16 -mt-16 h-32 w-32 rounded-full bg-blue-500/10 blur-3xl" />
+                <div className="bento-card relative mb-6 overflow-hidden rounded-3xl bg-foreground p-6 text-background">
+                  <div className="absolute right-0 top-0 -mr-16 -mt-16 h-32 w-32 rounded-full bg-primary/20 blur-3xl" />
                   <div className="relative z-10">
                     <div className="mb-4 flex justify-between">
                       <div>
-                        <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-400">Intelligence</h4>
-                        <h3 className="text-lg font-black">Financial Reports</h3>
+                        <h4 className="text-[10px] font-semibold uppercase tracking-widest text-primary">Intelligence</h4>
+                        <h3 className="text-lg font-semibold">Financial Reports</h3>
                       </div>
-                      <FileText size={20} className="text-white/20" />
+                      <FileText size={20} className="text-background/20" />
                     </div>
                     <div className="mb-4 flex gap-2">
                       {(["pdf", "csv"] as const).map((t) => (
                         <button
                           key={t}
                           onClick={() => setReportType(t)}
-                          className={cn("flex-1 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all", reportType === t ? "bg-blue-600 shadow-lg shadow-blue-600/20" : "bg-white/5 hover:bg-white/10")}
+                          className={cn("flex-1 rounded-xl py-2 text-[10px] font-semibold uppercase tracking-widest transition-all", reportType === t ? "bg-primary text-primary-foreground shadow-sm" : "bg-background/10 hover:bg-background/15")}
                         >
                           {t}
                         </button>
@@ -1259,7 +1259,7 @@ export default function SettingsPage() {
                     <button
                       onClick={generateReport}
                       disabled={isGenerating}
-                      className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-900/20 transition-all active:scale-[0.98] disabled:opacity-50"
+                      className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-[10px] font-semibold uppercase tracking-widest text-primary-foreground shadow-sm transition-all active:scale-[0.98] hover:bg-primary/90 disabled:opacity-50"
                     >
                       {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Share2 className="h-3.5 w-3.5" />}
                       {isGenerating ? "Processing..." : "Download Report"}
@@ -1268,7 +1268,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500 ml-1">Export</div>
+                  <div className="text-xs font-black uppercase tracking-[0.18em] text-muted-foreground ml-1">Export</div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]">
                     <select value={String(settings.exportYear)} onChange={(e) => setExportYear(Number(e.target.value))} className={cn(fieldClass, "cursor-pointer appearance-none")}>
                       {Array.from({ length: 5 }).map((_, i) => {
@@ -1284,18 +1284,18 @@ export default function SettingsPage() {
                       onClick={handleExportYear}
                       disabled={!systemSettings.allowDataExport}
                       title={!systemSettings.allowDataExport ? "Data export has been disabled by administrator" : ""}
-                      className="min-h-11 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 text-sm font-black text-white shadow-lg shadow-blue-500/20 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
+                      className="min-h-11 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
                     >
                       Export CSV
                     </button>
                   </div>
                 </div>
 
-                <div className="space-y-2 border-t border-slate-100 pt-4 dark:border-slate-800">
-                  <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500 ml-1">Import</div>
+                <div className="space-y-2 border-t border-border pt-4 dark:border-border">
+                  <div className="text-xs font-black uppercase tracking-[0.18em] text-muted-foreground ml-1">Import</div>
                   <button
                     onClick={() => navigate("/expenses", { state: { tab: "data" } })}
-                    className="flex w-full items-center justify-between rounded-2xl border border-dashed border-blue-200 bg-blue-50/70 px-4 py-3 text-sm font-black text-blue-700 hover:bg-blue-100/70 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-300"
+                    className="flex w-full items-center justify-between rounded-2xl border border-dashed border-primary/30 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary hover:bg-primary/10"
                   >
                     <span className="inline-flex items-center gap-2">
                       <Folder className="h-4 w-4" /> Import expenses from CSV
@@ -1304,20 +1304,20 @@ export default function SettingsPage() {
                   </button>
                 </div>
 
-                <div className="space-y-2 border-t border-slate-100 pt-4 dark:border-slate-800">
-                  <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500 ml-1">Danger zone</div>
-                  <div className="rounded-2xl border border-red-100 bg-red-50/50 p-4 dark:border-red-900/40 dark:bg-red-950/20">
+                <div className="space-y-2 border-t border-border pt-4 dark:border-border">
+                  <div className="text-xs font-black uppercase tracking-[0.18em] text-muted-foreground ml-1">Danger zone</div>
+                  <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="text-sm font-black text-red-700 dark:text-red-300">Delete all data</div>
-                        <div className="mt-1 text-[11px] font-medium text-red-600/80 dark:text-red-300/80">Permanently deletes expenses, incomes, bill payments, and account entries.</div>
+                        <div className="text-sm font-semibold text-destructive">Delete all data</div>
+                        <div className="mt-1 text-[11px] font-medium text-destructive/80">Permanently deletes expenses, incomes, bill payments, and account entries.</div>
                       </div>
                       <button
                         onClick={() => {
                           if (!user) return toast.error("Sign in to delete data");
                           setShowDeleteConfirm(true);
                         }}
-                        className="min-h-10 rounded-xl border border-red-200 bg-white px-4 py-2 text-xs font-black text-red-700 hover:bg-red-50 dark:border-red-900/40 dark:bg-slate-950 dark:text-red-300"
+                        className="min-h-10 rounded-xl border border-destructive/30 bg-card px-4 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10"
                       >
                         Delete
                       </button>
@@ -1329,9 +1329,9 @@ export default function SettingsPage() {
 
             {import.meta.env.DEV && active === "dev" && (
               <SettingsCard title="Dev Tools" subtitle="Seed demo data to quickly test all features." icon={Folder}>
-                <div className="rounded-2xl border border-slate-100/80 bg-white/60 p-4 dark:border-slate-800 dark:bg-slate-950/30">
-                  <div className="text-sm font-black text-slate-900 dark:text-slate-100">Seed data</div>
-                  <div className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                <div className="rounded-2xl border border-border bg-card/60 p-4 dark:border-border dark:bg-card/40">
+                  <div className="text-sm font-black text-foreground">Seed data</div>
+                  <div className="mt-1 text-[11px] font-medium text-muted-foreground">
                     Creates demo account types, bank accounts, subscriptions/EMIs, a trip (with budgets), a split, and a few months of expenses — all tagged so you can delete safely.
                   </div>
 
@@ -1339,28 +1339,28 @@ export default function SettingsPage() {
                     <button
                       onClick={handleSeedWorkspace}
                       disabled={isSeeding}
-                      className="min-h-11 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 text-sm font-black text-white shadow-lg shadow-blue-500/20 active:scale-[0.98] disabled:opacity-50"
+                      className="min-h-11 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50"
                     >
                       {isSeeding ? "Working..." : "Seed everything"}
                     </button>
                     <button
                       onClick={() => setSeedClearScope("tag")}
                       disabled={isSeeding}
-                      className="min-h-11 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 hover:bg-slate-50 active:scale-[0.98] disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+                      className="min-h-11 rounded-xl border border-border bg-card px-5 py-3 text-sm font-semibold text-foreground hover:bg-muted active:scale-[0.98] disabled:opacity-50"
                     >
                       Clear this seed
                     </button>
                     <button
                       onClick={() => setSeedClearScope("all")}
                       disabled={isSeeding}
-                      className="min-h-11 rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-black text-red-700 hover:bg-red-50 active:scale-[0.98] disabled:opacity-50 dark:border-red-900/40 dark:bg-slate-950 dark:text-red-300 dark:hover:bg-red-950/30"
+                      className="min-h-11 rounded-xl border border-destructive/30 bg-card px-5 py-3 text-sm font-semibold text-destructive hover:bg-destructive/10 active:scale-[0.98] disabled:opacity-50"
                     >
                       Clear all demo
                     </button>
                   </div>
 
                   {seedStatus && (
-                    <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 text-xs font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-200">
+                    <div className="mt-4 rounded-2xl border border-border bg-muted/40 p-4 p-4 text-xs font-semibold text-muted-foreground">
                       {seedStatus}
                     </div>
                   )}

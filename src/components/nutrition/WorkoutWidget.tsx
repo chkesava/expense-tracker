@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Flame, Activity, X } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from "../../lib/toast";
 
 interface WorkoutWidgetProps {
   duration: number;

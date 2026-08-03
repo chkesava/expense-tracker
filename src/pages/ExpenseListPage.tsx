@@ -10,7 +10,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { doc, getDoc, setDoc, deleteDoc, writeBatch, addDoc, collection, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../lib/utils";
 import { useModals } from "../hooks/useModals";
@@ -514,10 +514,10 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                 <PageHeader
                     title="Vault Ledger"
                     subtitle="Precision Financial Tracking"
-                    icon={<History className="text-blue-600" />}
+                    icon={<History className="text-primary" />}
                     rightElement={
                         <div className="flex gap-2">
-                            <button onClick={() => setIsSelectionMode(!isSelectionMode)} aria-label={isSelectionMode ? "Exit selection mode" : "Enter selection mode"} className={cn("p-3 rounded-2xl transition-all", isSelectionMode ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-900 text-slate-400 hover:text-blue-600")}>
+                            <button onClick={() => setIsSelectionMode(!isSelectionMode)} aria-label={isSelectionMode ? "Exit selection mode" : "Enter selection mode"} className={cn("p-3 rounded-2xl transition-all", isSelectionMode ? "bg-primary text-primary-foreground" : "bg-white dark:bg-slate-900 text-muted-foreground hover:text-primary")}>
                                 <Plus className={cn("transition-transform", isSelectionMode && "rotate-45")} />
                             </button>
                         </div>
@@ -532,21 +532,21 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                         "flex p-1.5 w-max sm:w-fit min-w-full sm:min-w-0 justify-between sm:justify-start",
                         isClay
                             ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-[2rem]"
-                            : "bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl rounded-[2rem] border border-white/20 dark:border-white/5"
+                            : "bg-card/80 backdrop-blur-xl rounded-[2rem] border border-white/20 dark:border-white/5"
                     )}>
                         {(["history", "income", "audit", "data"] as const).map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
                                 className={cn(
-                                    "px-4 py-2.5 sm:px-6 sm:py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all duration-300 shrink-0 whitespace-nowrap",
+                                    "px-4 py-2.5 sm:px-6 sm:py-3 rounded-[1.5rem] text-[10px] font-semibold uppercase tracking-wide transition-all duration-300 shrink-0 whitespace-nowrap",
                                     activeTab === tab
                                         ? isClay
                                             ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-clay-card shadow-[inset_1px_1px_2px_rgba(255,255,255,0.4)] scale-105"
-                                            : "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl scale-105"
+                                            : "bg-foreground text-background shadow-xl scale-105"
                                         : isClay
-                                            ? "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100/30 dark:hover:bg-slate-800/30"
-                                            : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                            ? "text-muted-foreground hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100/30 dark:hover:bg-slate-800/30"
+                                            : "text-muted-foreground hover:text-slate-600 dark:hover:text-slate-200"
                                 )}
                             >
                                 {{ history: "Expenses", income: "Income", audit: "Review", data: "Import & export" }[tab]}
@@ -571,20 +571,20 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                     <div className={cn(
                                         "p-6 flex flex-col justify-between min-h-[120px] transition-all",
                                         isClay
-                                            ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-3xl"
-                                            : "bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm rounded-3xl"
+                                            ? "bento-card rounded-3xl"
+                                            : "bg-white dark:bg-slate-900 border border-border shadow-sm rounded-3xl"
                                     )}>
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Monthly Burn</span>
-                                            <span className="p-2 rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                                            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Monthly Burn</span>
+                                            <span className="p-2 rounded-2xl bg-destructive/10 text-destructive">
                                                 <ArrowDownRight size={18} />
                                             </span>
                                         </div>
                                         <div>
-                                            <div className="text-2xl font-black tracking-tight text-slate-900 dark:text-white mt-2">
+                                            <div className="text-2xl font-semibold tabular-nums tracking-tight text-foreground mt-2">
                                                 <Amount value={historySummary.total} />
                                             </div>
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 inline-block">Active Selection</span>
+                                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1 inline-block">Active Selection</span>
                                         </div>
                                     </div>
 
@@ -592,20 +592,20 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                     <div className={cn(
                                         "p-6 flex flex-col justify-between min-h-[120px] transition-all",
                                         isClay
-                                            ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-3xl"
-                                            : "bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm rounded-3xl"
+                                            ? "bento-card rounded-3xl"
+                                            : "bg-white dark:bg-slate-900 border border-border shadow-sm rounded-3xl"
                                     )}>
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Activity Log</span>
-                                            <span className="p-2 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                                            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Activity Log</span>
+                                            <span className="p-2 rounded-2xl bg-info/10 text-info">
                                                 <History size={18} />
                                             </span>
                                         </div>
                                         <div>
-                                            <div className="text-2xl font-black tracking-tight text-slate-900 dark:text-white mt-2">
-                                                {searchedExpenses.length} <span className="text-sm font-bold text-slate-400">entries</span>
+                                            <div className="text-2xl font-semibold tabular-nums tracking-tight text-foreground mt-2">
+                                                {searchedExpenses.length} <span className="text-sm font-bold text-muted-foreground">entries</span>
                                             </div>
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 inline-block">Processed Logs</span>
+                                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1 inline-block">Processed Logs</span>
                                         </div>
                                     </div>
 
@@ -613,17 +613,17 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                     <div className={cn(
                                         "p-6 flex flex-col justify-between min-h-[120px] transition-all",
                                         isClay
-                                            ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-3xl"
-                                            : "bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm rounded-3xl"
+                                            ? "bento-card rounded-3xl"
+                                            : "bg-white dark:bg-slate-900 border border-border shadow-sm rounded-3xl"
                                     )}>
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Top Burner</span>
-                                            <span className="p-2 rounded-2xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Top Burner</span>
+                                            <span className="p-2 rounded-2xl bg-warning/10 text-warning">
                                                 <Sparkles size={18} />
                                             </span>
                                         </div>
                                         <div>
-                                            <div className="text-2xl font-black tracking-tight text-slate-900 dark:text-white mt-2 truncate">
+                                            <div className="text-2xl font-semibold tabular-nums tracking-tight text-foreground mt-2 truncate">
                                                 {(() => {
                                                     if (!historySummary.byCategory || Object.keys(historySummary.byCategory).length === 0) return "None";
                                                     let maxCat = "";
@@ -637,7 +637,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                     return maxCat;
                                                 })()}
                                             </div>
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 inline-block">
+                                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1 inline-block">
                                                 Max spent category
                                             </span>
                                         </div>
@@ -648,17 +648,17 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                 <div className={cn(
                                     "p-4 sm:p-6 transition-all",
                                     isClay
-                                        ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-3xl"
+                                        ? "bento-card rounded-3xl"
                                         : "bento-card"
                                 )}>
                                     <div className="flex flex-col md:flex-row gap-4 items-center">
                                         <div className="relative flex-1 w-full">
-                                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                                             <input
                                                 value={query}
                                                 onChange={e => setQuery(e.target.value)}
                                                 placeholder="Search ledger..."
-                                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 ring-blue-500/20"
+                                                className="w-full rounded-xl border border-border bg-muted/40 py-2 pl-9 pr-4 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                                             />
                                         </div>
                                         <div className="flex gap-2 w-full md:w-auto">
@@ -669,10 +669,10 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                     showFilters
                                                         ? isClay
                                                             ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-transparent shadow-[inset_1px_1px_2px_rgba(255,255,255,0.4)]"
-                                                            : "bg-blue-50 border-blue-200 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
+                                                            : "bg-blue-50 border-blue-200 text-primary dark:bg-blue-500/10 dark:text-blue-400"
                                                         : isClay
-                                                            ? "bg-slate-100/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-0 hover:bg-slate-100/80"
-                                                            : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800"
+                                                            ? "bg-slate-100/50 dark:bg-slate-800/50 text-muted-foreground border-0 hover:bg-slate-100/80"
+                                                            : "bg-card border-border"
                                                 )}
                                             >
                                                 <Filter size={14} /> Filters
@@ -680,7 +680,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                             <select
                                                 value={sortOrder}
                                                 onChange={e => setSortOrder(e.target.value as any)}
-                                                className="flex-1 md:w-32 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none"
+                                                className="flex-1 md:w-32 bg-card border border-border rounded-xl px-3 py-2 text-xs font-bold focus:outline-none"
                                             >
                                                 <option value="desc">Newest</option>
                                                 <option value="asc">Oldest</option>
@@ -690,16 +690,16 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                     <AnimatePresence>
                                         {showFilters && (
                                             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
-                                                    <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none">
+                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 mt-4 border-t border-border">
+                                                    <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="bg-muted rounded-xl px-3 py-2 text-xs focus:outline-none">
                                                         <option value="">All Categories</option>
                                                         {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                                                     </select>
-                                                    <select value={selectedAccountId} onChange={e => setSelectedAccountId(e.target.value)} className="bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none">
+                                                    <select value={selectedAccountId} onChange={e => setSelectedAccountId(e.target.value)} className="bg-muted rounded-xl px-3 py-2 text-xs focus:outline-none">
                                                         <option value="">All Accounts</option>
                                                         {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                                                     </select>
-                                                    <select value={selectedAccountTypeId} onChange={e => setSelectedAccountTypeId(e.target.value)} className="bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none">
+                                                    <select value={selectedAccountTypeId} onChange={e => setSelectedAccountTypeId(e.target.value)} className="bg-muted rounded-xl px-3 py-2 text-xs focus:outline-none">
                                                         <option value="">Account Type</option>
                                                         {accountTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                                                     </select>
@@ -710,12 +710,12 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                 </div>
 
                                 <div className="bento-card min-h-[500px] overflow-hidden">
-                                    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/2">
-                                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Transaction Stream</h3>
+                                    <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/40">
+                                        <h3 className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Transaction Stream</h3>
                                         <div className="flex items-center gap-4">
                                             <div className="text-right">
-                                                <div className="text-[10px] font-black uppercase text-slate-400 mb-0.5">Monthly Burn</div>
-                                                <div className="text-sm font-black text-rose-600 dark:text-rose-400"><Amount value={historySummary.total} /></div>
+                                                <div className="text-xs font-semibold uppercase text-muted-foreground mb-0.5">Monthly Burn</div>
+                                                <div className="text-sm font-black text-destructive dark:text-rose-400"><Amount value={historySummary.total} /></div>
                                             </div>
                                         </div>
                                     </div>
@@ -723,14 +723,14 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                     {loading ? <Skeleton className="h-full w-full" /> : (
                                         <div className="flex flex-col pb-4">
                                             {searchedExpenses.length === 0 ? (
-                                                <div className="py-20 text-center text-slate-400 italic text-sm">No transactions found for this period</div>
+                                                <div className="py-20 text-center text-muted-foreground italic text-sm">No transactions found for this period</div>
                                             ) : (
                                                 <div className="flex flex-col">
                                                     {today.length > 0 && (
                                                         <div className="bg-blue-50/10 dark:bg-blue-500/5 pb-2">
-                                                            <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5 mb-2">
-                                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">Today</span>
-                                                                <Badge variant="ghost" className="bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-0">
+                                                            <div className="px-5 py-3 flex justify-between items-center bg-card/80 backdrop-blur-md sticky top-0 z-10 border-b border-border mb-2">
+                                                                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-primary dark:text-blue-400">Today</span>
+                                                                <Badge variant="ghost" className="bg-info/10 text-info border-0">
                                                                     Total: <Amount value={today.reduce((acc, curr) => acc + curr.amount, 0)} />
                                                                 </Badge>
                                                             </div>
@@ -748,10 +748,10 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                         </div>
                                                     )}
                                                     {yesterday.length > 0 && (
-                                                        <div className="bg-slate-50/10 dark:bg-white/2 pb-2">
-                                                            <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5 mb-2">
-                                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Yesterday</span>
-                                                                <Badge variant="ghost" className="bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-0">
+                                                        <div className="bg-muted/20 pb-2">
+                                                            <div className="px-5 py-3 flex justify-between items-center bg-card/80 backdrop-blur-md sticky top-0 z-10 border-b border-border mb-2">
+                                                                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Yesterday</span>
+                                                                <Badge variant="ghost" className="bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-muted-foreground border-0">
                                                                     Total: <Amount value={yesterday.reduce((acc, curr) => acc + curr.amount, 0)} />
                                                                 </Badge>
                                                             </div>
@@ -769,10 +769,10 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                         </div>
                                                     )}
                                                     {earlier.length > 0 && (
-                                                        <div className="bg-slate-50/50 dark:bg-white/2 pb-2">
-                                                            <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5 mb-2">
-                                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Earlier</span>
-                                                                <Badge variant="ghost" className="bg-slate-50 dark:bg-white/2 text-slate-400 border-0">
+                                                        <div className="bg-muted/40 pb-2">
+                                                            <div className="px-5 py-3 flex justify-between items-center bg-card/80 backdrop-blur-md sticky top-0 z-10 border-b border-border mb-2">
+                                                                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Earlier</span>
+                                                                <Badge variant="ghost" className="bg-slate-50 dark:bg-white/2 text-muted-foreground border-0">
                                                                     Total: <Amount value={earlier.reduce((acc, curr) => acc + curr.amount, 0)} />
                                                                 </Badge>
                                                             </div>
@@ -814,12 +814,12 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                 <div className={cn(
                                     "p-4 sm:p-6 transition-all",
                                     isClay
-                                        ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-3xl"
+                                        ? "bento-card rounded-3xl"
                                         : "bento-card"
                                 )}>
                                     <div className="flex flex-col md:flex-row gap-4 items-center">
                                         <div className="relative flex-1 w-full">
-                                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                                             <input
                                                 value={incomeQuery}
                                                 onChange={e => setIncomeQuery(e.target.value)}
@@ -827,8 +827,8 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                 className={cn(
                                                     "w-full pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 transition-all",
                                                     isClay
-                                                        ? "bg-slate-50/50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/60 rounded-xl focus:ring-emerald-500/20"
-                                                        : "bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-emerald-500/20"
+                                                        ? "bg-slate-50/50 dark:bg-slate-950/50 border border-border/60 rounded-xl focus:ring-emerald-500/20"
+                                                        : "bg-muted/50 border border-border rounded-xl focus:ring-emerald-500/20"
                                                 )}
                                             />
                                         </div>
@@ -839,15 +839,15 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                 className={cn(
                                                     "flex-1 md:w-48 px-3 py-2 text-xs font-bold focus:outline-none transition-all",
                                                     isClay
-                                                        ? "bg-slate-50/50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/60 rounded-xl focus:ring-emerald-500/20"
-                                                        : "bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl"
+                                                        ? "bg-slate-50/50 dark:bg-slate-950/50 border border-border/60 rounded-xl focus:ring-emerald-500/20"
+                                                        : "bg-card border border-border rounded-xl"
                                                 )}
                                             >
                                                 <option value="">All Sources</option>
                                                 {INCOME_SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
                                             </select>
                                         </div>
-                                        <button onClick={() => { setIncomeQuery(""); setSelectedSource(""); }} className="text-[10px] font-black uppercase text-slate-400 hover:text-emerald-500 transition-colors shrink-0 px-2">Clear</button>
+                                        <button onClick={() => { setIncomeQuery(""); setSelectedSource(""); }} className="text-xs font-semibold uppercase text-muted-foreground hover:text-emerald-500 transition-colors shrink-0 px-2">Clear</button>
                                     </div>
                                 </div>
 
@@ -860,9 +860,9 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                             : "bento-card bg-emerald-600/5 border-emerald-500/20"
                                     )}>
                                         <div className="flex items-center justify-between mb-6">
-                                            <h3 className={cn("text-[10px] font-black uppercase tracking-[0.2em]", isClay ? "text-emerald-100" : "text-emerald-600 dark:text-emerald-400")}>Monthly Earnings Pulse</h3>
+                                            <h3 className={cn("text-[10px] font-semibold uppercase tracking-[0.06em]", isClay ? "text-emerald-100" : "text-emerald-600 dark:text-emerald-400")}>Monthly Earnings Pulse</h3>
                                             <span className={cn(
-                                                "text-[9px] font-black px-2 py-1 rounded-md uppercase tracking-widest",
+                                                "text-[11px] font-semibold px-2 py-1 rounded-md uppercase tracking-widest",
                                                 isClay
                                                     ? "bg-white/20 text-white"
                                                     : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
@@ -872,7 +872,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                         </div>
                                         <div className="flex items-baseline gap-2">
                                             <span className={cn("text-4xl sm:text-5xl font-black tracking-tighter", isClay ? "text-white" : "text-emerald-600 dark:text-emerald-400")}><Amount value={incomeSummary.total} /></span>
-                                            <span className={cn("text-[10px] font-black uppercase tracking-widest", isClay ? "text-emerald-100" : "text-slate-400")}>total earned</span>
+                                            <span className={cn("text-[10px] font-semibold uppercase tracking-wide", isClay ? "text-emerald-100" : "text-muted-foreground")}>total earned</span>
                                         </div>
                                     </div>
 
@@ -887,14 +887,14 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
 
                                             <div className="flex flex-col pb-4">
                                                 {[...iToday, ...iYesterday, ...iEarlier].length === 0 ? (
-                                                    <div className="py-20 text-center text-slate-400 italic">No income matches found</div>
+                                                    <div className="py-20 text-center text-muted-foreground italic">No income matches found</div>
                                                 ) : (
                                                     <div className="flex flex-col">
                                                         {iToday.length > 0 && (
                                                             <div className="bg-emerald-50/10 dark:bg-emerald-500/5 pb-2">
-                                                                <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5 mb-2">
-                                                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">Today</span>
-                                                                    <Badge variant="ghost" className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-0">
+                                                                <div className="px-5 py-3 flex justify-between items-center bg-card/80 backdrop-blur-md sticky top-0 z-10 border-b border-border mb-2">
+                                                                    <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-emerald-600 dark:text-emerald-400">Today</span>
+                                                                    <Badge variant="ghost" className="bg-success/10 text-success border-0">
                                                                         Total: <Amount value={iToday.reduce((acc, curr) => acc + curr.amount, 0)} />
                                                                     </Badge>
                                                                 </div>
@@ -913,9 +913,9 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                         )}
                                                         {iYesterday.length > 0 && (
                                                             <div className="bg-emerald-50/10 dark:bg-emerald-500/5 pb-2">
-                                                                <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5 mb-2">
-                                                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Yesterday</span>
-                                                                    <Badge variant="ghost" className="bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-0">
+                                                                <div className="px-5 py-3 flex justify-between items-center bg-card/80 backdrop-blur-md sticky top-0 z-10 border-b border-border mb-2">
+                                                                    <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Yesterday</span>
+                                                                    <Badge variant="ghost" className="bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-muted-foreground border-0">
                                                                         Total: <Amount value={iYesterday.reduce((acc, curr) => acc + curr.amount, 0)} />
                                                                     </Badge>
                                                                 </div>
@@ -934,9 +934,9 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                         )}
                                                         {iEarlier.length > 0 && (
                                                             <div className="bg-emerald-50/10 dark:bg-emerald-500/5 pb-2">
-                                                                <div className="px-5 py-3 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100 dark:border-white/5 mb-2">
-                                                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Earlier</span>
-                                                                    <Badge variant="ghost" className="bg-slate-50 dark:bg-white/2 text-slate-400 border-0">
+                                                                <div className="px-5 py-3 flex justify-between items-center bg-card/80 backdrop-blur-md sticky top-0 z-10 border-b border-border mb-2">
+                                                                    <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">Earlier</span>
+                                                                    <Badge variant="ghost" className="bg-slate-50 dark:bg-white/2 text-muted-foreground border-0">
                                                                         Total: <Amount value={iEarlier.reduce((acc, curr) => acc + curr.amount, 0)} />
                                                                     </Badge>
                                                                 </div>
@@ -982,12 +982,12 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                         : "bg-white/80 dark:bg-slate-900/80 rounded-3xl border border-white/20"
                                 )}>
                                     <div className="text-left">
-                                        <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">Audit Mode</h3>
-                                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400">{auditRemaining} tasks left</p>
+                                        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Audit Mode</h3>
+                                        <p className="text-xs font-bold text-muted-foreground">{auditRemaining} tasks left</p>
                                     </div>
                                     <div className={cn(
                                         "h-2 w-32 rounded-full overflow-hidden transition-all duration-300",
-                                        isClay ? "bg-slate-100 dark:bg-slate-800 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.1)]" : "bg-slate-100 dark:bg-slate-800"
+                                        isClay ? "bg-muted shadow-[inset_1px_1px_2px_rgba(0,0,0,0.1)]" : "bg-muted"
                                     )}>
                                         <motion.div
                                             initial={{ width: 0 }}
@@ -1020,8 +1020,8 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                 : "bg-white/80 dark:bg-slate-900/80 rounded-[3rem] border-2 border-dashed border-slate-200"
                                         )}>
                                             <CheckCircle2 size={48} className="text-emerald-500 mb-4" />
-                                            <h3 className="text-xl font-black">Laboratory Clean!</h3>
-                                            <p className="text-sm text-slate-500 mt-2 text-balance">All expenses have been categorized and confirmed.</p>
+                                            <h3 className="text-xl font-semibold tabular-nums">Laboratory Clean!</h3>
+                                            <p className="text-sm text-muted-foreground mt-2 text-balance">All expenses have been categorized and confirmed.</p>
                                         </div>
                                     )}
                                 </div>
@@ -1038,13 +1038,13 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                         ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-[2.5rem]"
                                         : "bento-card"
                                 )}>
-                                    <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-6">Import / Export Hub</h3>
+                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-6">Import / Export Hub</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-4">
                                             <label className={cn(
                                                 "flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed cursor-pointer transition-all duration-300",
                                                 isClay
-                                                    ? "bg-slate-50/50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800 rounded-3xl hover:shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] hover:bg-slate-100/50 dark:hover:bg-slate-800/20"
+                                                    ? "bg-slate-50/50 dark:bg-slate-950/50 border-border rounded-3xl hover:shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] hover:bg-slate-100/50 dark:hover:bg-slate-800/20"
                                                     : "border-slate-200 dark:border-slate-700 rounded-3xl hover:bg-slate-50 dark:hover:bg-slate-800/50"
                                             )}>
                                                 <Upload className="text-blue-500 animate-bounce" />
@@ -1058,8 +1058,8 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                 className={cn(
                                                     "w-full px-3 py-3 text-sm font-bold focus:outline-none focus:ring-2 transition-all duration-300",
                                                     isClay
-                                                        ? "bg-slate-50/50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/60 rounded-xl focus:ring-blue-500/20"
-                                                        : "bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl"
+                                                        ? "bg-slate-50/50 dark:bg-slate-950/50 border border-border/60 rounded-xl focus:ring-primary/20"
+                                                        : "bg-card border border-border rounded-xl"
                                                 )}
                                             >
                                                 <option value="">Default Import Account</option>
@@ -1092,7 +1092,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                     <div className="flex items-center justify-between mb-8">
                                                         <div>
                                                             <h4 className={cn("font-black text-xs uppercase tracking-[0.2em] mb-1", isClay ? "text-blue-100" : "text-blue-400")}>Vault Intelligence</h4>
-                                                            <h3 className="text-xl font-black tracking-tight">Generate Financial Report</h3>
+                                                            <h3 className="text-xl font-semibold tabular-nums tracking-tight">Generate Financial Report</h3>
                                                         </div>
                                                         <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-xl">
                                                             <FileText className="text-white" size={24} />
@@ -1103,10 +1103,10 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                         <button
                                                             onClick={() => setReportType("pdf")}
                                                             className={cn(
-                                                                "flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                                                "flex-1 py-3 rounded-2xl text-[10px] font-semibold uppercase tracking-wide transition-all",
                                                                 reportType === "pdf"
-                                                                    ? (isClay ? "bg-white text-blue-600 shadow-[inset_1px_1px_3px_rgba(255,255,255,0.8),inset_-1px_-1px_3px_rgba(0,0,0,0.1),0_8px_16px_rgba(0,0,0,0.1)] border-0" : "bg-blue-600 text-white shadow-lg shadow-blue-600/20")
-                                                                    : (isClay ? "bg-white/15 text-white/80 hover:bg-white/25 hover:text-white" : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10")
+                                                                    ? (isClay ? "bg-white text-primary shadow-[inset_1px_1px_3px_rgba(255,255,255,0.8),inset_-1px_-1px_3px_rgba(0,0,0,0.1),0_8px_16px_rgba(0,0,0,0.1)] border-0" : "bg-primary text-primary-foreground shadow-lg shadow-blue-600/20")
+                                                                    : (isClay ? "bg-white/15 text-white/80 hover:bg-white/25 hover:text-white" : "bg-white/5 text-muted-foreground hover:text-white hover:bg-white/10")
                                                             )}
                                                         >
                                                             PDF Document
@@ -1114,10 +1114,10 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                         <button
                                                             onClick={() => setReportType("csv")}
                                                             className={cn(
-                                                                "flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                                                "flex-1 py-3 rounded-2xl text-[10px] font-semibold uppercase tracking-wide transition-all",
                                                                 reportType === "csv"
-                                                                    ? (isClay ? "bg-white text-blue-600 shadow-[inset_1px_1px_3px_rgba(255,255,255,0.8),inset_-1px_-1px_3px_rgba(0,0,0,0.1),0_8px_16px_rgba(0,0,0,0.1)] border-0" : "bg-blue-600 text-white shadow-lg shadow-blue-600/20")
-                                                                    : (isClay ? "bg-white/15 text-white/80 hover:bg-white/25 hover:text-white" : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10")
+                                                                    ? (isClay ? "bg-white text-primary shadow-[inset_1px_1px_3px_rgba(255,255,255,0.8),inset_-1px_-1px_3px_rgba(0,0,0,0.1),0_8px_16px_rgba(0,0,0,0.1)] border-0" : "bg-primary text-primary-foreground shadow-lg shadow-blue-600/20")
+                                                                    : (isClay ? "bg-white/15 text-white/80 hover:bg-white/25 hover:text-white" : "bg-white/5 text-muted-foreground hover:text-white hover:bg-white/10")
                                                             )}
                                                         >
                                                             CSV Spreadsheet
@@ -1130,7 +1130,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                         className={cn(
                                                             "w-full relative group h-16 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] transition-all disabled:opacity-50 disabled:scale-100 overflow-hidden",
                                                             isClay
-                                                                ? "bg-white text-blue-600 shadow-[inset_1px_1px_3px_rgba(255,255,255,0.8),inset_-1px_-1px_3px_rgba(0,0,0,0.1),0_8px_16px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-95 border-0"
+                                                                ? "bg-white text-primary shadow-[inset_1px_1px_3px_rgba(255,255,255,0.8),inset_-1px_-1px_3px_rgba(0,0,0,0.1),0_8px_16px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-95 border-0"
                                                                 : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-95"
                                                         )}
                                                     >
@@ -1175,18 +1175,18 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                     !systemSettings.allowDataExport && "opacity-40 cursor-not-allowed",
                                                     isClay
                                                         ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card hover:translate-y-[-2px]"
-                                                        : "bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700"
+                                                        : "bg-card border border-border hover:border-slate-200 dark:hover:border-slate-700"
                                                 )}
                                             >
                                                 <div className="text-left">
-                                                    <h4 className={cn("font-black text-[10px] uppercase tracking-[0.2em]", isClay ? "text-blue-500" : "text-slate-400 group-hover:text-slate-600 transition-colors")}>Data Management</h4>
+                                                    <h4 className={cn("font-black text-[10px] uppercase tracking-[0.2em]", isClay ? "text-blue-500" : "text-muted-foreground group-hover:text-slate-600 transition-colors")}>Data Management</h4>
                                                     <h3 className="font-black text-sm uppercase tracking-widest mt-1">Full System Backup</h3>
-                                                    <p className="text-[10px] text-slate-400 mt-1">{systemSettings.allowDataExport ? `Export all ${expenses.length} records` : "Export disabled by administrator"}</p>
+                                                    <p className="text-[10px] text-muted-foreground mt-1">{systemSettings.allowDataExport ? `Export all ${expenses.length} records` : "Export disabled by administrator"}</p>
                                                 </div>
                                                 <div className={cn(
                                                     "h-12 w-12 rounded-2xl flex items-center justify-center transition-all",
                                                     isClay
-                                                        ? "bg-blue-50 dark:bg-blue-950/50 text-blue-600 shadow-[inset_1px_1px_3px_rgba(255,255,255,0.8),inset_-1px_-1px_3px_rgba(0,0,0,0.1)]"
+                                                        ? "bg-blue-50 dark:bg-blue-950/50 text-primary shadow-[inset_1px_1px_3px_rgba(255,255,255,0.8),inset_-1px_-1px_3px_rgba(0,0,0,0.1)]"
                                                         : "bg-slate-50 dark:bg-white/5 group-hover:bg-slate-900 group-hover:text-white"
                                                 )}>
                                                     <Download size={20} />
@@ -1200,7 +1200,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                                         "flex w-full items-center justify-between p-6 rounded-3xl transition-all shadow-lg",
                                                         isClay
                                                             ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-0 shadow-[inset_2px_2px_5px_rgba(255,255,255,0.45),inset_-2px_-2px_5px_rgba(0,0,0,0.15),0_8px_20px_rgba(37,99,235,0.3)] hover:translate-y-[-2px] active:translate-y-[1px]"
-                                                            : "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-500/20"
+                                                            : "bg-primary text-primary-foreground hover:bg-blue-700 shadow-blue-500/20"
                                                     )}
                                                 >
                                                     <div className="text-left">
@@ -1215,18 +1215,18 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
 
                                     {importRows.length > 0 && (
                                         <div className="mt-8 space-y-2">
-                                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Import Preview</h4>
+                                            <h4 className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground px-2">Import Preview</h4>
                                             <div className="max-h-64 overflow-y-auto space-y-2 pr-2">
                                                 {importRows.map((r, i) => (
                                                     <div key={i} className={cn(
                                                         "flex justify-between items-center p-4 transition-all duration-300",
                                                         isClay
                                                             ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card rounded-2xl"
-                                                            : "bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800"
+                                                            : "bg-muted/50 rounded-2xl border border-border"
                                                     )}>
                                                         <div>
                                                             <div className="text-xs font-black uppercase">{r.category}</div>
-                                                            <div className="text-[10px] text-slate-400">{r.note || "No note"} • {r.date}</div>
+                                                            <div className="text-[10px] text-muted-foreground">{r.note || "No note"} • {r.date}</div>
                                                         </div>
                                                         <div className="text-sm font-black"><Amount value={r.amount} /></div>
                                                     </div>
@@ -1278,34 +1278,34 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
             <Modal isOpen={!!viewingTransaction} onClose={() => setViewingTransaction(null)} title="Transaction Details">
                 {viewingTransaction && (
                     <div className="space-y-6">
-                        <div className="text-center p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800">
-                            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Amount</div>
-                            <div className={cn("text-4xl font-black", viewingTransaction.type === 'expense' ? "text-slate-900 dark:text-white" : "text-emerald-600")}>
+                        <div className="text-center p-6 bg-muted/50 rounded-3xl border border-border">
+                            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">Amount</div>
+                            <div className={cn("text-4xl font-black", viewingTransaction.type === 'expense' ? "text-foreground" : "text-emerald-600")}>
                                 <Amount value={viewingTransaction.data.amount} prefix={viewingTransaction.type === 'income' ? "+₹" : "₹"} />
                             </div>
                         </div>
 
                         <div className="space-y-4">
-                            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Type</span>
+                            <div className="flex justify-between items-center border-b border-border pb-3">
+                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Type</span>
                                 <span className="text-sm font-black uppercase">{viewingTransaction.type}</span>
                             </div>
-                            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Category</span>
+                            <div className="flex justify-between items-center border-b border-border pb-3">
+                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Category</span>
                                 <span className="text-sm font-bold">{viewingTransaction.type === 'expense' ? viewingTransaction.data.category : viewingTransaction.data.source}</span>
                             </div>
-                            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Date</span>
+                            <div className="flex justify-between items-center border-b border-border pb-3">
+                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Date</span>
                                 <span className="text-sm font-bold">{viewingTransaction.data.date}</span>
                             </div>
                             {viewingTransaction.data.note && (
-                                <div className="flex flex-col gap-1 border-b border-slate-100 dark:border-slate-800 pb-3">
-                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Note</span>
+                                <div className="flex flex-col gap-1 border-b border-border pb-3">
+                                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Note</span>
                                     <span className="text-sm italic">{viewingTransaction.data.note}</span>
                                 </div>
                             )}
                             <div className="flex justify-between items-center">
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Account</span>
+                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Account</span>
                                 <span className="text-sm font-bold">{accountById.get(viewingTransaction.data.accountId)?.name || "Unknown"}</span>
                             </div>
                         </div>
@@ -1317,7 +1317,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                     else setEditingIncome(viewingTransaction.data);
                                     setViewingTransaction(null);
                                 }}
-                                className="flex-1 py-3 bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                                className="flex-1 py-3 bg-blue-50 text-primary dark:bg-blue-500/10 dark:text-blue-400 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2"
                             >
                                 <Edit2 size={14} /> Edit
                             </button>
@@ -1330,7 +1330,7 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                                     });
                                     setViewingTransaction(null);
                                 }}
-                                className="flex-1 py-3 bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                                className="flex-1 py-3 bg-rose-50 text-destructive dark:bg-rose-500/10 dark:text-rose-400 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2"
                             >
                                 <Trash2 size={14} /> Delete
                             </button>
@@ -1345,12 +1345,12 @@ export default function ExpenseListPage({ hideHeader }: { hideHeader?: boolean }
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/60 backdrop-blur-sm flex items-end justify-center sm:items-center p-4">
                         <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }} className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] p-8">
                             <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-lg font-black uppercase tracking-widest">Select Category</h3>
+                                <h3 className="text-lg font-semibold uppercase tracking-wide">Select Category</h3>
                                 <button onClick={() => setShowCategoryPicker(false)} aria-label="Close category picker"><X size={20} /></button>
                             </div>
                             <div className="grid grid-cols-3 gap-2">
                                 {CATEGORIES.map(c => (
-                                    <button key={c} onClick={() => handleAuditAction("update-category", { category: c })} className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 text-[10px] font-black uppercase hover:bg-blue-600 hover:text-white transition-all">{c}</button>
+                                    <button key={c} onClick={() => handleAuditAction("update-category", { category: c })} className="p-3 rounded-2xl bg-muted text-xs font-semibold uppercase hover:bg-primary hover:text-primary-foreground transition-all">{c}</button>
                                 ))}
                             </div>
                         </motion.div>
@@ -1374,29 +1374,29 @@ const ExpenseRow = memo(({ expense, accountById, isSelected, onSelect, onEdit, o
     const isClay = theme === "claymorphism";
 
     const catLower = (expense.category || "").toLowerCase();
-    let badgeColorClass = "bg-slate-100 dark:bg-slate-800 text-slate-500";
+    let badgeColorClass = "bg-muted text-muted-foreground";
     let clayBadgeClass = "clay-badge-default";
 
     if (catLower.includes("food") || catLower.includes("dining")) {
-        badgeColorClass = "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400";
+        badgeColorClass = "bg-destructive/10 text-destructive";
         clayBadgeClass = "clay-badge-food";
     } else if (catLower.includes("travel") || catLower.includes("transport") || catLower.includes("fuel")) {
-        badgeColorClass = "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400";
+        badgeColorClass = "bg-info/10 text-info";
         clayBadgeClass = "clay-badge-travel";
     } else if (catLower.includes("shop") || catLower.includes("buy") || catLower.includes("clothing")) {
-        badgeColorClass = "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400";
+        badgeColorClass = "bg-warning/10 text-warning";
         clayBadgeClass = "clay-badge-shopping";
     } else if (catLower.includes("bill") || catLower.includes("utilities") || catLower.includes("rent") || catLower.includes("subscription")) {
-        badgeColorClass = "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400";
+        badgeColorClass = "bg-primary/10 text-primary";
         clayBadgeClass = "clay-badge-bills";
     } else if (catLower.includes("health") || catLower.includes("medical") || catLower.includes("gym")) {
-        badgeColorClass = "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+        badgeColorClass = "bg-success/10 text-success";
         clayBadgeClass = "clay-badge-health";
     }
 
     let iconClass = "";
     if (isSelected) {
-        iconClass = "bg-slate-900 dark:bg-white text-white dark:text-slate-900";
+        iconClass = "bg-foreground text-background";
     } else if (isClay) {
         iconClass = clayBadgeClass;
     } else {
@@ -1410,21 +1410,21 @@ const ExpenseRow = memo(({ expense, accountById, isSelected, onSelect, onEdit, o
                 "group relative flex flex-col p-4 sm:p-5 mx-3 my-2 sm:mx-5 sm:my-3 transition-[box-shadow,border-color,background-color] cursor-pointer rounded-3xl border",
                 isSelected
                     ? isClay
-                        ? "bg-blue-500/10 dark:bg-blue-500/20 ring-2 ring-inset ring-blue-500 border-transparent shadow-[0_8px_16px_rgba(59,130,246,0.15)]"
-                        : "bg-blue-50/80 dark:bg-blue-500/10 ring-2 ring-inset ring-blue-500 border-transparent shadow-md"
+                        ? "bg-primary/10 ring-2 ring-inset ring-primary border-transparent shadow-md"
+                        : "bg-primary/10 ring-2 ring-inset ring-primary border-transparent shadow-md"
                     : isClay
                         ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card hover:shadow-clay-card-hover"
-                        : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-lg hover:border-slate-200 dark:hover:border-slate-700"
+                        : "bg-card border-border shadow-sm hover:shadow-md hover:border-primary/20"
             )}
         >
             {/* Account Tag Inline */}
             {acc && (
                 <div className="absolute top-0 right-6 -translate-y-1/2">
                     <span className={cn(
-                        "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm",
+                        "px-3 py-1 rounded-full text-[9px] font-semibold uppercase tracking-wide shadow-sm",
                         isClay
                             ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-[inset_1px_1px_2px_rgba(255,255,255,0.4)]"
-                            : "bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900"
+                            : "bg-foreground text-background"
                     )}>
                         {acc.name}
                     </span>
@@ -1436,8 +1436,8 @@ const ExpenseRow = memo(({ expense, accountById, isSelected, onSelect, onEdit, o
                 <button
                     onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
                     className={cn(
-                        "p-1.5 rounded-full transition-colors text-slate-400",
-                        isClay ? "hover:bg-slate-100/50 dark:hover:bg-slate-800/50" : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                        "p-1.5 rounded-full transition-colors text-muted-foreground",
+                        isClay ? "hover:bg-slate-100/50 dark:hover:bg-slate-800/50" : "hover:bg-muted"
                     )}
                     aria-label="Open expense actions"
                 >
@@ -1462,16 +1462,16 @@ const ExpenseRow = memo(({ expense, accountById, isSelected, onSelect, onEdit, o
                                     "absolute right-0 top-10 z-20 w-32 border overflow-hidden",
                                     isClay
                                         ? "bg-white/95 dark:bg-slate-900/95 border-0 shadow-clay-card rounded-2xl backdrop-blur-md"
-                                        : "bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl"
+                                        : "bg-card border-border rounded-2xl shadow-lg"
                                 )}
                             >
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onEdit(expense); setShowMenu(false); }}
                                     className={cn(
-                                        "w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-blue-600 transition-colors border-b",
+                                        "w-full flex items-center gap-3 px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-primary transition-colors border-b",
                                         isClay
-                                            ? "hover:bg-blue-50/50 dark:hover:bg-blue-500/10 border-slate-100 dark:border-slate-800"
-                                            : "hover:bg-blue-50 dark:hover:bg-blue-500/10 border-slate-50 dark:border-white/5"
+                                            ? "hover:bg-blue-50/50 dark:hover:bg-blue-500/10 border-border"
+                                            : "hover:bg-primary/10 border-slate-50 dark:border-white/5"
                                     )}
                                 >
                                     <Edit2 size={12} /> Edit
@@ -1479,8 +1479,8 @@ const ExpenseRow = memo(({ expense, accountById, isSelected, onSelect, onEdit, o
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onDelete(expense); setShowMenu(false); }}
                                     className={cn(
-                                        "w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-rose-600 transition-colors",
-                                        isClay ? "hover:bg-rose-50/50 dark:hover:bg-rose-500/10" : "hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                                        "w-full flex items-center gap-3 px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-destructive transition-colors",
+                                        isClay ? "hover:bg-rose-50/50 dark:hover:bg-rose-500/10" : "hover:bg-destructive/10"
                                     )}
                                 >
                                     <Trash2 size={12} /> Delete
@@ -1500,24 +1500,24 @@ const ExpenseRow = memo(({ expense, accountById, isSelected, onSelect, onEdit, o
                         {expense.category[0]}
                     </div>
                     <div className="min-w-0 flex flex-col gap-0.5 flex-1">
-                        <div className="font-bold text-[16px] text-slate-900 dark:text-white tracking-tight group-hover:text-rose-600 transition-colors truncate">
+                        <div className="font-bold text-[16px] text-foreground tracking-tight group-hover:text-primary transition-colors truncate">
                           {expense.category}
                           {expense.subcategory ? (
-                            <span className="font-semibold text-slate-400 dark:text-slate-500"> › {expense.subcategory}</span>
+                            <span className="font-semibold text-muted-foreground"> › {expense.subcategory}</span>
                           ) : null}
                         </div>
                         <div className="flex items-center gap-2 overflow-hidden">
                             <span className={cn(
-                                "text-[10px] text-slate-400 font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md shrink-0",
-                                isClay ? "bg-slate-100/50 dark:bg-slate-950/50" : "bg-slate-100 dark:bg-slate-800"
+                                "text-[10px] text-muted-foreground font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-md shrink-0",
+                                isClay ? "bg-slate-100/50 dark:bg-slate-950/50" : "bg-muted"
                             )}>{expense.date}</span>
                             {expense.note && (
-                                <span className="text-[11px] text-slate-400 dark:text-slate-500 italic font-medium truncate">
+                                <span className="text-[11px] text-muted-foreground italic font-medium truncate">
                                     {expense.note}
                                 </span>
                             )}
                             {expense.tags && expense.tags.length > 0 && (
-                                <span className="text-[10px] text-slate-400 font-bold truncate">
+                                <span className="text-[10px] text-muted-foreground font-bold truncate">
                                   {expense.tags.map((t: string) => `#${t}`).join(" ")}
                                 </span>
                             )}
@@ -1525,7 +1525,7 @@ const ExpenseRow = memo(({ expense, accountById, isSelected, onSelect, onEdit, o
                     </div>
                 </div>
                 <div className="text-right shrink-0 self-center pl-2">
-                    <div className="text-xl font-black text-slate-900 dark:text-white tracking-tightest group-hover:scale-105 transition-transform"><Amount value={expense.amount} /></div>
+                    <div className="text-xl font-semibold tabular-nums text-foreground tracking-tightest group-hover:scale-105 transition-transform"><Amount value={expense.amount} /></div>
                 </div>
             </div>
         </div>
@@ -1553,23 +1553,23 @@ const IncomeRow = memo(({ income, accountById, isSelected, onEdit, onDelete, onS
     const isClay = theme === "claymorphism";
 
     const sourceLower = (income.source || "").toLowerCase();
-    let badgeColorClass = "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+    let badgeColorClass = "bg-success/10 text-success";
     let clayBadgeClass = "clay-badge-default";
 
     if (sourceLower.includes("salary") || sourceLower.includes("job") || sourceLower.includes("wage")) {
-        badgeColorClass = "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+        badgeColorClass = "bg-success/10 text-success";
         clayBadgeClass = "clay-badge-salary";
     } else if (sourceLower.includes("invest") || sourceLower.includes("stock") || sourceLower.includes("dividend") || sourceLower.includes("interest")) {
-        badgeColorClass = "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400";
+        badgeColorClass = "bg-info/10 text-info";
         clayBadgeClass = "clay-badge-investments";
     } else if (sourceLower.includes("free") || sourceLower.includes("gigs") || sourceLower.includes("side") || sourceLower.includes("consult")) {
-        badgeColorClass = "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400";
+        badgeColorClass = "bg-primary/10 text-primary";
         clayBadgeClass = "clay-badge-freelance";
     }
 
     let iconClass = "";
     if (isSelected) {
-        iconClass = "bg-slate-900 dark:bg-white text-white dark:text-slate-900";
+        iconClass = "bg-foreground text-background";
     } else if (isClay) {
         iconClass = clayBadgeClass;
     } else {
@@ -1583,21 +1583,21 @@ const IncomeRow = memo(({ income, accountById, isSelected, onEdit, onDelete, onS
                 "group relative flex flex-col p-4 sm:p-5 mx-3 my-2 sm:mx-5 sm:my-3 transition-[box-shadow,border-color,background-color] cursor-pointer rounded-3xl border",
                 isSelected
                     ? isClay
-                        ? "bg-blue-500/10 dark:bg-blue-500/20 ring-2 ring-inset ring-blue-500 border-transparent shadow-[0_8px_16px_rgba(59,130,246,0.15)]"
-                        : "bg-blue-50/80 dark:bg-blue-500/10 ring-2 ring-inset ring-blue-500 border-transparent shadow-md"
+                        ? "bg-primary/10 ring-2 ring-inset ring-primary border-transparent shadow-md"
+                        : "bg-primary/10 ring-2 ring-inset ring-primary border-transparent shadow-md"
                     : isClay
                         ? "bg-white dark:bg-slate-900 border-0 shadow-clay-card hover:shadow-clay-card-hover"
-                        : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-lg hover:border-slate-200 dark:hover:border-slate-700"
+                        : "bg-card border-border shadow-sm hover:shadow-md hover:border-primary/20"
             )}
         >
             {/* Account Tag Inline */}
             {acc && (
                 <div className="absolute top-0 right-6 -translate-y-1/2">
                     <span className={cn(
-                        "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm",
+                        "px-3 py-1 rounded-full text-[9px] font-semibold uppercase tracking-wide shadow-sm",
                         isClay
                             ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-[inset_1px_1px_2px_rgba(255,255,255,0.4)]"
-                            : "bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900"
+                            : "bg-foreground text-background"
                     )}>
                         {acc.name}
                     </span>
@@ -1609,8 +1609,8 @@ const IncomeRow = memo(({ income, accountById, isSelected, onEdit, onDelete, onS
                 <button
                     onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
                     className={cn(
-                        "p-1.5 rounded-full transition-colors text-slate-400",
-                        isClay ? "hover:bg-slate-100/50 dark:hover:bg-slate-800/50" : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                        "p-1.5 rounded-full transition-colors text-muted-foreground",
+                        isClay ? "hover:bg-slate-100/50 dark:hover:bg-slate-800/50" : "hover:bg-muted"
                     )}
                     aria-label="Open income actions"
                 >
@@ -1635,16 +1635,16 @@ const IncomeRow = memo(({ income, accountById, isSelected, onEdit, onDelete, onS
                                     "absolute right-0 top-10 z-20 w-32 border overflow-hidden",
                                     isClay
                                         ? "bg-white/95 dark:bg-slate-900/95 border-0 shadow-clay-card rounded-2xl backdrop-blur-md"
-                                        : "bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl"
+                                        : "bg-card border-border rounded-2xl shadow-lg"
                                 )}
                             >
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onEdit(income); setShowMenu(false); }}
                                     className={cn(
-                                        "w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-blue-600 transition-colors border-b",
+                                        "w-full flex items-center gap-3 px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-primary transition-colors border-b",
                                         isClay
-                                            ? "hover:bg-blue-50/50 dark:hover:bg-blue-500/10 border-slate-100 dark:border-slate-800"
-                                            : "hover:bg-blue-50 dark:hover:bg-blue-500/10 border-slate-50 dark:border-white/5"
+                                            ? "hover:bg-blue-50/50 dark:hover:bg-blue-500/10 border-border"
+                                            : "hover:bg-primary/10 border-slate-50 dark:border-white/5"
                                     )}
                                 >
                                     <Edit2 size={12} /> Edit
@@ -1652,8 +1652,8 @@ const IncomeRow = memo(({ income, accountById, isSelected, onEdit, onDelete, onS
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onDelete(income); setShowMenu(false); }}
                                     className={cn(
-                                        "w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-rose-600 transition-colors",
-                                        isClay ? "hover:bg-rose-50/50 dark:hover:bg-rose-500/10" : "hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                                        "w-full flex items-center gap-3 px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-destructive transition-colors",
+                                        isClay ? "hover:bg-rose-50/50 dark:hover:bg-rose-500/10" : "hover:bg-destructive/10"
                                     )}
                                 >
                                     <Trash2 size={12} /> Delete
@@ -1673,14 +1673,14 @@ const IncomeRow = memo(({ income, accountById, isSelected, onEdit, onDelete, onS
                         {income.source[0]}
                     </div>
                     <div className="min-w-0 flex flex-col gap-0.5 flex-1">
-                        <div className="font-bold text-[16px] text-slate-900 dark:text-white tracking-tight group-hover:text-emerald-600 transition-colors truncate">{income.source}</div>
+                        <div className="font-bold text-[16px] text-foreground tracking-tight group-hover:text-emerald-600 transition-colors truncate">{income.source}</div>
                         <div className="flex items-center gap-2 overflow-hidden">
                             <span className={cn(
-                                "text-[10px] text-slate-400 font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md shrink-0",
-                                isClay ? "bg-slate-100/50 dark:bg-slate-950/50" : "bg-slate-100 dark:bg-slate-800"
+                                "text-[10px] text-muted-foreground font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-md shrink-0",
+                                isClay ? "bg-slate-100/50 dark:bg-slate-950/50" : "bg-muted"
                             )}>{income.date}</span>
                             {income.note && (
-                                <span className="text-[11px] text-slate-400 dark:text-slate-500 italic font-medium truncate">
+                                <span className="text-[11px] text-muted-foreground italic font-medium truncate">
                                     {income.note}
                                 </span>
                             )}
@@ -1688,7 +1688,7 @@ const IncomeRow = memo(({ income, accountById, isSelected, onEdit, onDelete, onS
                     </div>
                 </div>
                 <div className="text-right shrink-0 self-center pl-2">
-                    <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 tracking-tighter"><Amount value={income.amount} prefix="+₹" /></div>
+                    <div className="text-xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400 tracking-tighter"><Amount value={income.amount} prefix="+₹" /></div>
                 </div>
             </div>
         </div>

@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { TrendingUp, TrendingDown, CalendarRange } from "lucide-react";
 import Amount from "../common/Amount";
 import { cn } from "../../lib/utils";
+import { ICON_SIZE, ICON_STROKE } from "../../lib/iconSizes";
 
 interface SpendingPacingCardProps {
   metrics: {
@@ -19,7 +20,6 @@ interface SpendingPacingCardProps {
 export default function SpendingPacingCard({ metrics }: SpendingPacingCardProps) {
   const {
     currentMonthMtdTotal,
-    historicAverageMtdTotal,
     historicAverageMonthlyTotal,
     dayOfMonth,
     totalDays,
@@ -31,7 +31,6 @@ export default function SpendingPacingCard({ metrics }: SpendingPacingCardProps)
   const isWayAhead = pacingPercentage > 20;
   const isUnder = pacingPercentage < -5;
 
-  // Calculate percentage progress of month and spend
   const timeProgress = (dayOfMonth / totalDays) * 100;
   const spendProgress = Math.min(
     (currentMonthMtdTotal / (historicAverageMonthlyTotal || 1)) * 100,
@@ -39,65 +38,66 @@ export default function SpendingPacingCard({ metrics }: SpendingPacingCardProps)
   );
 
   return (
-    <div className="premium-glass p-6 rounded-3xl flex flex-col justify-between min-h-[250px] relative overflow-hidden transition-all duration-500 hover:shadow-2xl">
-      {/* Background soft color wash */}
-      <div className={cn(
-        "absolute -right-16 -top-16 w-36 h-36 rounded-full blur-3xl opacity-20 pointer-events-none transition-all duration-700",
-        isWayAhead ? "bg-rose-500" : isUnder ? "bg-emerald-500" : "bg-blue-500"
-      )} />
+    <div className="bento-card relative flex min-h-[250px] flex-col justify-between overflow-hidden p-6 transition-shadow duration-300 hover:shadow-md">
+      <div
+        className={cn(
+          "pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full opacity-15 blur-3xl transition-colors duration-500",
+          isWayAhead ? "bg-destructive" : isUnder ? "bg-success" : "bg-info"
+        )}
+      />
 
-      {/* Card Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <CalendarRange className="text-slate-400 dark:text-slate-500" size={18} />
-          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            Spend Pacing & Run-Rate
+          <CalendarRange className="text-muted-foreground" size={ICON_SIZE.sm} strokeWidth={ICON_STROKE} />
+          <span className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            Spend pacing & run-rate
           </span>
         </div>
-        <div className={cn(
-          "px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wide flex items-center gap-1",
-          isWayAhead 
-            ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400"
-            : isAhead
-              ? "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400"
-              : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-        )}>
+        <div
+          className={cn(
+            "flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide",
+            isWayAhead
+              ? "bg-destructive/10 text-destructive"
+              : isAhead
+                ? "bg-warning/10 text-warning"
+                : "bg-success/10 text-success"
+          )}
+        >
           {isWayAhead ? (
             <>
-              <TrendingUp size={12} /> High Velocity
+              <TrendingUp size={12} /> High velocity
             </>
           ) : isUnder ? (
             <>
-              <TrendingDown size={12} /> Under Budget
+              <TrendingDown size={12} /> Under budget
             </>
           ) : (
             <>
-              <TrendingDown size={12} /> On Track
+              <TrendingDown size={12} /> On track
             </>
           )}
         </div>
       </div>
 
-      {/* Large Value & Pacing Alert */}
-      <div className="space-y-1 mb-6">
-        <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">
-          Month-to-Date Spend
+      <div className="mb-6 space-y-1">
+        <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Month-to-date spend
         </div>
         <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+          <span className="text-3xl font-semibold tracking-tight tabular-nums text-foreground">
             <Amount value={currentMonthMtdTotal} />
           </span>
-          <span className={cn(
-            "text-xs font-bold",
-            pacingPercentage > 0 
-              ? "text-rose-500 dark:text-rose-400"
-              : "text-emerald-500 dark:text-emerald-400"
-          )}>
+          <span
+            className={cn(
+              "text-xs font-semibold tabular-nums",
+              pacingPercentage > 0 ? "text-destructive" : "text-success"
+            )}
+          >
             {pacingPercentage > 0 ? "+" : ""}
             {pacingPercentage.toFixed(0)}% vs avg
           </span>
         </div>
-        <p className="text-xs text-slate-400 dark:text-slate-400 mt-1 font-medium">
+        <p className="mt-1 text-xs font-medium text-muted-foreground">
           {isWayAhead ? (
             <span>You're spending faster than usual. Try scaling back discretionary purchases.</span>
           ) : isUnder ? (
@@ -108,60 +108,36 @@ export default function SpendingPacingCard({ metrics }: SpendingPacingCardProps)
         </p>
       </div>
 
-      {/* Visual Progress Bar Gauge */}
-      <div className="space-y-2 mb-4">
-        <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-          <span>Spend vs Avg Budget</span>
-          <span>Day {dayOfMonth} of {totalDays}</span>
+      <div className="mb-4 space-y-2">
+        <div className="flex justify-between text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <span>Spend vs avg budget</span>
+          <span>
+            Day {dayOfMonth} of {totalDays}
+          </span>
         </div>
-        <div className="relative h-3 w-full bg-slate-100 dark:bg-slate-800/80 rounded-full overflow-hidden">
-          {/* Spend progress bar */}
+        <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${spendProgress}%` }}
             transition={{ duration: 0.8, ease: "easeOut" }}
             className={cn(
-              "h-full rounded-full",
-              isWayAhead 
-                ? "bg-gradient-to-r from-rose-400 to-rose-600" 
-                : "bg-gradient-to-r from-blue-400 to-indigo-600"
+              "absolute left-0 top-0 h-full rounded-full",
+              isWayAhead ? "bg-destructive" : isUnder ? "bg-success" : "bg-primary"
             )}
           />
-          
-          {/* Time progress pin indicator */}
-          <motion.div
-            initial={{ left: 0 }}
-            animate={{ left: `${timeProgress}%` }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="absolute top-0 bottom-0 w-1 bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)] z-10"
-            style={{ transform: "translateX(-50%)" }}
+          <div
+            className="absolute top-0 h-full w-0.5 bg-foreground/40"
+            style={{ left: `${Math.min(100, timeProgress)}%` }}
+            title="Today in month"
           />
-        </div>
-        <div className="flex justify-between text-[10px] font-medium text-slate-400 dark:text-slate-500">
-          <span>Start</span>
-          <span className="text-amber-500 font-bold">Month Progress: {timeProgress.toFixed(0)}%</span>
-          <span>EOM</span>
         </div>
       </div>
 
-      {/* Sub-metrics */}
-      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-white/5">
-        <div>
-          <div className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">
-            EOM Projection
-          </div>
-          <div className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5">
-            <Amount value={projectedEndMonthTotal} />
-          </div>
-        </div>
-        <div>
-          <div className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">
-            Historic MTD Avg
-          </div>
-          <div className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5">
-            <Amount value={historicAverageMtdTotal} />
-          </div>
-        </div>
+      <div className="flex items-center justify-between border-t border-border pt-3 text-xs">
+        <span className="font-medium text-muted-foreground">Projected month end</span>
+        <span className="font-semibold tabular-nums text-foreground">
+          <Amount value={projectedEndMonthTotal} />
+        </span>
       </div>
     </div>
   );

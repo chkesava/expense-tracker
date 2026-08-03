@@ -6,7 +6,7 @@ import "../styles/form.css";
 import { useAuth } from "../hooks/useAuth";
 import { db } from "../firebase";
 import ConfirmDialog from "./common/ConfirmDialog";
-import { toast } from 'react-toastify';
+import { toast } from '../lib/toast';
 
 export default function ExpenseList({ expenses }: { expenses: Expense[] }) {
   const navigate = useNavigate();

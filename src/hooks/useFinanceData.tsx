@@ -13,7 +13,7 @@ import {
   where,
 } from "firebase/firestore";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 import { db } from "../firebase";
 import type { Account, AccountEntry, AccountPayment, AccountTransfer, AccountType, Expense, Income } from "../types/expense";
 import { isValidDateKey } from "../utils/dates";

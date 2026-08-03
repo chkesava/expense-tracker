@@ -11,7 +11,7 @@ import type { InvestmentStatus } from "../types/investment";
 import { cn } from "../lib/utils";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import EditInvestmentModal from "../components/EditInvestmentModal";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 
 const fieldClass =
   "w-full rounded-xl border border-border bg-background px-4 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/30";

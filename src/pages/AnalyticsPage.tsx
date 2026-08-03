@@ -99,8 +99,8 @@ export default function AnalyticsPage({ hideHeader }: { hideHeader?: boolean }) 
                 className={cn(
                   "shrink-0 px-4 py-2 rounded-2xl text-xs font-black uppercase tracking-widest transition-all active:scale-95",
                   isActive
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                    : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:border-blue-300"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "border border-border bg-card text-muted-foreground hover:border-primary/30"
                 )}
               >
                 {label}
@@ -152,28 +152,28 @@ export default function AnalyticsPage({ hideHeader }: { hideHeader?: boolean }) 
 
           {activeTab === "distribution" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <section className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 p-10 shadow-sm">
-                <h2 className="mb-10 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 text-center">
+              <section className="rounded-2xl border border-border bg-card p-10 shadow-sm">
+                <h2 className="mb-10 text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground text-center">
                   Category Distribution
                 </h2>
                 <div className="space-y-10">
                   <div className="flex h-64 items-center justify-center">
                     <CategoryPie data={groupByCategory(filteredExpenses)} />
                   </div>
-                  <div className="h-px bg-slate-100 dark:bg-white/5" />
+                  <div className="h-px bg-border" />
                   <CategoryBars expenses={filteredExpenses} />
                 </div>
               </section>
 
-              <section className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 p-10 shadow-sm">
-                <h2 className="mb-10 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 text-center">
+              <section className="rounded-2xl border border-border bg-card p-10 shadow-sm">
+                <h2 className="mb-10 text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground text-center">
                   Subcategory Breakdown
                 </h2>
                 <div className="space-y-10">
                   <div className="flex h-64 items-center justify-center">
                     <CategoryPie data={groupBySubcategory(filteredExpenses).slice(0, 12)} />
                   </div>
-                  <div className="h-px bg-slate-100 dark:bg-white/5" />
+                  <div className="h-px bg-border" />
                   <CategoryBars
                     expenses={filteredExpenses}
                     groupFn={groupBySubcategory}
@@ -182,8 +182,8 @@ export default function AnalyticsPage({ hideHeader }: { hideHeader?: boolean }) 
                 </div>
               </section>
 
-              <section className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 p-10 shadow-sm lg:col-span-2">
-                <h2 className="mb-10 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 text-center">
+              <section className="rounded-2xl border border-border bg-card p-10 shadow-sm lg:col-span-2">
+                <h2 className="mb-10 text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground text-center">
                   Account Allocation
                 </h2>
                 <AccountSpendingBars expenses={filteredExpenses} accounts={accounts} />
@@ -193,20 +193,20 @@ export default function AnalyticsPage({ hideHeader }: { hideHeader?: boolean }) 
 
           {activeTab === "insights" && (
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-white/5 dark:bg-slate-900/40">
-                <h2 className="mb-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">
+              <section className="rounded-2xl border border-border bg-card p-8 shadow-sm">
+                <h2 className="mb-6 text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground">
                   Top Spending
                 </h2>
                 <TopSpendLists expenses={filteredExpenses} />
               </section>
-              <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-white/5 dark:bg-slate-900/40">
-                <h2 className="mb-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">
+              <section className="rounded-2xl border border-border bg-card p-8 shadow-sm">
+                <h2 className="mb-6 text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground">
                   Focused Lenses
                 </h2>
                 <FocusedSpendingPanel expenses={filteredExpenses} />
               </section>
-              <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-white/5 dark:bg-slate-900/40 lg:col-span-2">
-                <h2 className="mb-6 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">
+              <section className="rounded-2xl border border-border bg-card p-8 shadow-sm lg:col-span-2">
+                <h2 className="mb-6 text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground">
                   Budget vs Actual
                 </h2>
                 <BudgetVsActualPanel
@@ -221,23 +221,23 @@ export default function AnalyticsPage({ hideHeader }: { hideHeader?: boolean }) 
           {activeTab === "trends" && (
             <div className="space-y-6">
               <div className="grid gap-6 md:grid-cols-2">
-                <section className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 p-8 shadow-sm">
-                  <h3 className="mb-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                <section className="rounded-2xl border border-border bg-card p-8 shadow-sm">
+                  <h3 className="mb-8 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
                     Capital Outflow — All Time
                   </h3>
                   <MonthlyBar data={groupByMonth(expenses)} />
                 </section>
 
-                <section className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 p-8 shadow-sm">
-                  <h3 className="mb-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                <section className="rounded-2xl border border-border bg-card p-8 shadow-sm">
+                  <h3 className="mb-8 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
                     Velocity Analysis — All Time
                   </h3>
                   <TrendLine data={groupByMonth(expenses)} />
                 </section>
               </div>
 
-              <section className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/40 p-8 shadow-sm">
-                <h3 className="mb-8 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">
+              <section className="rounded-2xl border border-border bg-card p-8 shadow-sm">
+                <h3 className="mb-8 text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground">
                   Daily Pulse —{" "}
                   {selectedMonth
                     ? new Date(selectedMonth + "-01").toLocaleDateString(undefined, {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { clearDemoWorkspaceForUser, seedDemoWorkspaceForUser } from "../utils/seedData";
-import { toast } from 'react-toastify';
+import { toast } from '../lib/toast';
 import ConfirmDialog from "../components/common/ConfirmDialog";
 
 export default function SeedDataPage() {

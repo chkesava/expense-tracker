@@ -15,7 +15,7 @@ import {
 import { db } from "../firebase";
 import { useAuth } from "./useAuth";
 import type { Split } from "../types/split";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 import { currentMonthKey, todayDateKey } from "../utils/dates";
 
 export const useSplits = () => {

@@ -15,32 +15,30 @@ export const SplitSuggestionToast: React.FC<SplitSuggestionToastProps> = ({
   note,
   category,
   onSplit,
-  closeToast
+  closeToast,
 }) => {
   return (
-    <div className="flex flex-col gap-3 p-1">
+    <div className="flex w-[min(92vw,22rem)] flex-col gap-3 rounded-2xl border border-border bg-card p-4 text-foreground shadow-lg">
       <div className="flex items-start gap-3">
-        <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+        <div className="rounded-xl bg-primary/10 p-2 text-primary">
           <Users size={20} />
         </div>
         <div>
-          <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-            Group expense detected?
-          </h4>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-            ₹{amount.toLocaleString()} for "{note || category}". Tap to split with friends.
+          <h4 className="text-sm font-semibold tracking-tight text-foreground">Group expense detected?</h4>
+          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+            ₹{amount.toLocaleString()} for &ldquo;{note || category}&rdquo;. Tap to split with friends.
           </p>
         </div>
       </div>
-      
+
       <motion.button
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => {
           onSplit({ amount, title: note || category, category });
-          if (closeToast) closeToast();
+          closeToast?.();
         }}
-        className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 transition-all"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-xs font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
       >
         Split with Friends
         <ArrowRight size={14} />

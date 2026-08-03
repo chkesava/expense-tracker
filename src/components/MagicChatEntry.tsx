@@ -8,7 +8,7 @@ import { parseNaturalLanguageEntry, askFinancialAdvisor, type ChatMessage } from
 import { addDoc, collection, serverTimestamp, writeBatch, doc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../hooks/useAuth";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 import { cn } from "../lib/utils";
 import { useCategorizationRules } from "../hooks/useCategorizationRules";
 import { shouldSuggestSplit } from "../utils/proactiveSplits";
@@ -485,7 +485,7 @@ export default function MagicChatEntry({
       inputRef.current?.focus();
       recognitionRef.current?.start();
       setIsRecording(true);
-      toast.info("Listening...", { autoClose: 2000, icon: <Mic className="text-blue-500 animate-pulse" /> });
+      toast.info("Listening...", { autoClose: 2000, icon: <Mic className="text-primary animate-pulse" /> });
     }
   };
 
@@ -644,26 +644,22 @@ export default function MagicChatEntry({
       });
 
       toast.success(`Saved: ₹${amount} in ${parsed.category}${parsed.subcategory ? ` › ${parsed.subcategory}` : ""}`, {
-        icon: <CheckCircle2 className="text-emerald-500" />
+        icon: <CheckCircle2 className="text-success" />
       });
 
       // Proactive split suggestion
       if (shouldSuggestSplit(amount, parsed.note)) {
-        toast.info(
-          ({ closeToast }) => (
-            <SplitSuggestionToast 
-              amount={amount} 
-              note={parsed.note} 
+        toast.custom(
+          (id) => (
+            <SplitSuggestionToast
+              amount={amount}
+              note={parsed.note}
               category={parsed.category}
               onSplit={(data) => navigate("/split", { state: { tab: "management", ...data } })}
-              closeToast={closeToast}
+              closeToast={() => toast.dismiss(id)}
             />
           ),
-          { 
-            autoClose: 10000,
-            icon: false,
-            className: "p-0 overflow-hidden rounded-2xl border border-blue-100 dark:border-blue-900 shadow-xl"
-          }
+          { duration: 10000, unstyled: true }
         );
       }
 
@@ -707,7 +703,7 @@ export default function MagicChatEntry({
       await batch.commit();
       
       toast.success(`Successfully saved ${batchResults.length} items!`, {
-        icon: <Sparkles className="text-blue-500" />
+        icon: <Sparkles className="text-primary" />
       });
 
       setInput("");

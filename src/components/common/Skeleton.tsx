@@ -8,7 +8,7 @@ export function Skeleton({ className, variant = "rectangle", ...props }: Skeleto
   return (
     <div
       className={cn(
-        "animate-pulse bg-slate-200 dark:bg-slate-800/80",
+        "animate-pulse bg-muted",
         variant === "circle" ? "rounded-full" : "rounded-2xl",
         className
       )}

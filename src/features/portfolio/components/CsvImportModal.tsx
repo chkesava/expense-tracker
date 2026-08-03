@@ -4,7 +4,7 @@ import { UploadCloud, CheckCircle, AlertTriangle } from "lucide-react";
 import Modal from "../../../components/common/Modal";
 import Button from "../../../components/ui/Button";
 import { useHoldings, type CreateHoldingInput } from "../hooks/useHoldings";
-import { toast } from "react-toastify";
+import { toast } from "../../../lib/toast";
 import type { InstrumentType, Exchange } from "../types";
 import { todayKey } from "../hooks/useHoldings";
 

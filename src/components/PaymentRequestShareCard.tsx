@@ -62,7 +62,7 @@ export default function PaymentRequestShareCard({
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="overflow-hidden rounded-[2rem] border border-white/20 bg-white text-slate-900 shadow-2xl shadow-indigo-900/15 dark:border-white/10 dark:shadow-black/40"
+      className="overflow-hidden rounded-[2rem] border border-border bg-card text-foreground shadow-2xl shadow-primary/15 dark:shadow-black/40"
       id="payment-request-card"
     >
       {/* Header — payment-app style */}
@@ -98,7 +98,7 @@ export default function PaymentRequestShareCard({
       </div>
 
       {/* QR panel — always light for reliable scanning */}
-      <div className="-mt-10 relative z-10 mx-4 rounded-[1.75rem] border border-slate-100 bg-white px-5 pb-6 pt-8 shadow-lg">
+      <div className="-mt-10 relative z-10 mx-4 rounded-[1.75rem] border border-border bg-white px-5 pb-6 pt-8 shadow-lg">
         <UpiPaymentQr
           value={upiLink}
           style={qrStyle}
@@ -106,7 +106,7 @@ export default function PaymentRequestShareCard({
           centerImageSrc={payeePhotoUrl}
         />
 
-        <p className="mt-5 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400">
+        <p className="mt-5 text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
           Scan with any UPI app
         </p>
 
@@ -114,7 +114,7 @@ export default function PaymentRequestShareCard({
           {UPI_APPS.map((app) => (
             <span
               key={app}
-              className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-slate-600"
+              className="rounded-full bg-muted px-3 py-1 text-[10px] font-black uppercase tracking-wide text-muted-foreground"
             >
               {app}
             </span>
@@ -127,7 +127,7 @@ export default function PaymentRequestShareCard({
           </div>
         )}
         {sharePageUrl && (
-          <p className="mt-4 truncate rounded-xl bg-slate-50 px-3 py-2 text-[10px] font-mono text-slate-500">
+          <p className="mt-4 truncate rounded-xl bg-muted/40 px-3 py-2 text-[10px] font-mono text-muted-foreground">
             {sharePageUrl}
           </p>
         )}
@@ -135,8 +135,8 @@ export default function PaymentRequestShareCard({
 
       {/* Actions */}
       <div className="space-y-3 px-4 pb-6 pt-4">
-        <div className="flex items-center justify-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-[11px] font-bold text-slate-500">
-          <Shield size={14} className="text-emerald-600" />
+        <div className="flex items-center justify-center gap-2 rounded-xl bg-muted/40 px-3 py-2 text-[11px] font-bold text-muted-foreground">
+          <Shield size={14} className="text-success" />
           Secured by UPI · Not saved to your expense ledger
         </div>
 
@@ -144,7 +144,7 @@ export default function PaymentRequestShareCard({
           <button
             type="button"
             onClick={onCopyLink}
-            className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-3.5 text-sm font-black text-slate-800 shadow-sm transition active:scale-[0.98]"
+            className="flex items-center justify-center gap-2 rounded-2xl border border-border bg-card py-3.5 text-sm font-black text-foreground shadow-sm transition active:scale-[0.98]"
           >
             <Copy size={16} />
             Copy page link
@@ -153,7 +153,7 @@ export default function PaymentRequestShareCard({
             <button
               type="button"
               onClick={onShare}
-              className="flex items-center justify-center gap-2 rounded-2xl bg-slate-900 py-3.5 text-sm font-black text-white shadow-lg transition active:scale-[0.98]"
+              className="flex items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-black text-primary-foreground shadow-lg transition active:scale-[0.98] hover:bg-primary/90"
             >
               <Share2 size={16} />
               Share
@@ -162,7 +162,7 @@ export default function PaymentRequestShareCard({
             <button
               type="button"
               onClick={onOpenUpi}
-              className="flex items-center justify-center gap-2 rounded-2xl bg-slate-900 py-3.5 text-sm font-black text-white shadow-lg transition active:scale-[0.98]"
+              className="flex items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-black text-primary-foreground shadow-lg transition active:scale-[0.98] hover:bg-primary/90"
             >
               <Smartphone size={16} />
               {isMobile() ? "Open UPI" : "Copy & share"}
@@ -174,7 +174,7 @@ export default function PaymentRequestShareCard({
           <button
             type="button"
             onClick={onOpenUpi}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition active:scale-[0.98]"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border py-3 text-sm font-bold text-muted-foreground transition active:scale-[0.98] hover:text-foreground"
           >
             <Smartphone size={16} />
             {isMobile() ? "Open in UPI app" : "Open UPI deep link"}
@@ -185,7 +185,7 @@ export default function PaymentRequestShareCard({
           <button
             type="button"
             onClick={onCopyUpiLink}
-            className="w-full py-2 text-xs font-bold text-slate-400 hover:text-slate-600"
+            className="w-full py-2 text-xs font-bold text-muted-foreground hover:text-foreground"
           >
             Copy UPI app link (advanced)
           </button>
@@ -195,7 +195,7 @@ export default function PaymentRequestShareCard({
           <button
             type="button"
             onClick={onEditAmount}
-            className="w-full py-2 text-xs font-bold text-slate-400 hover:text-slate-600"
+            className="w-full py-2 text-xs font-bold text-muted-foreground hover:text-foreground"
           >
             Change amount or note
           </button>

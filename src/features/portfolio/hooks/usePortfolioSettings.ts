@@ -7,7 +7,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
-import { toast } from "react-toastify";
+import { toast } from "../../../lib/toast";
 import { db } from "../../../firebase";
 import type { PortfolioSettings } from "../types";
 import { useAuth } from "../../../hooks/useAuth";

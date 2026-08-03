@@ -11,7 +11,7 @@ import {
   Share2,
   Trash2,
 } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 import RequestUpiPayment from "../components/RequestUpiPayment";
 import { usePaymentRequests } from "../hooks/usePaymentRequests";
 import Amount from "../components/common/Amount";

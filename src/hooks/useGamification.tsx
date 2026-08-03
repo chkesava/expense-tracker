@@ -21,7 +21,7 @@ import { db } from "../firebase";
 import { useAuth } from "./useAuth";
 import type { UserStats } from "../types/stats";
 import { LEVEL_THRESHOLDS } from "../types/stats";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 import { useCelebration } from "./useCelebration";
 import { formatDateKey, todayDateKey } from "../utils/dates";
 import { scheduleIdleWork } from "../utils/scheduleIdle";

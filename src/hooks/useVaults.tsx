@@ -11,7 +11,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "./useAuth";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 import type { SharedVault } from "../types/vault";
 
 export function useVaults() {

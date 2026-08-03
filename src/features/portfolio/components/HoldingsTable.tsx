@@ -60,7 +60,7 @@ function HoldingsTable({
                   >
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-xs font-black text-emerald-600">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-success/10 text-xs font-semibold text-success">
                           {h.symbol.slice(0, 2)}
                         </div>
                         <div>
@@ -105,14 +105,14 @@ function HoldingsTable({
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => onMockBuy(h)}
-                          className="p-2 rounded-lg hover:bg-emerald-500/10 text-emerald-500"
+                          className="rounded-lg p-2 text-success hover:bg-success/10"
                           title="Mock Buy"
                         >
                           <ShoppingCart size={16} />
                         </button>
                         <button
                           onClick={() => onMockSell(h)}
-                          className="p-2 rounded-lg hover:bg-rose-500/10 text-rose-500"
+                          className="rounded-lg p-2 text-destructive hover:bg-destructive/10"
                           title="Mock Sell"
                         >
                           <TrendingDown size={16} />
@@ -133,7 +133,7 @@ function HoldingsTable({
                         </button>
                         <button
                           onClick={() => setDeleteId(h.id)}
-                          className="p-2 rounded-lg hover:bg-rose-500/10 text-rose-500"
+                          className="rounded-lg p-2 text-destructive hover:bg-destructive/10"
                           title="Delete"
                         >
                           <Trash2 size={16} />

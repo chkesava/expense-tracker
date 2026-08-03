@@ -20,12 +20,12 @@ interface PageHeaderProps {
   tabLayoutId?: string;
 }
 
-export default function PageHeader({ 
-  title, 
-  subtitle, 
-  icon, 
-  activeTab, 
-  onTabChange, 
+export default function PageHeader({
+  title,
+  subtitle,
+  icon,
+  activeTab,
+  onTabChange,
   tabs,
   rightElement,
   tabAriaLabel = "Page sections",
@@ -36,26 +36,22 @@ export default function PageHeader({
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3 md:gap-4">
           {icon && (
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-foreground shadow-sm md:h-14 md:w-14 md:rounded-2xl">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-foreground shadow-sm md:h-12 md:w-12 md:rounded-2xl">
               {icon}
             </div>
           )}
           <div className="min-w-0">
-            <h1 className="truncate text-2xl font-black tracking-normal text-slate-900 dark:text-white md:text-3xl">
+            <h1 className="truncate text-2xl font-bold tracking-tight text-foreground md:text-3xl">
               {title}
             </h1>
             {subtitle && (
-              <p className="mt-1 line-clamp-2 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400 md:tracking-[0.16em]">
+              <p className="mt-1 line-clamp-2 text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
                 {subtitle}
               </p>
             )}
           </div>
         </div>
-        {rightElement && (
-          <div className="w-full sm:w-auto">
-            {rightElement}
-          </div>
-        )}
+        {rightElement && <div className="w-full sm:w-auto">{rightElement}</div>}
       </div>
 
       {tabs && tabs.length > 0 && (
@@ -69,6 +65,7 @@ export default function PageHeader({
             return (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => {
                   if (!isActive) onTabChange?.(tab.id);
                 }}
@@ -77,7 +74,7 @@ export default function PageHeader({
                 aria-selected={isActive}
                 aria-controls={`panel-${tab.id}`}
                 className={cn(
-                  "relative flex min-h-10 items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] transition-all sm:px-4 md:px-6 md:py-2.5 md:text-xs md:tracking-widest",
+                  "relative flex min-h-10 items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold tracking-wide transition-colors sm:px-4 md:px-5 md:py-2.5",
                   isActive
                     ? "text-foreground"
                     : "text-muted-foreground hover:text-foreground"

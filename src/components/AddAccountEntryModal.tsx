@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 import { useAccountEntries } from "../hooks/useAccountEntries";
 import { useAccountPayments } from "../hooks/useAccountPayments";
 import { useAccountTransfers } from "../hooks/useAccountTransfers";
@@ -121,7 +121,7 @@ export default function AddAccountEntryModal({
             onClick={() => setMode("credit")}
             className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${
               mode === "credit"
-                ? "bg-emerald-500 text-white"
+                ? "bg-success text-success-foreground"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -132,7 +132,7 @@ export default function AddAccountEntryModal({
             onClick={() => setMode("debit")}
             className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${
               mode === "debit"
-                ? "bg-rose-500 text-white"
+                ? "bg-destructive text-destructive-foreground"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -143,7 +143,7 @@ export default function AddAccountEntryModal({
             onClick={() => setMode("transfer")}
             className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${
               mode === "transfer"
-                ? "bg-violet-600 text-white"
+                ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >

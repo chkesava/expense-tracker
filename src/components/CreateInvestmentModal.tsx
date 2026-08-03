@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 import Modal from "./common/Modal";
 import { useAuth } from "../hooks/useAuth";
 import { useAccounts } from "../hooks/useAccounts";

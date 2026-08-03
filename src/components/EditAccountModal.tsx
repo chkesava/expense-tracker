@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 import Modal from "./common/Modal";
 import { useAccounts } from "../hooks/useAccounts";
 import { useAccountTypes } from "../hooks/useAccountTypes";

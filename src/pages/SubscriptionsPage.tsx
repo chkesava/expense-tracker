@@ -26,7 +26,7 @@ import PageHeader from "../components/layout/PageHeader";
 import Amount from "../components/common/Amount";
 import SegmentedTabs from "../components/ui/SegmentedTabs";
 import ConfirmDialog from "../components/common/ConfirmDialog";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 
 import { useLedgerState, type SubTab } from "../hooks/useLedgerState";
 

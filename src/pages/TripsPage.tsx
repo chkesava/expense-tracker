@@ -29,8 +29,8 @@ export default function TripsPage({ hideHeader = false }: { hideHeader?: boolean
       {!hideHeader && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Travel Hub</h1>
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Manage trip budgets and tagged expenses.</p>
+            <h1 className="text-2xl font-black tracking-tight text-foreground">Travel Hub</h1>
+            <p className="text-xs font-medium text-muted-foreground">Manage trip budgets and tagged expenses.</p>
           </div>
           <Button type="button" icon={<Plus size={18} />} onClick={() => navigate("/travel/new")}>
             New Trip
@@ -52,8 +52,8 @@ export default function TripsPage({ hideHeader = false }: { hideHeader?: boolean
           {activeTrips.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center gap-2 px-2">
-                <TrendingUp size={16} className="text-blue-500" />
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Current Journeys</h3>
+                <TrendingUp size={16} className="text-primary" />
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Current Journeys</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {activeTrips.map((trip) => (
@@ -67,8 +67,8 @@ export default function TripsPage({ hideHeader = false }: { hideHeader?: boolean
           {pastTrips.length > 0 && (
             <div className="space-y-4 pt-4">
               <div className="flex items-center gap-2 px-2">
-                <Calendar size={16} className="text-slate-400" />
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Past Adventures</h3>
+                <Calendar size={16} className="text-muted-foreground" />
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Past Adventures</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {pastTrips.map((trip) => (
@@ -84,7 +84,7 @@ export default function TripsPage({ hideHeader = false }: { hideHeader?: boolean
       {trips.length > 0 && hideHeader && (
           <button
             onClick={() => navigate("/travel/new")}
-            className="fixed bottom-24 right-6 w-14 h-14 bg-blue-600 text-white rounded-[1.5rem] flex items-center justify-center shadow-2xl shadow-blue-500/40 active:scale-90 transition-transform z-40 lg:hidden"
+            className="fixed bottom-24 right-6 w-14 h-14 bg-primary text-primary-foreground rounded-[1.5rem] flex items-center justify-center shadow-2xl shadow-primary/40 active:scale-90 transition-transform z-40 lg:hidden"
           >
             <Plus size={28} />
           </button>
@@ -106,7 +106,7 @@ function TripCard({ trip, onClick, isPast = false }: { trip: any, onClick: () =>
       onClick={onClick}
       className={cn(
         "group relative overflow-hidden bento-card p-5 cursor-pointer border transition-all duration-300",
-        isPast ? "opacity-75 grayscale-[0.5] hover:grayscale-0" : "hover:border-blue-500/50"
+        isPast ? "opacity-75 grayscale-[0.5] hover:grayscale-0" : "hover:border-primary/50"
       )}
     >
       <div className="flex justify-between items-start mb-4">
@@ -114,18 +114,18 @@ function TripCard({ trip, onClick, isPast = false }: { trip: any, onClick: () =>
           <div className="flex items-center gap-2">
             <div className={cn(
               "w-8 h-8 rounded-xl flex items-center justify-center transition-colors",
-              isPast ? "bg-slate-100 dark:bg-slate-800 text-slate-500" : "bg-blue-50 dark:bg-blue-500/10 text-blue-600"
+              isPast ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"
             )}>
               <MapPin size={16} />
             </div>
-            <h4 className="font-black text-slate-900 dark:text-white truncate max-w-[150px]">{trip.destination}</h4>
+            <h4 className="font-black text-foreground truncate max-w-[150px]">{trip.destination}</h4>
           </div>
-          <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+          <p className="text-[10px] font-bold text-muted-foreground flex items-center gap-1">
             <Calendar size={10} />
             {new Date(trip.startDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - {new Date(trip.endDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
           </p>
         </div>
-        <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-950/50 text-slate-400 group-hover:text-blue-500 transition-colors">
+        <div className="p-2 rounded-xl bg-muted text-muted-foreground group-hover:text-primary transition-colors">
           <ChevronRight size={16} />
         </div>
       </div>
@@ -133,32 +133,32 @@ function TripCard({ trip, onClick, isPast = false }: { trip: any, onClick: () =>
       <div className="space-y-3">
         <div className="flex justify-between items-end">
           <div className="space-y-0.5">
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Spent Amount</p>
-            <div className={cn("text-lg font-black", isOverBudget ? "text-rose-500" : "text-slate-900 dark:text-white")}>
+            <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Spent Amount</p>
+            <div className={cn("text-lg font-black", isOverBudget ? "text-destructive" : "text-foreground")}>
               <Amount value={spent} />
             </div>
           </div>
           <div className="text-right space-y-0.5">
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Budget</p>
-            <p className="text-xs font-black text-slate-600 dark:text-slate-300"><Amount value={budget} /></p>
+            <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Budget</p>
+            <p className="text-xs font-black text-muted-foreground"><Amount value={budget} /></p>
           </div>
         </div>
 
         {/* Progress Bar */}
         <div className="space-y-1.5">
-          <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               className={cn(
                 "h-full rounded-full transition-all duration-1000",
-                isOverBudget ? "bg-rose-500" : "bg-gradient-to-r from-blue-500 to-indigo-500"
+                isOverBudget ? "bg-destructive" : "bg-primary"
               )}
             />
           </div>
           <div className="flex justify-between text-[9px] font-black uppercase tracking-tighter">
-            <span className={cn(isOverBudget ? "text-rose-500" : "text-blue-500")}>{progress}% used</span>
-            <span className="text-slate-400">{isOverBudget ? "Over budget" : <><Amount value={budget - spent} /> left</>}</span>
+            <span className={cn(isOverBudget ? "text-destructive" : "text-primary")}>{progress}% used</span>
+            <span className="text-muted-foreground">{isOverBudget ? "Over budget" : <><Amount value={budget - spent} /> left</>}</span>
           </div>
         </div>
       </div>

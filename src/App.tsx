@@ -3,8 +3,7 @@ import { lazyWithRetry } from "./utils/lazyWithRetry";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Toaster } from "sonner";
 
 import Header from "./components/Header";
 import MobileActionDock from "./components/MobileActionDock";
@@ -293,7 +292,30 @@ export default function App() {
           </LedgerStateProvider>
         </ModalProvider>
       </SettingsProvider>
-      <ToastContainer position="top-center" theme={toastTheme} autoClose={2000} hideProgressBar newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+      <Toaster
+        position="top-center"
+        theme={toastTheme}
+        richColors
+        closeButton
+        offset={16}
+        gap={10}
+        visibleToasts={3}
+        toastOptions={{
+          duration: 2200,
+          classNames: {
+            toast:
+              "group toast !rounded-2xl !border !border-border !bg-card !text-foreground !shadow-lg !shadow-black/10 dark:!shadow-black/40 font-medium",
+            title: "!text-sm !font-semibold !tracking-tight",
+            description: "!text-xs !text-muted-foreground",
+            success: "!border-success/25",
+            error: "!border-destructive/25",
+            info: "!border-info/25",
+            warning: "!border-warning/25",
+            closeButton:
+              "!bg-muted !border-border !text-muted-foreground hover:!bg-muted/80",
+          },
+        }}
+      />
     </BrowserRouter>
   );
 }

@@ -15,10 +15,11 @@ import { previewBalanceAfterTransaction } from "../utils/accountBalance";
 import { currentMonthKey, monthFromDateKey, todayDateKey } from "../utils/dates";
 import { INCOME_SOURCES } from "../types/expense";
 import type { Account, Expense, Income } from "../types/expense";
-import { toast } from 'react-toastify';
+import { toast } from '../lib/toast';
 import useSettings from "../hooks/useSettings";
 import { useGamification } from "../hooks/useGamification";
 import { cn } from "../lib/utils";
+import { fieldClass, labelClass, segmentTrackClass, segmentActiveClass, segmentInactiveClass } from "../lib/formStyles";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCategorizationRules } from "../hooks/useCategorizationRules";
 import { useTrips } from "../hooks/useTrips";
@@ -313,32 +314,26 @@ export default function ExpenseForm({
 
       if (editingId) {
         await updateDoc(doc(db, "users", user.uid, collectionName, editingId), data);
-        toast.success(`${type === "expense" ? "Expense" : "Income"} updated`);
       } else {
         await addDoc(collection(db, "users", user.uid, collectionName), {
           ...data,
           time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           createdAt: serverTimestamp(),
         });
-        toast.success(`${type === "expense" ? "Expense" : "Income"} added`);
         if (type === "expense") addXP(10);
 
         if (type === "expense" && shouldSuggestSplit(Number(amount), note)) {
-            toast.info(
-            ({ closeToast }: { closeToast?: () => void }) => (
-              <SplitSuggestionToast 
-                amount={Number(amount)} 
-                note={note} 
+          toast.custom(
+            (id) => (
+              <SplitSuggestionToast
+                amount={Number(amount)}
+                note={note}
                 category={category}
                 onSplit={(data) => navigate("/split", { state: { tab: "management", ...data } })}
-                closeToast={closeToast}
+                closeToast={() => toast.dismiss(id)}
               />
             ),
-            { 
-              autoClose: 10000,
-              icon: false,
-              className: "p-0 overflow-hidden rounded-2xl border border-blue-100 dark:border-blue-900 shadow-xl"
-            }
+            { duration: 10000, unstyled: true }
           );
         }
       }
@@ -365,15 +360,15 @@ export default function ExpenseForm({
   return (
     <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="space-y-4 px-1">
       {/* Type Toggle */}
-      <div className="flex p-1 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/5">
+      <div className={segmentTrackClass}>
         <button
           type="button"
           onClick={() => setType("expense")}
           className={cn(
-            "flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
-            type === "expense" 
-              ? "bg-white dark:bg-slate-800 text-rose-600 dark:text-rose-400 shadow-sm" 
-              : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+            "flex-1 rounded-lg py-1.5 text-xs font-semibold uppercase tracking-wide transition-all",
+            type === "expense"
+              ? cn(segmentActiveClass, "text-destructive")
+              : segmentInactiveClass
           )}
         >
           Expense
@@ -385,10 +380,10 @@ export default function ExpenseForm({
             if (!vaultId && vaults[0]?.id) setVaultId(vaults[0].id);
           }}
           className={cn(
-            "flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-1.5",
+            "flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-semibold uppercase tracking-wide transition-all",
             type === "vault"
-              ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm"
-              : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+              ? cn(segmentActiveClass, "text-info")
+              : segmentInactiveClass
           )}
           disabled={vaults.length === 0}
           title={vaults.length === 0 ? "Join or create a vault first" : "Add directly to a vault"}
@@ -400,10 +395,10 @@ export default function ExpenseForm({
           type="button"
           onClick={() => setType("income")}
           className={cn(
-            "flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
-            type === "income" 
-              ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm" 
-              : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+            "flex-1 rounded-lg py-1.5 text-xs font-semibold uppercase tracking-wide transition-all",
+            type === "income"
+              ? cn(segmentActiveClass, "text-success")
+              : segmentInactiveClass
           )}
         >
           Income
@@ -413,7 +408,7 @@ export default function ExpenseForm({
       {/* Amount Display */}
       <div className="space-y-3">
         <div className="flex items-center justify-between mb-1">
-          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
+          <label className={labelClass}>
             Amount
           </label>
           {type === "expense" && (
@@ -423,20 +418,20 @@ export default function ExpenseForm({
         <div className="relative group">
 
           <span className={cn(
-            "absolute left-4 top-1/2 -translate-y-1/2 font-black text-xl z-10 transition-colors",
-            type === "expense" ? "text-rose-500" : type === "vault" ? "text-blue-600" : "text-emerald-500"
+            "absolute left-4 top-1/2 z-10 -translate-y-1/2 text-xl font-semibold transition-colors",
+            type === "expense" ? "text-destructive" : type === "vault" ? "text-info" : "text-success"
           )}>₹</span>
           <input
             type="number"
             autoFocus
             required
             className={cn(
-              "w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-white/10 rounded-2xl py-4 pl-10 pr-4 text-3xl font-black focus:outline-none transition-all placeholder:opacity-20",
+              "w-full rounded-2xl border border-border bg-muted/40 py-4 pl-10 pr-4 text-3xl font-semibold tabular-nums text-foreground placeholder:opacity-20 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all",
               type === "expense"
-                ? "text-slate-900 dark:text-white focus:border-rose-500"
+                ? "focus:border-destructive"
                 : type === "vault"
-                  ? "text-slate-900 dark:text-white focus:border-blue-500"
-                  : "text-emerald-700 dark:text-emerald-100 focus:border-emerald-500"
+                  ? "focus:border-info"
+                  : "focus:border-success"
             )}
             placeholder="0"
             value={amount}
@@ -451,7 +446,7 @@ export default function ExpenseForm({
               key={q}
               type="button"
               onClick={() => setAmount(q.toString())}
-              className="shrink-0 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-[10px] font-black text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-white/5"
+              className="shrink-0 rounded-lg border border-border bg-muted px-3 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-muted/80"
             >
               +₹{q}
             </button>
@@ -462,13 +457,13 @@ export default function ExpenseForm({
       {/* Primary Info Grid */}
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <label className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
+          <label className={labelClass}>
             <Calendar size={10} /> Date
           </label>
           <input
             type="date"
             required
-            className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary transition-all"
+            className={fieldClass}
             value={date}
             onChange={e => setDate(e.target.value)}
           />
@@ -476,12 +471,12 @@ export default function ExpenseForm({
 
         {type === "income" ? (
           <div className="space-y-1.5">
-            <label className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
+            <label className={labelClass}>
               <Tag size={10} /> Source
             </label>
             <div className="relative">
               <select
-                className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 appearance-none focus:outline-none focus:border-primary transition-all"
+                className={cn(fieldClass, "appearance-none")}
                 value={source}
                 onChange={e => setSource(e.target.value)}
               >
@@ -510,7 +505,7 @@ export default function ExpenseForm({
           />
 
           <div className="space-y-1.5">
-            <label className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
+            <label className={labelClass}>
               <Tag size={10} /> Tags <span className="font-medium normal-case tracking-normal text-slate-400">(optional)</span>
             </label>
             <div className="flex flex-wrap gap-1.5 mb-1">
@@ -519,14 +514,14 @@ export default function ExpenseForm({
                   key={t}
                   type="button"
                   onClick={() => setTags((prev) => prev.filter((x) => x !== t))}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-300"
+                  className="inline-flex items-center gap-1 rounded-lg bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground"
                 >
                   {t} ×
                 </button>
               ))}
             </div>
             <input
-              className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary transition-all"
+              className={fieldClass}
               placeholder="Add tag and press Enter"
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
@@ -545,12 +540,12 @@ export default function ExpenseForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-            <label className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
+            <label className={labelClass}>
                 <CreditCard size={10} /> Account
             </label>
             <div className="relative">
                 <select
-                    className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 appearance-none focus:outline-none focus:border-primary transition-all"
+                    className={cn(fieldClass, "appearance-none")}
                     value={accountId}
                     onChange={e => setAccountId(e.target.value)}
                 >
@@ -570,11 +565,11 @@ export default function ExpenseForm({
         </div>
 
         <div className="space-y-1.5">
-            <label className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
+            <label className={labelClass}>
                 <FileText size={10} /> Note
             </label>
             <input
-                className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary transition-all"
+                className={fieldClass}
                 placeholder="..."
                 value={note}
                 onChange={e => setNote(e.target.value)}
@@ -594,7 +589,7 @@ export default function ExpenseForm({
                 {/* Vault Selection */}
                 {vaults.length > 0 && (
                     <div className="space-y-2">
-                        <label className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                        <label className={labelClass}>
                             <Zap size={10} /> {type === "vault" ? "Choose Vault" : "Contribute to Vault"}
                         </label>
                         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
@@ -631,12 +626,12 @@ export default function ExpenseForm({
                 {/* Trip Selection */}
                 {type === "expense" && (trips.filter(t => t.status === "active").length > 0 || !!tripId) && (
                     <div className="space-y-1.5">
-                        <label className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                        <label className={labelClass}>
                             <MapPin size={10} /> Link to Trip
                         </label>
                         <div className="relative">
                             <select
-                                className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-[11px] font-bold text-slate-700 dark:text-slate-200 appearance-none focus:outline-none"
+                                className={cn(fieldClass, "appearance-none py-2 text-xs")}
                                 value={tripId || ""}
                                 onChange={e => setTripId(e.target.value || null)}
                             >
@@ -660,17 +655,17 @@ export default function ExpenseForm({
         whileHover={{ scale: 1.01 }}
         whileTap={{ scale: 0.99 }}
         className={cn(
-          "w-full py-4 rounded-xl font-black text-[11px] text-white shadow-lg transition-all mt-2 uppercase tracking-[0.2em]",
+          "mt-2 w-full rounded-xl py-4 text-xs font-semibold uppercase tracking-[0.08em] shadow-sm transition-all",
           isLocked
-            ? "bg-slate-400 cursor-not-allowed"
+            ? "cursor-not-allowed bg-muted text-muted-foreground"
             : type === "expense"
-              ? "bg-rose-500 shadow-rose-500/20"
+              ? "bg-destructive text-destructive-foreground shadow-destructive/20"
               : type === "vault"
-                ? "bg-blue-600 shadow-blue-600/20"
-                : "bg-emerald-500 shadow-emerald-500/20"
+                ? "bg-info text-info-foreground shadow-info/20"
+                : "bg-success text-success-foreground shadow-success/20"
         )}
       >
-        {isLocked ? "🔒 Locked" : isSubmitting ? "Saving..." : (editingExpense || editingIncome ? "Save Changes" : `Add ${type}`)}
+        {isLocked ? "Locked" : isSubmitting ? "Saving..." : (editingExpense || editingIncome ? "Save Changes" : `Add ${type}`)}
       </motion.button>
     </form>
   );

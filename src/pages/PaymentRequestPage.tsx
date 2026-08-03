@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Loader2, Trash2 } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from "../lib/toast";
 import PaymentRequestShareCard from "../components/PaymentRequestShareCard";
 import { fetchPaymentRequestBySlug, usePaymentRequests } from "../hooks/usePaymentRequests";
 import { useAuth } from "../hooks/useAuth";

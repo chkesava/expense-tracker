@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../../firebase";
-import { toast } from "react-toastify";
+import { toast } from "../../lib/toast";
 import { AlertTriangle, Sparkles, Download, Globe } from "lucide-react";
 
 interface SystemSettings {
