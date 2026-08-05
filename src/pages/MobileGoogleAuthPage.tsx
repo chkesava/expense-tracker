@@ -2,7 +2,8 @@
  * Mobile Google auth bridge.
  * Opened from the Expo app via WebBrowser AuthSession.
  * Completes Google sign-in on this HTTPS origin (same Firebase project as web),
- * then redirects back to the app deep link with a Firebase ID token.
+ * then redirects back to the app deep link with a **Google** ID token
+ * (not a Firebase ID token — required by GoogleAuthProvider.credential).
  *
  * Google never sees exp:// — only this site does OAuth, so Expo Go works.
  */
@@ -16,6 +17,7 @@ import {
   signInWithRedirect,
   signOut,
   type User,
+  type UserCredential,
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { Activity } from "lucide-react";
@@ -32,9 +34,23 @@ function isAllowedRedirect(uri: string): boolean {
   );
 }
 
-function redirectToApp(redirectUri: string, idToken: string) {
+function redirectToApp(redirectUri: string, googleIdToken: string) {
   const base = redirectUri.split("#")[0];
-  window.location.href = `${base}#id_token=${encodeURIComponent(idToken)}`;
+  window.location.href = `${base}#id_token=${encodeURIComponent(googleIdToken)}`;
+}
+
+/** Google OAuth ID token from a sign-in result (not Firebase Auth JWT). */
+function googleIdTokenFromCredential(result: UserCredential): string | null {
+  const fromCredential = GoogleAuthProvider.credentialFromResult(result)?.idToken;
+  if (fromCredential) return fromCredential;
+
+  // Fallback for some redirect hosts / SDK shapes.
+  const tokenResponse = (
+    result as UserCredential & {
+      _tokenResponse?: { oauthIdToken?: string };
+    }
+  )._tokenResponse;
+  return tokenResponse?.oauthIdToken ?? null;
 }
 
 export default function MobileGoogleAuthPage() {
@@ -54,7 +70,17 @@ export default function MobileGoogleAuthPage() {
   const [busy, setBusy] = useState(false);
 
   const handoff = useCallback(
-    async (user: User, isNewUser?: boolean) => {
+    async (
+      user: User,
+      googleIdToken: string,
+      isNewUser?: boolean
+    ) => {
+      if (!googleIdToken) {
+        throw new Error(
+          "Google did not return an ID token. Please try Continue with Google again."
+        );
+      }
+
       if (isNewUser) {
         const settingsSnap = await getDoc(doc(db, "system_settings", "global"));
         if (settingsSnap.exists() && settingsSnap.data().disableSignups) {
@@ -66,7 +92,6 @@ export default function MobileGoogleAuthPage() {
       }
 
       setStatus("Returning to the app…");
-      const idToken = await user.getIdToken(/* forceRefresh */ true);
       const target =
         sessionStorage.getItem(STORAGE_KEY) || redirectUri;
 
@@ -76,7 +101,7 @@ export default function MobileGoogleAuthPage() {
         // Token already obtained; ignore sign-out failures.
       }
 
-      redirectToApp(target, idToken);
+      redirectToApp(target, googleIdToken);
     },
     [redirectUri]
   );
@@ -98,16 +123,23 @@ export default function MobileGoogleAuthPage() {
         if (cancelled) return;
 
         if (redirectResult?.user) {
+          const googleIdToken = googleIdTokenFromCredential(redirectResult);
+          if (!googleIdToken) {
+            throw new Error(
+              "Google redirect completed but no Google ID token was returned."
+            );
+          }
           const extra = getAdditionalUserInfo(redirectResult);
-          await handoff(redirectResult.user, Boolean(extra?.isNewUser));
+          await handoff(
+            redirectResult.user,
+            googleIdToken,
+            Boolean(extra?.isNewUser)
+          );
           return;
         }
 
-        if (auth.currentUser) {
-          await handoff(auth.currentUser, false);
-          return;
-        }
-
+        // Existing web session has a Firebase JWT only — mobile needs a Google
+        // ID token, so always require an explicit Continue with Google.
         setStatus("Sign in with the same Google account you use on the web.");
         setReady(true);
       } catch (err) {
@@ -131,8 +163,14 @@ export default function MobileGoogleAuthPage() {
       const provider = new GoogleAuthProvider();
       try {
         const result = await signInWithPopup(auth, provider);
+        const googleIdToken = googleIdTokenFromCredential(result);
+        if (!googleIdToken) {
+          throw new Error(
+            "Google sign-in completed but no Google ID token was returned."
+          );
+        }
         const extra = getAdditionalUserInfo(result);
-        await handoff(result.user, Boolean(extra?.isNewUser));
+        await handoff(result.user, googleIdToken, Boolean(extra?.isNewUser));
       } catch (popupError: unknown) {
         const code =
           popupError && typeof popupError === "object" && "code" in popupError
