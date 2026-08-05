@@ -56,6 +56,7 @@ const AdminLayout = lazyWithRetry(() => import("./admin/components/AdminLayout")
 const AdminSettings = lazyWithRetry(() => import("./admin/pages/AdminSettings"));
 import AppSelector from "./pages/AppSelector";
 const NutritionApp = lazyWithRetry(() => import("./pages/nutrition/NutritionApp"));
+const MobileGoogleAuthPage = lazyWithRetry(() => import("./pages/MobileGoogleAuthPage"));
 function RouteFallback() {
   return (
     <div className="flex min-h-[50dvh] items-center justify-center px-6">
@@ -279,6 +280,7 @@ export default function App() {
                     <Routes>
                       <Route path="/payment/:slug" element={<PaymentRequestPage />} />
                       <Route path="/pay/:slug" element={<PaySlugRedirect />} />
+                      <Route path="/mobile-google-auth" element={<MobileGoogleAuthPage />} />
                       <Route path="*" element={<AppContent />} />
                     </Routes>
                   </Suspense>
