@@ -35,6 +35,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/app-distribution-invite"
+  to = "/.netlify/functions/app-distribution-invite"
+  status = 200
+
+[[redirects]]
   from = "/api/twelve-data/*"
   to = "/.netlify/functions/twelve-data/:splat"
   status = 200

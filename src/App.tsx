@@ -12,6 +12,7 @@ import PrivacyLock from "./components/PrivacyLock";
 import useSettings, { SettingsProvider } from "./hooks/useSettings";
 import FloatingAdvisor from "./components/FloatingAdvisor";
 import MaintenanceScreen from "./components/MaintenanceScreen";
+import WebShutdownScreen from "./components/WebShutdownScreen";
 import { useSystemSettings } from "./hooks/useSystemSettings";
 import { useUserRole } from "./hooks/useUserRole";
 
@@ -101,6 +102,10 @@ function AppContent() {
 
   if (settingsLoading || (user && roleLoading)) {
     return <RouteFallback />;
+  }
+
+  if (settings.webAppShutdown && !isAdmin) {
+    return <WebShutdownScreen />;
   }
 
   if (settings.maintenanceMode && !isAdmin) {

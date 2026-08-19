@@ -17,6 +17,13 @@ export interface SystemSettings {
   enableAIFeatures: boolean;
   allowDataExport: boolean;
   enableInvestments: boolean;
+  /** Permanently disable the web app for non-admins. Android is unaffected. */
+  webAppShutdown: boolean;
+  /** ISO date shown on the public shutdown page, e.g. 2026-09-30 */
+  webAppShutdownDate: string;
+  webAppShutdownMessage: string;
+  /** Fallback Firebase App Distribution invite URL if latest_release has none. */
+  appDistributionInviteUrl: string;
 }
 
 const DEFAULT_SETTINGS: SystemSettings = {
@@ -27,6 +34,10 @@ const DEFAULT_SETTINGS: SystemSettings = {
   enableAIFeatures: true,
   allowDataExport: true,
   enableInvestments: true,
+  webAppShutdown: false,
+  webAppShutdownDate: "2026-09-30",
+  webAppShutdownMessage: "",
+  appDistributionInviteUrl: "",
 };
 
 type SystemSettingsContextType = {

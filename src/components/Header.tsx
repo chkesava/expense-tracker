@@ -18,6 +18,7 @@ import { useAuth } from "../hooks/useAuth";
 import useOnline from "../hooks/useOnline";
 import { useGamification } from "../hooks/useGamification";
 import { useUserRole } from "../hooks/useUserRole";
+import { useSystemSettings } from "../hooks/useSystemSettings";
 import { useModals } from "../hooks/useModals";
 import { useVaults } from "../hooks/useVaults";
 import Avatar from "./Avatar";
@@ -32,6 +33,28 @@ import AnnouncementBanner from "./AnnouncementBanner";
 import NotificationBell from "../features/sip/components/NotificationBell";
 import AddFab from "./ui/AddFab";
 import { ICON_SIZE, ICON_STROKE } from "../lib/iconSizes";
+
+function WebShutdownAdminBanner({
+  visible,
+  onOpenSettings,
+}: {
+  visible: boolean;
+  onOpenSettings: () => void;
+}) {
+  if (!visible) return null;
+  return (
+    <div className="bg-red-600 px-4 py-2 text-center text-sm font-medium text-white">
+      Web app is off for regular users. Android is unaffected.{" "}
+      <button
+        type="button"
+        onClick={onOpenSettings}
+        className="underline underline-offset-2"
+      >
+        Settings
+      </button>
+    </div>
+  );
+}
 
 function formatMonthLabel(month: string, short = false) {
   if (!month) return "This Month";
@@ -49,6 +72,7 @@ export default function Header() {
   const { isOnline } = useOnline();
   const { stats } = useGamification();
   const { isAdmin } = useUserRole();
+  const { settings: systemSettings } = useSystemSettings();
   const { setIsMonthDrawerOpen, setIsAddExpenseOpen, globalMonth } = useModals();
   const { settings, setGhostMode } = useSettings();
   const { pendingSyncCount } = useExpenses();
@@ -79,6 +103,10 @@ export default function Header() {
     return (
       <div className="pointer-events-none fixed top-0 left-0 z-50 flex w-full flex-col">
         <div className="pointer-events-auto w-full">
+          <WebShutdownAdminBanner
+            visible={isAdmin && systemSettings.webAppShutdown}
+            onOpenSettings={() => navigate("/admin/settings")}
+          />
           <AnnouncementBanner />
         </div>
       </div>
@@ -97,6 +125,10 @@ export default function Header() {
 
       <div className="pointer-events-none fixed top-0 left-0 z-50 flex w-full flex-col">
         <div className="pointer-events-auto w-full">
+          <WebShutdownAdminBanner
+            visible={isAdmin && systemSettings.webAppShutdown}
+            onOpenSettings={() => navigate("/admin/settings")}
+          />
           <AnnouncementBanner />
         </div>
         <div className="pointer-events-none w-full px-2 pt-2 sm:px-5 sm:pt-5">
