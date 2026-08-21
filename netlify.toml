@@ -9,6 +9,11 @@
 [functions."sip-execute"]
   schedule = "0 3 * * *"
 
+[functions."credit-card-bills"]
+  # Same 03:00 UTC / 08:30 IST window as sip-execute. Runs on close day D, then
+  # refreshes again the next morning so spend later on D still lands on the bill.
+  schedule = "0 3 * * *"
+
 [[redirects]]
   from = "/api/stock"
   to = "/.netlify/functions/stock"
@@ -32,6 +37,11 @@
 [[redirects]]
   from = "/api/sip-execute"
   to = "/.netlify/functions/sip-execute"
+  status = 200
+
+[[redirects]]
+  from = "/api/credit-card-bills"
+  to = "/.netlify/functions/credit-card-bills"
   status = 200
 
 [[redirects]]
