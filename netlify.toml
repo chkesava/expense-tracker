@@ -10,8 +10,9 @@
   schedule = "0 3 * * *"
 
 [functions."credit-card-bills"]
-  # 00:00 IST (18:30 UTC). Runs after the close day finishes so spend on day D is included.
-  schedule = "30 18 * * *"
+  # Same 03:00 UTC / 08:30 IST window as sip-execute. Runs on close day D, then
+  # refreshes again the next morning so spend later on D still lands on the bill.
+  schedule = "0 3 * * *"
 
 [[redirects]]
   from = "/api/stock"
