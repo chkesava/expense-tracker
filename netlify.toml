@@ -7,12 +7,14 @@
   VITE_PUBLIC_APP_URL = "https://kesavaexpensetracker.netlify.app"
 
 [functions."sip-execute"]
-  schedule = "0 3 * * *"
+  # Retired 2026-11-09 (SPENDLY-682): this daily job now runs from
+  # chkesava/expense-tracker-mobile-application- (.github/workflows/sip-daily.yml, started by
+  # the spendly-push-trigger Worker). The function stays callable but has no schedule.
 
 [functions."credit-card-bills"]
-  # Same 03:00 UTC / 08:30 IST window as sip-execute. Runs on close day D, then
-  # refreshes again the next morning so spend later on D still lands on the bill.
-  schedule = "0 3 * * *"
+  # Retired 2026-11-09 (SPENDLY-682): this daily job now runs from
+  # chkesava/expense-tracker-mobile-application- (.github/workflows/bill-daily.yml, started by
+  # the spendly-push-trigger Worker). The function stays callable but has no schedule.
 
 [[redirects]]
   from = "/api/stock"
